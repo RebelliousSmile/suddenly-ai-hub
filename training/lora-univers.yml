@@ -1,0 +1,108 @@
+# lora-univers.yml — TEMPLATE LoRA adapter axe univers (genre GROG)
+#
+# Ce fichier est un TEMPLATE. Avant de lancer un entraînement, substituer :
+#   ADAPTER_NAME   → slug du genre, ex: medieval-fantastique
+#   DATASET_PATH   → chemin vers le JSONL du corpus de ce genre
+#   OUTPUT_DIR     → répertoire de sortie, ex: ./outputs/lora-medieval-fantastique
+#   BASE_MODEL_DIR → chemin ou HF id du modèle suddenly-7b déjà fine-tuné
+#
+# Genres valides (taxonomie GROG — legrog.org/themes) :
+#   medieval-fantastique, historique-fantastique, scifi, contemporain-fantastique,
+#   space-opera, contemporain, post-apocalyptique, cyberpunk, super-heros,
+#   oriental-manga, generique
+#
+# Seuil de déclenchement : 500 sessions pour ce genre
+# Compatible vLLM via PEFT (noms de couches préservés par Axolotl, pas de merge inline)
+# Usage : axolotl train training/lora-univers.yml
+#         (après substitution des placeholders)
+
+base_model: BASE_MODEL_DIR   # ex: ./outputs/suddenly-7b ou mistralai/Mistral-7B-v0.3
+
+model_type: MistralForCausalLM
+tokenizer_type: LlamaTokenizer
+
+# --- Quantization ---
+load_in_4bit: true
+load_in_8bit: false
+bnb_config_kwargs:
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+
+# --- Adapter ---
+adapter: qlora
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# --- Dataset ---
+# JSONL de sessions filtrées pour ce genre (produit par pipeline/formatting)
+# Format attendu par ligne :
+#   {"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
+chat_template: mistral_v1
+datasets:
+  - path: DATASET_PATH    # ex: data/corpus-medieval-fantastique.jsonl
+    type: chat_template
+    roles_to_train:
+      - assistant
+    train_on_eos: turn
+
+dataset_prepared_path: .cache/lora-univers-ADAPTER_NAME-prepared
+val_set_size: 0.1         # 10% validation (corpus plus petit qu'un modèle de base)
+
+# --- Séquences ---
+sequence_len: 4096
+sample_packing: true
+pad_to_sequence_len: true
+
+# --- Output ---
+output_dir: OUTPUT_DIR    # ex: ./outputs/lora-medieval-fantastique
+lora_model_dir:           # laisser vide sauf pour continuer un entraînement
+
+# --- Entraînement ---
+num_epochs: 5             # plus d'epochs : corpus plus petit, risque d'overfitting contrôlé par val
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+# effective batch size = 4 * 4 = 16
+
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 2.0e-4
+warmup_ratio: 0.1
+weight_decay: 0.01
+
+# --- Précision et mémoire ---
+bf16: auto
+tf32: false
+flash_attention: true
+gradient_checkpointing: true
+
+# --- Logging et checkpoints ---
+logging_steps: 10
+evals_per_epoch: 4
+saves_per_epoch: 1
+save_total_limit: 2
+
+# --- Stabilité ---
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+max_grad_norm: 1.0
+
+# --- Wandb (optionnel) ---
+# wandb_project: suddenly-ai-hub
+# wandb_entity:
+# wandb_name: lora-univers-ADAPTER_NAME
+
+# --- Après entraînement : pre-merge ---
+# Le pipeline déclenche automatiquement merge_lora.py si lora-{situation} existe déjà.
+# Résultat : ./outputs/lora-ADAPTER_NAME-{situation}-merged/
+# hub_model_id: suddenly-ai/lora-univers-ADAPTER_NAME

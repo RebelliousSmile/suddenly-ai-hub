@@ -1,0 +1,92 @@
+# suddenly-7b.yml
+# Full fine-tuning du modèle de base Mistral 7B v0.3 sur corpus RP général
+# Méthode : QLoRA sur A100-40G (full FFT requiert A100-80G ou 2xA100-40G)
+# GPU cible : RunPod A100-40G (40GB VRAM)
+# Usage : axolotl train training/suddenly-7b.yml
+
+base_model: mistralai/Mistral-7B-v0.3
+model_type: MistralForCausalLM
+tokenizer_type: LlamaTokenizer
+
+# --- Quantization ---
+load_in_4bit: true
+load_in_8bit: false
+bnb_config_kwargs:
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+
+# --- Adapter ---
+adapter: qlora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# --- Dataset ---
+# Format : JSONL avec clé "messages", rôles system/user/assistant
+# Fichier produit par pipeline/formatting après anonymisation
+chat_template: mistral_v1
+datasets:
+  - path: data/corpus-rp-general.jsonl
+    type: chat_template
+    roles_to_train:
+      - assistant
+    train_on_eos: turn
+
+dataset_prepared_path: .cache/suddenly-7b-prepared
+val_set_size: 0.05
+
+# --- Séquences ---
+sequence_len: 4096
+sample_packing: true
+pad_to_sequence_len: true
+
+# --- Output ---
+output_dir: ./outputs/suddenly-7b
+
+# --- Entraînement ---
+num_epochs: 3
+micro_batch_size: 2
+gradient_accumulation_steps: 8
+# effective batch size = 2 * 8 = 16
+
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 2.0e-4
+warmup_ratio: 0.05
+weight_decay: 0.01
+
+# --- Précision et mémoire ---
+bf16: auto
+tf32: false
+flash_attention: true
+gradient_checkpointing: true
+
+# --- Logging et checkpoints ---
+logging_steps: 10
+evals_per_epoch: 4
+saves_per_epoch: 1
+save_total_limit: 3
+
+# --- Stabilité ---
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+max_grad_norm: 1.0
+
+# --- Wandb (optionnel) ---
+# wandb_project: suddenly-ai-hub
+# wandb_entity:
+# wandb_name: suddenly-7b-run-1
+
+# --- Hub (optionnel, après entraînement) ---
+# hub_model_id: suddenly-ai/suddenly-7b
+# hub_strategy: end
