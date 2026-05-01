@@ -18,8 +18,8 @@ from pipeline.format_corpus import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _long(text: str, repeat: int = 30) -> str:
-    """Répète le texte pour dépasser le seuil MIN_WORDS."""
+def _long(text: str, repeat: int = 80) -> str:
+    """Répète le texte pour dépasser le seuil MIN_WORDS (150 mots)."""
     return " ".join([text] * repeat)
 
 
@@ -135,6 +135,20 @@ class TestParseDialogue:
         sessions = list(_parse_dialogue(text))
         assert len(sessions) == 0
 
+    def test_third_speaker_mapped_to_alternating_role(self):
+        text = self._build(
+            f"Alice: {_long('action alice')}",
+            f"Bob: {_long('réponse bob')}",
+            f"Charlie: {_long('action charlie')}",
+            f"Bob: {_long('réponse bob encore')}",
+        )
+        sessions = list(_parse_dialogue(text))
+        assert len(sessions) == 1
+        # Alice → user, Bob → assistant, Charlie → user (3e locuteur, alternance)
+        assert sessions[0][0]["role"] == "user"
+        assert sessions[0][1]["role"] == "assistant"
+        assert sessions[0][2]["role"] == "user"
+
 
 # ---------------------------------------------------------------------------
 # _parse_narrative
@@ -167,6 +181,14 @@ class TestParseNarrative:
         sessions = list(_parse_narrative(text, window=6))
         # 3 paras : user(0), assistant(1), user(2) → pas de doubles consécutifs
         assert sessions[0][2]["role"] == "user"
+
+    def test_non_divisible_paragraph_count(self):
+        # 13 paragraphes, window=4 → 3 sessions complètes (12 paras) + 1 chunk terminal (1 para)
+        # Le chunk terminal de 1 para doit être ignoré sans planter
+        paras = [_long(f"paragraphe {i}") for i in range(13)]
+        text = "\n\n".join(paras)
+        sessions = list(_parse_narrative(text, window=4))
+        assert len(sessions) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -262,3 +284,10 @@ class TestConvert:
         out = tmp_path / "subdir" / "out.jsonl"
         convert(src, out, "dialogue", system_prompt=None)
         assert out.exists()
+
+    def test_empty_file_produces_zero_sessions(self, tmp_path: Path):
+        src = tmp_path / "empty.txt"
+        src.write_text("", encoding="utf-8")
+        out = tmp_path / "out.jsonl"
+        count = convert(src, out, "dialogue", system_prompt=None)
+        assert count == 0
