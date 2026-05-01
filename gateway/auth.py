@@ -26,6 +26,8 @@ def parse_signature_header(header: str) -> dict[str, str]:
 
 
 async def fetch_public_key(key_id: str):
+    if not key_id.startswith("https://"):
+        raise HTTPException(status_code=400, detail="keyId must use HTTPS")
     if key_id in _key_cache:
         return _key_cache[key_id]
     try:
@@ -58,7 +60,7 @@ def build_signing_string(headers_list: list[str], request_headers: dict, method:
             value = request_headers.get(name.lower())
             if value is None:
                 raise ValueError(f"Header listed in Signature but missing from request: {name!r}")
-            lines.append(f"{name}: {value}")
+            lines.append(f"{name.lower()}: {value}")
     return "\n".join(lines)
 
 

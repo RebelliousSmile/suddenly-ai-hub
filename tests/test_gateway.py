@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from gateway.adapter_router import resolve_adapter
-from gateway.auth import verify_http_signature
+from gateway.auth import clear_key_cache, verify_http_signature
 from gateway.config import GatewayConfig, set_config
 from gateway.main import app
 from gateway.models import ChatChoice, ChatResponse, ChatUsage, Message
@@ -19,6 +19,7 @@ from gateway.models import ChatChoice, ChatResponse, ChatUsage, Message
 
 @pytest.fixture(autouse=True)
 def reset_config():
+    clear_key_cache()
     cfg = GatewayConfig(
         available_adapters=frozenset(["lora-cyberpunk", "lora-combat", "lora-generique"]),
     )
@@ -28,6 +29,7 @@ def reset_config():
     yield cfg
     app.dependency_overrides.pop(verify_http_signature, None)
     set_config(GatewayConfig())
+    clear_key_cache()
 
 
 @pytest.fixture
