@@ -1,0 +1,99 @@
+# suddenly-13b.yml
+# Full fine-tuning du modèle de base Mistral NeMo 12B sur corpus RP long-contexte
+# Modèle retenu : mistralai/Mistral-Nemo-Base-2407 (12B, Apache 2.0, 128k ctx natif)
+# Raisons du choix vs LLaMA 3 13B :
+#   - Apache 2.0 (LLaMA 3 a des restrictions usage commercial)
+#   - 128k context natif (vs 8k LLaMA 3 base) — critique pour analyze_session/generate_summary
+#   - Drop-in replacement de Mistral 7B (même tokenizer Tekken, même architecture)
+#   - Compatible vLLM et même pipeline Axolotl que suddenly-7b
+# GPU cible : RunPod A100-40G (40GB VRAM) — QLoRA requis pour tenir en mémoire
+# Usage : axolotl train training/suddenly-13b.yml
+
+base_model: mistralai/Mistral-Nemo-Base-2407
+model_type: MistralForCausalLM
+tokenizer_type: AutoTokenizer
+
+# --- Quantization ---
+load_in_4bit: true
+load_in_8bit: false
+bnb_config_kwargs:
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+
+# --- Adapter ---
+adapter: qlora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# --- Dataset ---
+# Format : JSONL avec clé "messages", rôles system/user/assistant
+# Corpus long-contexte : sessions > 2k tokens (analyze_session, generate_summary, suggest_links)
+chat_template: mistral_v1
+datasets:
+  - path: data/corpus-rp-longctx.jsonl
+    type: chat_template
+    roles_to_train:
+      - assistant
+    train_on_eos: turn
+
+dataset_prepared_path: .cache/suddenly-13b-prepared
+val_set_size: 0.05
+
+# --- Séquences ---
+# Séquence réduite à 4096 pour tenir sur A100-40G avec 12B params
+# Pour exploiter les 128k : utiliser 2xA100-40G avec DeepSpeed ZeRO-3
+sequence_len: 4096
+sample_packing: true
+pad_to_sequence_len: true
+
+# --- Output ---
+output_dir: ./outputs/suddenly-13b
+
+# --- Entraînement ---
+num_epochs: 3
+micro_batch_size: 1
+gradient_accumulation_steps: 16
+# effective batch size = 1 * 16 = 16
+
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 1.0e-4
+warmup_ratio: 0.05
+weight_decay: 0.01
+
+# --- Précision et mémoire ---
+bf16: auto
+tf32: false
+flash_attention: true
+gradient_checkpointing: true
+
+# --- Logging et checkpoints ---
+logging_steps: 10
+evals_per_epoch: 4
+saves_per_epoch: 1
+save_total_limit: 3
+
+# --- Stabilité ---
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+max_grad_norm: 1.0
+
+# --- Wandb (optionnel) ---
+# wandb_project: suddenly-ai-hub
+# wandb_entity:
+# wandb_name: suddenly-13b-run-1
+
+# --- Hub (optionnel, après entraînement) ---
+# hub_model_id: suddenly-ai/suddenly-13b
+# hub_strategy: end
