@@ -38,7 +38,7 @@ from typing import Iterator
 # Constantes
 # ---------------------------------------------------------------------------
 
-MIN_WORDS = 10  # seuil minimal : sessions trop courtes ignorées
+MIN_WORDS = 150  # ~200 tokens — seuil défini dans data-format.md / issue #9
 SYSTEM_PROMPT_RP = (
     "Tu es un conteur de roleplay. "
     "Réponds en français, dans un registre narratif et immersif."
@@ -89,17 +89,22 @@ def _parse_dialogue(text: str) -> Iterator[list[dict]]:
     for turns in sessions_raw:
         if len(turns) < 2:
             continue
-        # Construire le mapping speaker→rôle à partir du premier locuteur
+        # Construire le mapping speaker→rôle à partir du premier locuteur.
+        # Les 2 premiers locuteurs sont mappés user/assistant.
+        # Les locuteurs supplémentaires héritent du rôle attendu par alternance.
         speakers: dict[str, str] = {}
         messages: list[dict] = []
         for speaker, content in turns:
             key = speaker.lower()
             if key not in speakers:
-                role = "user" if len(speakers) == 0 else "assistant"
-                speakers[key] = role
-            role = speakers.get(key)
-            if role is None:
-                continue
+                if len(speakers) == 0:
+                    speakers[key] = "user"
+                elif len(speakers) == 1:
+                    speakers[key] = "assistant"
+                else:
+                    last_role = messages[-1]["role"] if messages else "assistant"
+                    speakers[key] = "user" if last_role == "assistant" else "assistant"
+            role = speakers[key]
             # Vérifier l'alternance
             if messages and messages[-1]["role"] == role:
                 # Fusionner si même rôle consécutif
@@ -125,7 +130,7 @@ def _parse_narrative(text: str, window: int = 6) -> Iterator[list[dict]]:
     for i in range(0, len(paragraphs) - 1, window):
         chunk = paragraphs[i : i + window]
         if len(chunk) < 2:
-            break
+            continue
         messages: list[dict] = []
         for j, para in enumerate(chunk):
             role = "user" if j % 2 == 0 else "assistant"

@@ -79,7 +79,7 @@ python pipeline/format_corpus.py \
 
 ### 4. Forums JDR FR (scraping manuel — vérifier CGU)
 
-**Sites** : [scenariotheque.org](https://scenariotheque.org), [lapartiedujdr.fr](https://lapartiedejdr.fr), [irtuel.fr](https://www.irtuel.fr)  
+**Sites** : [scenariotheque.org](https://scenariotheque.org), [lapartiedejdr.fr](https://lapartiedejdr.fr), [irtuel.fr](https://www.irtuel.fr)  
 **Licence** : variable selon le site — vérifier les CGU avant usage  
 **Format** : HTML → texte après extraction  
 **Intérêt** : contenu RP FR authentique, personnages et univers variés  
