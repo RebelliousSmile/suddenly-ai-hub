@@ -54,6 +54,18 @@ services:
       postgres:
         condition: service_healthy
 
+  mock-instance:
+    build:
+      context: ./mock-instance
+    environment:
+      MOCK_DOMAIN: ${MOCK_DOMAIN:-mock-instance}
+    ports:
+      - "${MOCK_PORT:-8080}:8080"
+    networks:
+      - hub_net
+    profiles:
+      - mock
+
 volumes:
   postgres_data:
   minio_data:
