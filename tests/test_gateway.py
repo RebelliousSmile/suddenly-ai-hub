@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from gateway.adapter_router import resolve_adapter
+from gateway.auth import verify_http_signature
 from gateway.config import GatewayConfig, set_config
 from gateway.main import app
 from gateway.models import ChatChoice, ChatResponse, ChatUsage, Message
@@ -22,7 +23,10 @@ def reset_config():
         available_adapters=frozenset(["lora-cyberpunk", "lora-combat", "lora-generique"]),
     )
     set_config(cfg)
+    # Désactive la vérification de signature pour les tests existants
+    app.dependency_overrides[verify_http_signature] = lambda: None
     yield cfg
+    app.dependency_overrides.pop(verify_http_signature, None)
     set_config(GatewayConfig())
 
 
