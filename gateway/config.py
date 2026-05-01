@@ -48,6 +48,12 @@ class GatewayConfig:
     available_adapters: frozenset[str] = field(default_factory=frozenset)
     vllm_base_url: str = field(default_factory=lambda: os.environ.get("VLLM_BASE_URL", "http://localhost:8001"))
     default_model: str = "suddenly-7b"
+    activitypub_mock: bool = field(
+        default_factory=lambda: os.environ.get("ACTIVITYPUB_MOCK", "false").lower() == "true"
+    )
+    mock_instance_url: str = field(
+        default_factory=lambda: os.environ.get("MOCK_INSTANCE_URL", "http://mock-instance:8080")
+    )
 
 
 # Instance globale — remplacée au démarrage via lifespan ou dans les tests

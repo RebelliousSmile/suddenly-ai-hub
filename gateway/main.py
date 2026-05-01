@@ -5,10 +5,12 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from cryptography.hazmat.primitives.asymmetric import rsa
+from fastapi import Depends, FastAPI, HTTPException
 
 from . import vllm_client
 from .adapter_router import resolve_adapter
+from .auth import clear_key_cache, preload_key, verify_http_signature
 from .config import get_config
 from .models import (
     ChatRequest,
@@ -24,7 +26,16 @@ from .models import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    cfg = get_config()
+    if cfg.activitypub_mock:
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public_key = private_key.public_key()
+        mock_key_id = f"{cfg.mock_instance_url}/actor#main-key"
+        preload_key(mock_key_id, public_key)
+        app.state.mock_private_key = private_key
+        app.state.mock_key_id = mock_key_id
     yield
+    clear_key_cache()
 
 
 app = FastAPI(title="Suddenly AI Hub Gateway", lifespan=lifespan)
@@ -53,7 +64,10 @@ def _validate_situation(situation: Optional[str]) -> None:
 
 
 @app.post("/v1/chat/completions", response_model=ChatResponse)
-async def chat_completions(request: ChatRequest):
+async def chat_completions(
+    request: ChatRequest,
+    _: None = Depends(verify_http_signature),
+):
     _validate_genre(request.genre)
     _validate_situation(request.situation)
     adapter = resolve_adapter(request.genre, request.situation)
@@ -94,7 +108,10 @@ async def health():
 
 
 @app.post("/v1/contribute", response_model=ContributeResponse)
-async def contribute(request: ContributeRequest):
+async def contribute(
+    request: ContributeRequest,
+    _: None = Depends(verify_http_signature),
+):
     _validate_genre(request.genre)
     _validate_situation(request.situation)
     return ContributeResponse(
