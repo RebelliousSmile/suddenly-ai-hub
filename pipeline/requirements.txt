@@ -2,3 +2,5 @@ spacy>=3.7,<4.0
 langdetect>=1.0.9
 fr-core-news-md @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.7.0/fr_core_news_md-3.7.0-py3-none-any.whl
 en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.0/en_core_web_md-3.7.0-py3-none-any.whl
+sacrebleu>=2.3           # chrF++ pour évaluation automatique (evaluate.py)
+# bert-score>=0.3.13    # BERTScore optionnel — nécessite torch (non installé par défaut)
