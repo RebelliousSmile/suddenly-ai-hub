@@ -1,0 +1,108 @@
+# lora-situation.yml — TEMPLATE LoRA adapter axe situation
+#
+# Ce fichier est un TEMPLATE. Avant de lancer un entraînement, substituer :
+#   ADAPTER_NAME   → slug de la situation, ex: combat
+#   DATASET_PATH   → chemin vers le JSONL du corpus de cette situation
+#   OUTPUT_DIR     → répertoire de sortie, ex: ./outputs/lora-combat
+#   BASE_MODEL_DIR → chemin ou HF id du modèle suddenly-7b déjà fine-tuné
+#
+# Situations valides :
+#   romance, combat, enquete, diplomatie, exploration, introspection
+#
+# Seuil de déclenchement : 500 sessions pour cette situation
+# Compatible vLLM via PEFT (noms de couches préservés par Axolotl, pas de merge inline)
+# Usage : axolotl train training/lora-situation.yml
+#         (après substitution des placeholders)
+
+base_model: BASE_MODEL_DIR   # ex: ./outputs/suddenly-7b ou mistralai/Mistral-7B-v0.3
+
+model_type: MistralForCausalLM
+tokenizer_type: LlamaTokenizer
+
+# --- Quantization ---
+load_in_4bit: true
+load_in_8bit: false
+bnb_config_kwargs:
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+
+# --- Adapter ---
+# Rank plus bas que l'axe univers : la situation est une spécialisation de style
+# plus étroite, moins de paramètres nécessaires
+adapter: qlora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# --- Dataset ---
+# JSONL de sessions filtrées pour cette situation (produit par pipeline/formatting)
+# Format attendu par ligne :
+#   {"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
+chat_template: mistral_v1
+datasets:
+  - path: DATASET_PATH    # ex: data/corpus-combat.jsonl
+    type: chat_template
+    roles_to_train:
+      - assistant
+    train_on_eos: turn
+
+dataset_prepared_path: .cache/lora-situation-ADAPTER_NAME-prepared
+val_set_size: 0.1         # 10% validation (corpus plus petit qu'un modèle de base)
+
+# --- Séquences ---
+sequence_len: 4096
+sample_packing: true
+pad_to_sequence_len: true
+
+# --- Output ---
+output_dir: OUTPUT_DIR    # ex: ./outputs/lora-combat
+lora_model_dir:           # laisser vide sauf pour continuer un entraînement
+
+# --- Entraînement ---
+num_epochs: 5
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+# effective batch size = 4 * 4 = 16
+
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 2.0e-4
+warmup_ratio: 0.1
+weight_decay: 0.01
+
+# --- Précision et mémoire ---
+bf16: auto
+tf32: false
+flash_attention: true
+gradient_checkpointing: true
+
+# --- Logging et checkpoints ---
+logging_steps: 10
+evals_per_epoch: 4
+saves_per_epoch: 1
+save_total_limit: 2
+
+# --- Stabilité ---
+loss_watchdog_threshold: 5.0
+loss_watchdog_patience: 3
+max_grad_norm: 1.0
+
+# --- Wandb (optionnel) ---
+# wandb_project: suddenly-ai-hub
+# wandb_entity:
+# wandb_name: lora-situation-ADAPTER_NAME
+
+# --- Après entraînement : pre-merge ---
+# Le pipeline déclenche automatiquement merge_lora.py si lora-{univers} existe déjà.
+# Résultat : ./outputs/lora-{univers}-ADAPTER_NAME-merged/
+# hub_model_id: suddenly-ai/lora-situation-ADAPTER_NAME
