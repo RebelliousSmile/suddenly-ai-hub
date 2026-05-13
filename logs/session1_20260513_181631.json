@@ -1,0 +1,40 @@
+{
+  "session": 1,
+  "date": "2026-05-13T18:15:06.499249",
+  "plan_ref": "session1_jdroll_exploration.md",
+  "challenged": true,
+  "requests": [],
+  "observations": [
+    {
+      "timestamp": "2026-05-13T18:15:06.827997",
+      "type": "auth_check",
+      "status": "doubtful",
+      "note": "Pas de logout détecté, mais continuation autorisée"
+    }
+  ],
+  "metrics": {
+    "total_requests": 0,
+    "successful": 0,
+    "failed": 0,
+    "avg_response_time": 0,
+    "success_rate": "N/A"
+  },
+  "forums": [],
+  "topics": [],
+  "recommendations": [
+    {
+      "type": "error",
+      "note": "Trop d'échecs - vérifier cookies ou attendre 24h"
+    },
+    {
+      "type": "action",
+      "note": "Session 2: Annuler ou tester avec nouveaux cookies"
+    }
+  ],
+  "warnings": [
+    {
+      "request": 1,
+      "error": "'total_requests'"
+    }
+  ]
+}
