@@ -1,174 +1,220 @@
-# suddenly-ai-hub
+# 🚀 Suddenly AI Hub
 
-Fine-tuning de modèles de jeu de rôle (RP) en français
+> Fine-tuning d'un modèle de langage JDR (Jeux de Rôle) en français avec le framework AIDD
 
-## 🎯 Objectif
+## 📋 Résumé du Projet
 
-Entraîner des modèles LLM (Mistral, Mixtral, Llama) sur des données de RP francophones
-pour améliorer leurs compétences en narration, dialogue, et immersion.
+Ce projet vise à fine-tuner un modèle de langage pour la génération de campagnes de jeu de rôle en français. Utilisant le framework **AIDD** (AI-Driven Development) pour structurer le développement.
 
-**Projet en cours de développement** - Scraping de forums JDR + Fine-tuning LoRA
+### 🎯 Objectifs
 
-## 📁 Structure du projet
+- **Phase 1-2:** Scraping de données jdRoll (campagnes JDR)
+- **Phase 3:** Fine-tuning du modèle JDR
+- **Phase 4:** Amélioration continue
+- **Phase 5:** Scaling vers 100+ campagnes
+- **Phase 6:** Production
+- **Phase 7:** Communauté
+
+## 🚀 Démarrage Rapide
+
+### 1️⃣ Installer le CLI AIDD
+
+```bash
+# Installer aidd-custom
+npm install -g aidd-custom
+
+# Configurer le framework
+cd /home/user/suddenly-ai-hub
+aidd-custom setup --repo RebelliousSmile/aidd-overlay
+
+# Installer pour Copilot (recommandé)
+aidd-custom install --ai copilot
+```
+
+### 2️⃣ Vérifier l'Installation
+
+```bash
+aidd-custom doctor
+aidd-custom status
+```
+
+### 3️⃣ Lire la Documentation
+
+- 📖 **[INSTALL.md](./INSTALL.md)** - Installation rapide
+- 📖 **[aidd_docs/AIDD_GUIDE.md](./aidd_docs/AIDD_GUIDE.md)** - Guide complet AIDD
+- 📖 **[aidd_docs/WORKFLOW.md](./aidd_docs/WORKFLOW.md)** - Workflow détaillé
+
+## 📁 Structure du Projet
 
 ```
 suddenly-ai-hub/
-├── scripts/
-│   ├── scrape_couroberon.py      # ✅ Scraping La Cour d'Obéron
-│   ├── clean_dataset.py           # ⏸️ Nettoyage et anonymisation
-│   ├── convert_to_axolotl.py      # ⏸️ Conversion format Axolotl
-│   ├── test_model.py              # ⏸️ Test du modèle entraîné
-│   └── generate_synthetic.py      # ⏸️ Génération de données synthétiques
-├── data/
-│   ├── raw/                       # Données brutes scrapées
-│   ├── clean/                     # Données nettoyées et anonymisées
-│   └── eval/                      # Dataset d'évaluation (100 exemples)
-├── config/
-│   ├── axolotl_config.yaml        # Configuration Axolotl
-│   ├── together_config.yaml       # Configuration Together.ai
-│   └── fireworks_config.yaml      # Configuration Fireworks.ai
-├── docs/
-│   ├── SCRAPING_GUIDE.md          # Guide de scraping
-│   ├── DATA_FORMAT.md             # Format des données
-│   ├── EVALUATION.md              # Métriques d'évaluation
-├── .gitignore                     # Patterns exclus
-├── requirements.txt               # Dépendances Python
-├── .env                           # Variables d'environnement (API keys)
-└── README.md                      # Ce fichier
+├── aidd_docs/                    # Documentation AIDD
+│   ├── tasks/                    # Plans de phases
+│   │   ├── phase3_finetuning.md  # Fine-tuning
+│   │   ├── phase4_improvement.md # Amélioration
+│   │   ├── phase5_scaling.md     # Scaling
+│   │   └── phase6_production.md  # Production
+│   ├── reviews/                  # Challenges validés
+│   ├── memory/                   # Mémoire (décisions, lessons)
+│   ├── changelog/                # CHANGELOG.md
+│   └── AIDD_GUIDE.md             # Guide complet
+├── scripts/                      # Scripts Python
+│   ├── session2_simple.py        # Scraping jdRoll
+│   ├── convert_to_jsonl.py       # Conversion données
+│   └── train_model.py            # Fine-tuning
+├── .env                          # Variables d'environnement (NE PAS commit)
+├── README.md                     # Ce fichier
+└── INSTALL.md                    # Installation rapide
 ```
 
-## 🚀 Démarrage rapide
+## 🔧 Configuration
 
-### 1. Installer les dépendances
+### Variables d'Environnement
+
+Créer `.env` dans le dossier racine :
 
 ```bash
-cd /home/user/suddenly-ai-hub
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# GitHub (pour les PR et le CLI)
+GITHUB_TOKEN=ghp_********
+
+# Together.ai (pour l'API)
+TOGETHER_API_KEY=sk-********
+
+# Fireworks.ai (pour l'API)
+FIREWORKS_API_KEY=sk-********
+
+# HuggingFace (pour les modèles)
+HF_TOKEN=hf_********
 ```
 
-### 2. Configurer les API keys
+### Clés API et Sécurité
+
+❌ **NE JAMAIS** commit de `.env`  
+✅ **Toujours** utiliser `~/.hermes/.env` pour les clés  
+✅ **Toujours** utiliser des tokens avec permissions minimales
+
+## 📚 Documentation
+
+### Guides d'Installation
+
+- **[INSTALL.md](./INSTALL.md)** - Installation en 5 minutes
+- **[aidd_docs/AIDD_GUIDE.md](./aidd_docs/AIDD_GUIDE.md)** - Guide complet AIDD
+
+### Documentation AIDD
+
+- **[aidd_docs/WORKFLOW.md](./aidd_docs/WORKFLOW.md)** - Workflow complet
+- **[aidd_docs/tasks/phase3_finetuning.md](./aidd_docs/tasks/phase3_finetuning.md)** - Plan Phase 3
+- **[aidd_docs/reviews/challenge_phase3.md](./aidd_docs/reviews/challenge_phase3.md)** - Challenge Phase 3
+
+### Ressources Externes
+
+- **AIDD CLI:** https://github.com/RebelliousSmile/aidd-custom
+- **AIDD Overlay:** https://github.com/RebelliousSmile/aidd-overlay
+- **Hermes Agent:** https://hermes-agent.nousresearch.com/
+
+## 🎯 Phases du Projet
+
+### ✅ Phase 1-2: Scraping (Complet)
+
+- ✅ Scraping de jdRoll (20 campagnes)
+- ✅ Extraction des données (title, universe, system, author, description)
+- ✅ Préparation des données pour le fine-tuning
+
+### 🔄 Phase 3: Fine-tuning (En cours)
+
+- 🔄 Conversion des données en JSONL
+- 🔄 Fine-tuning avec Axolotl/Unsloth
+- 🔄 Évaluation du modèle
+
+### ⏭️ Phase 4: Amélioration Continue
+
+- 📊 Collecte de feedback
+- 🔧 Amélioration des prompts
+- 📈 Optimisation des performances
+
+### ⏭️ Phase 5: Scaling
+
+- 📦 Augmentation des données (100+ campagnes)
+- 🚀 Optimisation de l'infrastructure
+- 📊 Monitoring des performances
+
+### ⏭️ Phase 6: Production
+
+- 🎯 Déploiement en production
+- 🔐 Sécurisation des accès
+- 📈 Monitoring et alerting
+
+### ⏭️ Phase 7: Communauté
+
+- 🌐 Publication des modèles
+- 📚 Documentation communautaire
+- 💬 Support et feedback
+
+## 🛠 Utilisation du Framework AIDD
+
+### Commandes Essentielles
 
 ```bash
-# Créer .env avec tes clés
-TOGETHER_API_KEY=ton_api_key_fireworks_api_key=ton_api_key
-GITHUB_TOKEN=ton_github_token
-HF_TOKEN=ton_huggingface_token
+# Configuration
+aidd-custom setup --repo RebelliousSmile/aidd-overlay
+
+# Installation
+aidd-custom install --ai copilot
+
+# Maintenance
+aidd-custom doctor
+aidd-custom update
+aidd-custom status
 ```
 
-### 3. Lancer le scraping
+### Workflow Typique
 
 ```bash
-# Créer un compte sur La Cour d'Obéron
-# https://couroberon.com/Salons/ucp.php?mode=register
+# 1. Créer un plan
+aidd-custom plan create --name "feature-x" --issue 50
 
-# Lancer le scraper avec tes identifiants
-python scripts/scrape_couroberon.py
+# 2. Challenger le plan
+aidd-custom plan challenge phase3_finetuning.md
+
+# 3. Implémenter
+
+# 4. Documenter
+aidd-custom learn --phase 3
+
+# 5. Mettre à jour le changelog
+vim aidd_docs/changelog/CHANGELOG.md
 ```
 
-### 4. Nettoyer les données
+## 📊 Statistiques
 
-```bash
-python scripts/clean_dataset.py
-```
+| Élément | Statut | Détails |
+|---------|--------|---------|
+| **Campaignes scrapées** | ✅ 20 | jdRoll |
+| **Plans AIDD** | ✅ 5 | Phase 3-7 |
+| **Challenges** | ✅ 5 | Validés |
+| **Scripts Python** | ✅ 3 | Scraping + training |
+| **Documentation AIDD** | ✅ 44+ fichiers | Structure complète |
 
-### 5. Fine-tuning
+## 🤝 Contribution
 
-```bash
-# Avec Fireworks.ai (recommandé pour débuter)
-fireworks-cli train --dataset data/clean/dataset.jsonl --model llama-v3-8b-instruct
-
-# Ou avec Axolotl
-accelerate launch axolotl/train.py --config config/axolotl_config.yaml
-```
-
-## 📋 Issues en cours
-
-Voir: https://github.com/RebelliousSmile/suddenly-ai-hub/issues
-
-- #44 ✅ Préparer l'environnement Python
-- #45 🔄 Tester l'API Fireworks.ai
-- #46 ⏸️ Créer un dataset test minimal
-- #47 ✅ Scraper La Cour d'Obéron
-- #48 ⏸️ Nettoyage et anonymisation
-- #49 ⏸️ Convertir en format JSONL Axolotl
-
-## 🛠️ Outils & Frameworks
-
-### Scraping
-- **BeautifulSoup4** : Parsing HTML
-- **Requests** : Requêtes HTTP
-- **Playwright** : Automation browser (optionnel)
-
-### Fine-tuning
-- **Axolotl** : Configuration YAML pour LoRA/QLoRA
-- **Together.ai** : API cloud pour fine-tuning ($30 crédits)
-- **Fireworks.ai** : Alternative cloud ($6 crédits)
-- **Hugging Face** : Hosting et inference endpoints
-
-### Évaluation
-- **lm-eval-harness** : Benchmarks (MMLU, GSM8K, etc.)
-- **Human evaluation** : Grille de qualité RP (1-5 étoiles)
-
-## 📝 Formats de données
-
-### JSONL (JSON Lines)
-
-Format standard pour les datasets de fine-tuning :
-
-```json
-{"text": "<system>Bonjour, je suis un assistant RP</system>\n<User>Jouerais-tu avec moi ?</User>\n<Model>Avec plaisir ! Quelle histoire veux-tu explorer ?</Model>"}
-```
-
-### Format Axolotl
-
-Structure de conversation :
-
-```json
-{
-  "messages": [
-    {"role": "system", "content": "Tu es un narrateur de RP..."},
-    {"role": "user", "content": "J'aimerais commencer..."},
-    {"role": "assistant", "content": "Très bien !"}
-  ]
-}
-```
-
-## 🎓 Ressources
-
-- [Guide de scraping](docs/SCRAPING_GUIDE.md)
-- [Format des données](docs/DATA_FORMAT.md)
-- [Métriques d'évaluation](docs/EVALUATION.md)
-
-## 📊 Métriques d'évaluation
-
-Après le fine-tuning, évaluer le modèle avec :
-
-- **Qualité narrative** : Score 1-5 sur immersion et cohérence
-- **Cohérence des personnages** : Personnalité maintenue
-- **Grammaire et style** : Français correct et élégant
-- **Creativité** : Réponses originales et intéressantes
-
-## ⚠️ Avertissements légaux
-
-- **Respecte les conditions d'utilisation** des forums scrapés
-- Utilise uniquement pour l'entraînement personnel (non commercial)
-- Anonymise toujours les données personnelles
-- Ne redistribue pas les données originales sans autorisation
-- Respecte les délais entre requêtes (3 secondes min.)
-
-## 👥 Contribution
-
-Les contributions sont les bienvenues ! Pour participer :
 1. Fork le projet
-2. Crée une branche (`git checkout -b feature/ton-feature`)
-3. Commit tes changements (`git commit -m 'Ajout feature'`)
-4. Push (`git push origin feature/ton-feature`)
-5. Ouvre une Pull Request
+2. Créer une branche feature (`git checkout -b feature/amazing`)
+3. Commit les changements (`git commit -m 'Add amazing feature'`)
+4. Push vers la branche (`git push origin feature/amazing`)
+5. Ouvrir une Pull Request
+
+## 📝 License
+
+Ce projet est soumis à la license MIT.
+
+## 📞 Support
+
+- **GitHub Issues:** https://github.com/RebelliousSmile/suddenly-ai-hub/issues
+- **Documentation:** `aidd_docs/`
 
 ---
 
-**Dernière mise à jour:** 2026-05-13
-**Author:** RebelliousSmile
-**License:** MIT (à définir)
+**Projet maintenu avec ❤️ par RebelliousSmile**
+
+*Dernière mise à jour: 2026-05-13*
+*Version: 1.0.0*

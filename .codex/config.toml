@@ -1,0 +1,28 @@
+project_doc_max_bytes = 262144
+
+[mcp_servers.playwright]
+command = "npx"
+args = [ "@playwright/mcp@latest" ]
+
+[mcp_servers.playwright.env]
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.mcp-atlassian]
+command = "uvx"
+args = [ "mcp-atlassian" ]
+
+[mcp_servers.mcp-atlassian.env]
+JIRA_URL = "https://your-company.atlassian.net"
+JIRA_USERNAME = "your.email@company.com"
+JIRA_API_TOKEN = "your_api_token"
+CONFLUENCE_URL = "https://your-company.atlassian.net/wiki"
+CONFLUENCE_USERNAME = "your.email@company.com"
+CONFLUENCE_API_TOKEN = "your_api_token"
+
+[features]
+codex_hooks = true
+
+[[skills.config]]
+path = ".agents/skills"
+enabled = true
