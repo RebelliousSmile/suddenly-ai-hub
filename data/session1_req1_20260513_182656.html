@@ -1,0 +1,631 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+    <!-- IMPORTANT: all angular URL will base from this -->
+    <base href="/">
+
+	<title>jdRoll - Jeu de Rôle par Forum</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plate-forme de jeu de rôle par forum">
+    <meta name="keywords" content="PBF, jdr, forum, jeu de rôle">
+
+  	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+
+	  <link rel="stylesheet" href="/vendor/components-font-awesome/css/font-awesome.min.css">
+      <link rel="stylesheet" href="/vendor/jquery-ui/themes/base/resizable.css">
+
+      <link rel="stylesheet" href="/dist/css/theme.min.css?v=20200913_001" type="text/css" media="all">
+  
+	<script type="text/javascript">
+		var CAMPAGNE_ID=0;
+		var BASE_PATH = '';
+		var AUTHENTICATED = "";
+		var AUTHENTICATED = "";
+					var USERNAME = "";
+			</script>
+
+	<script type="text/javascript" src="/vendor/jquery/dist/jquery.min.js"> </script>
+	<script type="text/javascript" src="/vendor/jquery-form/jquery.form.js"></script>
+	<script type="text/javascript" src="/vendor/jquery-ui/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <!--[if lt IE 9]>
+    	<script type="text/javascript" src="/js/modernizr-2.6.2-respond-1.1.0.min.js"></script>
+    <![endif]-->
+
+	
+	
+</head>
+<body>
+
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar1">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">jdRoll</a>
+          </div>
+
+
+          <div class="navbar-collapse collapse" id="navbar1">
+            <ul class="nav navbar-nav">
+              <li><a href="/"><i class="icon-home"></i> Accueil</a></li>
+              <li><a id="msgTitle"
+                    class="dropdown-toggle" data-toggle="dropdown"
+  				            				          ><i class="icon-envelope"></i>
+  				  	       Communiquer (0)
+                     <b class="caret"></b>
+                     </a>
+
+                     <ul class="dropdown-menu">
+                       <li><a href="/messagerie/new">Ecrire un message privé</a></li>
+                       <li class="divider"></li>
+                       <li><a href="/messagerie/">Boite de reception</a></li>
+                       <li><a href="/messagerie/sent">Messages envoyés</a></li>
+                       <li class="divider"></li>
+                       <li><a href="/tchat">Tchat</a></li>
+                       <li class="divider"></li>
+                       <li><a href="/md/gazette">Gazette</a></li>
+                    </ul>
+
+              </li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-play-circle"></i> Jouer <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+  					       <li><a href="/campagne/my_list">Mes campagnes</a></li>
+  					       <li class="divider"></li>
+  					       <li><a href="/campagne/list">Rejoindre une campagne</a></li>
+  					       <li><a href="/campagne/new">Créer une campagne</a></li>
+  					       <li class="divider"></li>
+  					       <li><a href="/campagne/list/all">Toutes les campagnes en-cours</a></li>
+  					       <li><a href="/campagne/list/archive">Toutes les campagnes archivées</a></li>
+  					         					       <li class="divider"></li>
+  					       <li><a href="/users">Liste des utilisateurs</a></li>
+                </ul>
+              </li>
+              <li><a href="/forum/"><i class="icon-folder-open"></i> Forum</a></li>
+              <li class="dropdown">
+  				      <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-question-sign"></i> Aide <b class="caret"></b></a>
+  				      <ul class="dropdown-menu">
+  					       <li><a href="/md/guide">Premier pas</a></li>
+                   <li><a href="/md/guide-joueur">Comment jouer</a></li>
+                   <li><a href="/md/contribute">Comment contribuer</a></li>
+  						     <li><a href="/static/faq">FAQ</a></li>
+  						     <li class="divider"></li>
+  						     <li><a href="/about">A propos de jdRoll</a></li>
+                             <li><a href="/feedback/">Voir les feedbacks</a></li>
+                   <li class="divider"></li>
+                   <li><a href="/stat">Quelques statistiques</a></li>
+  				      </ul>
+  			     </li>
+                          </ul>
+
+            <div class="navbar-right navbar-form">
+                                        <a class="btn btn-primary"  href="/login/!">
+                          <i class="icon-user"></i> Connexion</span>
+                      </a>
+                              </div>
+
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </nav>
+
+
+
+
+
+  <a name="top"></a>
+   <div class="container-fluid" id="main">
+
+	    <div class="row">
+				
+	    	<div class="col-sm-12 col-xs-12 col-md-9 col-lg-10" id="contentDiv">
+							
+          										
+          		
+         	 	<p></p>
+
+	    		
+<div class="row" style="margin-bottom: 1em">
+  <div class="col-md-10">
+    <div class="page-header">
+      <h1>Bienvenue ! <small>Du jeu, du rôle, du Roll !</small></h1>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <img ng-src="img/ban.png" width="100%" style="max-width: 250px">
+  </div>
+</div>
+
+<div class="row well">
+  <div class="col-md-4">
+    <h2>Une communauté</h2>
+    <p>La barrière des distances n'existant pas, vous rencontrerez ici des joueurs/euses venus de tous horizons.
+    </p><p>
+    Une grande communauté francophone est prête à vous accueillir autour du Jeu de Rôle pour partager de bons moments, à toute heure du jour, voire de la nuit. Ouvert même les jours fériés !</p>
+    <p><a class="btn btn-primary" href="/forum/">Voir la liste des membres &raquo;</a></p>
+  </div>
+  <div class="col-md-4">
+    <h2>Du choix</h2>
+    <p>Vous êtes fan de science-fiction ? Vous êtes plutôt épée et bouclier contre un vil félon ? Vous préférez cramer du zombie avec des copains ? Ou alors découvrir la dernière sortie indé ?
+    </p><p>
+    JDRoll est fait pour vous !
+    </p><p>
+    Tout ce que l'on vous demande, c'est de prendre plaisir à jouer. Et grâce au PbF, rien ne vous empêche de vous amuser sur plusieurs parties en même temps !</p>
+    <p><a class="btn btn-primary" href="/campagne/list">Voir les parties qui recrutent &raquo;</a></p>
+  </div>
+  <div class="col-md-4">
+    <h2>Une plateforme dediée</h2>
+    <p>jdRoll a été conçu spécialement pour le jeu de rôle par forum. C'est pour cela que vous aurez à votre disposition tout le matériel nécessaire afin d'organiser une partie ou de la jouer : bloc-note, lanceur de dés, fiche de personnage,...
+    <p></p>
+    <p>Tout ici a été conçu pour le confort des MJ et des joueurs. Et l'endroit est en perpétuelle évolution !</p>
+  <p><a class="btn btn-primary" href="/md/guide">Plus d'information &raquo;</a></p>
+</div>
+</div>
+<div class="row">
+  <div class="col-md-4 col-md-offset-1 game-carousel">
+    		
+<p></p>
+<div class="carouseltitle" style="text-align: center">
+<h5>Parties actives</h5>
+</div>
+<p></p>
+<div id="myCarousel" class="carousel slide">
+  <!-- Carousel items -->  
+  <div class="carousel-inner">
+  	 	 		
+ 		<div class=" active item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/875">
+		 					 				<img src="/files/0/849366fa784fe0d3e1a76c709156a78518bad62f.png" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/875">
+		 				<h4>La dernière mission</h4>
+			 			<p>Dans l'univers de Delta Green avec le système D100.<br>
+			 			<i>Proposé par iLanders</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/838">
+		 					 				<img src="/files/838/f4c58098dc913f0edaae2547c2baaefdfaba3ced.jpeg" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/838">
+		 				<h4>Les froids de Gaillac</h4>
+			 			<p>Dans l'univers de Impérium de Dune avec le système Impérium d&#039;Olivier Legrand.<br>
+			 			<i>Proposé par Guzim</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/781">
+		 					 				<img src="/files/781/66c198d1f239e035f30a54e6b2ba9fb925c40710.png" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/781">
+		 				<h4>L&#039;habit ne fait pas le moine</h4>
+			 			<p>Dans l'univers de Unknown Armies avec le système UA D100.<br>
+			 			<i>Proposé par Azh</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/847">
+		 					 				<img src="/files/847/3776628476da153c62d1dc5183775215083bd1f8.jpeg" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/847">
+		 				<h4>Escape Journey</h4>
+			 			<p>Dans l'univers de réalité virtuelle avec le système d100 maison.<br>
+			 			<i>Proposé par Derrewyn</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/831">
+		 					 				<img src="https://i80.servimg.com/u/f80/13/46/47/91/banier10.png" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/831">
+		 				<h4>Alien - Piège Organique</h4>
+			 			<p>Dans l'univers de Alien selon l&#039;univers de Ridley Scott avec le système Alien JdR.<br>
+			 			<i>Proposé par Vegas45</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/860">
+		 					 				<img src="/files/860/97466a1c6f06a9addfa496d180b987ce0d095f38.jpeg" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/860">
+		 				<h4>DiaMortem</h4>
+			 			<p>Dans l'univers de Contemporain personnel. avec le système Personnel.<br>
+			 			<i>Proposé par calame</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/878">
+		 					 				<img src="/files/878/8cfb02acdb7e009bebbb0edbfe4d80f6d47b8037.jpeg" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/878">
+		 				<h4>Play it again, Sam</h4>
+			 			<p>Dans l'univers de Hellywood avec le système Tapis vert.<br>
+			 			<i>Proposé par Galered</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/754">
+		 					 				<img src="/files/754/43611a421cf07c5ac60e3b6682779187bf7e9fab.png" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/754">
+		 				<h4>Ad gloriam necropolis stellarum</h4>
+			 			<p>Dans l'univers de Warhammer 40K avec le système Original.<br>
+			 			<i>Proposé par Azaghâl</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/832">
+		 					 				<img src="/img/ban.png" style="max-height: 200px; " />
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/832">
+		 				<h4>La Ballade du Temps Perdu</h4>
+			 			<p>Dans l'univers de Vampire Ere Victorienne avec le système Vampire V5.<br>
+			 			<i>Proposé par Laram Pasûr</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	 		
+ 		<div class="item" style="height: 250px">
+ 				
+ 				<div align="center" style="height: 150px">
+ 					<a href="/campagne/851">
+		 					 				<img src="/files/0/29f5147269af155d4a64d61e40579204ce9fbf16.jpeg" style="max-height: 200px; ">
+		 					 			</a>
+	 			</div>
+	 			
+	 			<div class="carousel-caption" style="height: 100px;">
+		 			<a href="/campagne/851">
+		 				<h4>Les secrets d&#039;un monde</h4>
+			 			<p>Dans l'univers de Multivers  avec le système RPG 2.0.<br>
+			 			<i>Proposé par kysicux</i></p>
+		 			</a>
+	 			</div>
+ 			
+ 		</div>
+ 		 	  </div>
+  <!-- Carousel nav -->
+  <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+    <span class="icon-chevron-left"></span>
+  </a>
+  <a class="right carousel-control" href="#myCarousel" data-slide="next">
+    <span class="icon-chevron-right"></span>
+  </a>
+</div>
+  </div>
+  <div class="col-md-6 col-md-offset-1">
+    <fieldset class="titled-box">
+      <legend>Informations générales</legend>
+      <p><b>Derniers inscrits :</b>
+                                <a href="/profile/tnntwister">tnntwister</a>
+                                ,
+                <a href="/profile/amnar">amnar</a>
+                                ,
+                <a href="/profile/Shadow">Shadow</a>
+                                ,
+                <a href="/profile/Kouk">Kouk</a>
+                                ,
+                <a href="/profile/TakeASeat">TakeASeat</a>
+                      </p>
+      <p><b>Connectés durant ces 24 dernières heures (40) : </b>
+                                <a href="/profile/Armaklan" class="profil1">Armaklan</a>
+                                ,
+                <a href="/profile/Snowsong" class="profil0">Snowsong</a>
+                                ,
+                <a href="/profile/NIYU" class="profil0">NIYU</a>
+                                ,
+                <a href="/profile/AydenD" class="profil0">AydenD</a>
+                                ,
+                <a href="/profile/milou7806" class="profil0">milou7806</a>
+                                ,
+                <a href="/profile/Bartabane" class="profil0">Bartabane</a>
+                                ,
+                <a href="/profile/keket44" class="profil0">keket44</a>
+                                ,
+                <a href="/profile/Dridder" class="profil0">Dridder</a>
+                                ,
+                <a href="/profile/Laram%20Pas%C3%BBr" class="profil0">Laram Pasûr</a>
+                                ,
+                <a href="/profile/Nisrax" class="profil0">Nisrax</a>
+                                ,
+                <a href="/profile/Comte%20Z%C3%A9ro" class="profil0">Comte Zéro</a>
+                                ,
+                <a href="/profile/Vegas45" class="profil0">Vegas45</a>
+                                ,
+                <a href="/profile/Tortue%20de%20Cristal" class="profil0">Tortue de Cristal</a>
+                                ,
+                <a href="/profile/Escem" class="profil0">Escem</a>
+                                ,
+                <a href="/profile/Unbent" class="profil0">Unbent</a>
+                                ,
+                <a href="/profile/thegreenthumb" class="profil0">thegreenthumb</a>
+                                ,
+                <a href="/profile/Apo" class="profil0">Apo</a>
+                                ,
+                <a href="/profile/Sucre" class="profil2">Sucre</a>
+                                ,
+                <a href="/profile/kysicux" class="profil0">kysicux</a>
+                                ,
+                <a href="/profile/AunBen" class="profil0">AunBen</a>
+                                ,
+                <a href="/profile/calame" class="profil0">calame</a>
+                                ,
+                <a href="/profile/illumen" class="profil0">illumen</a>
+                                ,
+                <a href="/profile/Polo%20Chon" class="profil0">Polo Chon</a>
+                                ,
+                <a href="/profile/Celebrindal" class="profil0">Celebrindal</a>
+                                ,
+                <a href="/profile/Baudelaire" class="profil0">Baudelaire</a>
+                                ,
+                <a href="/profile/pounetBF" class="profil0">pounetBF</a>
+                                ,
+                <a href="/profile/Gautier78900" class="profil0">Gautier78900</a>
+                                ,
+                <a href="/profile/Galered" class="profil0">Galered</a>
+                                ,
+                <a href="/profile/Alarad" class="profil0">Alarad</a>
+                                ,
+                <a href="/profile/Ra%C3%AFkoko" class="profil2">Raïkoko</a>
+                                ,
+                <a href="/profile/Azh" class="profil0">Azh</a>
+                                ,
+                <a href="/profile/dharry00" class="profil0">dharry00</a>
+                                ,
+                <a href="/profile/Izel" class="profil0">Izel</a>
+                                ,
+                <a href="/profile/Rorschach" class="profil0">Rorschach</a>
+                                ,
+                <a href="/profile/tnntwister" class="profil0">tnntwister</a>
+                                ,
+                <a href="/profile/Derrewyn" class="profil0">Derrewyn</a>
+                                ,
+                <a href="/profile/Shadow" class="profil0">Shadow</a>
+                                ,
+                <a href="/profile/Dexco" class="profil0">Dexco</a>
+                                ,
+                <a href="/profile/TakeASeat" class="profil0">TakeASeat</a>
+                                ,
+                <a href="/profile/tonio" class="profil0">tonio</a>
+                        <p><b>Actuellement absent : </b>
+                                        <a href="/profile/milou7806" class="profil0">milou7806</a>
+                                        ,
+                    <a href="/profile/Guzim" class="profil2">Guzim</a>
+                                        ,
+                    <a href="/profile/Polo%20Chon" class="profil0">Polo Chon</a>
+                                        ,
+                    <a href="/profile/Bartabane" class="profil0">Bartabane</a>
+                                          <p><b>Anniversaires du jour :</b>
+                                                                      <a href="/profile/Tsarivari" class="profil0">Tsarivari</a>
+                                  </fieldset>
+  </div>
+</div>
+
+
+<div class="row" style="margin-top: 1em; margin-bottom: 0.5em;">
+    <div ng-app="jdRoll.chat">
+        <div chat height="300"></div>
+    </div>
+</div>
+
+
+
+
+	    	</div>
+
+	    	                <div class="col-xs-12 col-sm-12 col-md-3 col-lg-2 sidebar maxheight">
+
+		<form role="form" class="" action="/login" method="POST">
+	    <div class="form-group">
+		    	<input class="form-control" type="text" id="login" name="login" placeholder="Nom d'utilisateur">
+	    </div>
+	    <div class="form-group">
+		    	<input class="form-control" type="password" id="pass" name="pass" placeholder="Mot de passe">
+		    	<input type="hidden" name="url" value="!" />
+	    </div>
+	    <div class="form-group">
+          <center>
+              Se souvenir
+          </center>
+		    <input class="form-control" type="checkbox" id="remember" name="remember" value="true">
+	    </div>
+	    <div class="form-group">
+			    <button type="submit" class="btn btn-primary">Se connecter</button>
+			    <a href="/subscribe/" class="btn btn-default">S'inscrire</a>
+	    </div>
+		<div align="center">
+    		<a href="/resetPwd/">J'ai oublié mon mot de passe</a>
+    	</div>
+    </form>
+
+    </div>
+
+            
+	    </div>
+	</div>
+
+				
+	
+	
+    <a name="bottom"></a>
+
+   	    <div id="uploaderModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+		    <div class="modal-header">
+			    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			    <h3>Uploader un fichier</h3>
+		    </div>
+		    <div class="modal-body">			   
+				<div class="fileupload fileupload-new" data-provides="fileupload">
+					<div class="fileupload-preview thumbnail" style="width: 200px; height: 150px;"></div>
+					<div>
+						<form role="form" enctype="multipart/form-data" id="uploaderForm" action="/upload" method="post">
+							<span class="btn btn-default btn-file"><span class="fileupload-new">Choisir une image</span><span class="fileupload-exists">Changer</span>
+							<input type="file" name="uploadFile" /></span>
+							<a href="#" class="btn btn-default fileupload-exists" data-dismiss="fileupload">Enlever</a>
+							<button type="submit" class="btn btn-default" class="fileupload-exist">Envoyer</button>
+                            <img src="/img/loading.gif" class="hide" id="waitingUploader">
+							<input type="hidden" name="campagneId" id="uploader-campagneId" />
+						</form>
+					</div>
+				</div>
+				Url à recopier : 
+				<div class="input-group">
+				<input type="text" id="urlUploader" class="form-control" onfocus="$(this).select();"/>
+				<span class="input-group-btn">
+					<button class="btn btn-default" id="btn-upload-copy" data-clipboard-target="urlUploader"><i class="icon-copy"></i></button>
+				</span>
+				</div>
+			    
+		    </div>
+		    <div class="modal-footer">
+		    	<button class="btn" data-dismiss="modal" aria-hidden="true">Fermer</button>
+		    </div>
+		</div>
+	</div>
+</div>
+
+<script> 
+	// wait for the DOM to be loaded 
+	$(document).ready(function() { 
+		
+		var targetField = undefined;
+	
+		// bind 'myForm' and provide a simple callback function 
+		$('#uploaderModal').on('show.bs.modal', function (event) {
+			var button = $(event.relatedTarget) // Button that triggered the modal
+			targetField = button.data('field');
+			$('#uploader-campagneId').val(CAMPAGNE_ID);
+		});
+		$('#uploaderForm').submit(function(e) {
+			$('#waitingUploader').removeClass('hide');    
+		});
+		$('#uploaderForm').ajaxForm(function(responseText, statusText, xhr, $form) { 
+			$('#urlUploader').val(responseText);
+			if(targetField) {
+				$(targetField).val(responseText);
+				$('#uploaderModal').modal('hide');
+			}
+			$('#waitingUploader').addClass('hide');
+		}); 
+	}); 
+</script>
+    
+
+  
+
+
+
+	<script type="text/javascript" src="/vendor/tinymce-3/tinymce.min.js?v=20200913_001"></script>
+  <!--[if lt IE 9]>
+    <script type="text/javascript" src="/vendor/es5-shim/es5-shim.min.js"> </script>
+    <script type="text/javascript" src="/vendor/es5-shim/es5-sham.min.js"> </script>
+  <![endif]-->
+
+
+	<!-- UI Component -->
+	    <script type="text/javascript" src="/dist/js/composant.min.js?v=20200913_001"> </script>
+	  <script type="text/javascript" src="/vendor/favico.js/favico-0.3.5.min.js"> </script>
+
+	<!-- Application specific controller -->
+  <script type="text/javascript" src="/dist/js/controller.min.js?v=20200913_001"></script>
+
+	<script type="text/javascript" src="/js/JDRollBootstrap-editable.js"></script>
+	<script type="text/javascript" src="/js/JDRollFDP.js?v=1"></script>
+	<script type="text/javascript" src="/js/JDRollEditableSelect.js"></script>
+
+    
+    
+<script type="text/javascript">
+
+	$(document).ready(function() {
+		onLoadController.onLoadGenerals();
+	});
+
+</script>
+</body>
+</html>
