@@ -4,19 +4,21 @@ Fine-tuning de modèles de jeu de rôle (RP) en français
 
 ## 🎯 Objectif
 
-Entraîner des modèles LLM (Mistral, Llama) sur des données de RP francophones
+Entraîner des modèles LLM (Mistral, Mixtral, Llama) sur des données de RP francophones
 pour améliorer leurs compétences en narration, dialogue, et immersion.
+
+**Projet en cours de développement** - Scraping de forums JDR + Fine-tuning LoRA
 
 ## 📁 Structure du projet
 
 ```
 suddenly-ai-hub/
 ├── scripts/
-│   ├── scrape_couroberon.py      # Scraping La Cour d'Obéron
-│   ├── clean_dataset.py           # Nettoyage et anonymisation (à créer)
-│   ├── convert_to_axolotl.py      # Conversion format Axolotl (à créer)
-│   ├── test_model.py              # Test du modèle entraîné
-│   └── generate_synthetic.py      # Génération de données synthétiques
+│   ├── scrape_couroberon.py      # ✅ Scraping La Cour d'Obéron
+│   ├── clean_dataset.py           # ⏸️ Nettoyage et anonymisation
+│   ├── convert_to_axolotl.py      # ⏸️ Conversion format Axolotl
+│   ├── test_model.py              # ⏸️ Test du modèle entraîné
+│   └── generate_synthetic.py      # ⏸️ Génération de données synthétiques
 ├── data/
 │   ├── raw/                       # Données brutes scrapées
 │   ├── clean/                     # Données nettoyées et anonymisées
@@ -29,17 +31,16 @@ suddenly-ai-hub/
 │   ├── SCRAPING_GUIDE.md          # Guide de scraping
 │   ├── DATA_FORMAT.md             # Format des données
 │   ├── EVALUATION.md              # Métriques d'évaluation
-│   └── README.md                  # Ce fichier
-├── tests/                         # Tests unitaires
-├── logs/                          # Logs d'exécution
+├── .gitignore                     # Patterns exclus
 ├── requirements.txt               # Dépendances Python
-├── .env                           # Variables d'environnement
-└── README.md                      # Documentation principale
+├── .env                           # Variables d'environnement (API keys)
+└── README.md                      # Ce fichier
 ```
 
 ## 🚀 Démarrage rapide
 
 ### 1. Installer les dépendances
+
 ```bash
 cd /home/user/suddenly-ai-hub
 python -m venv venv
@@ -48,25 +49,32 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configurer les API keys
+
 ```bash
 # Créer .env avec tes clés
-echo "TOGETHER_API_KEY=ton_api_key" >> .env
-echo "FIREWORKS_API_KEY=ton_api_key" >> .env
-echo "GITHUB_TOKEN=ton_github_token" >> .env
+TOGETHER_API_KEY=ton_api_key_fireworks_api_key=ton_api_key
+GITHUB_TOKEN=ton_github_token
+HF_TOKEN=ton_huggingface_token
 ```
 
 ### 3. Lancer le scraping
+
 ```bash
-# Script principal
+# Créer un compte sur La Cour d'Obéron
+# https://couroberon.com/Salons/ucp.php?mode=register
+
+# Lancer le scraper avec tes identifiants
 python scripts/scrape_couroberon.py
 ```
 
 ### 4. Nettoyer les données
+
 ```bash
 python scripts/clean_dataset.py
 ```
 
 ### 5. Fine-tuning
+
 ```bash
 # Avec Fireworks.ai (recommandé pour débuter)
 fireworks-cli train --dataset data/clean/dataset.jsonl --model llama-v3-8b-instruct
@@ -86,15 +94,69 @@ Voir: https://github.com/RebelliousSmile/suddenly-ai-hub/issues
 - #48 ⏸️ Nettoyage et anonymisation
 - #49 ⏸️ Convertir en format JSONL Axolotl
 
+## 🛠️ Outils & Frameworks
+
+### Scraping
+- **BeautifulSoup4** : Parsing HTML
+- **Requests** : Requêtes HTTP
+- **Playwright** : Automation browser (optionnel)
+
+### Fine-tuning
+- **Axolotl** : Configuration YAML pour LoRA/QLoRA
+- **Together.ai** : API cloud pour fine-tuning ($30 crédits)
+- **Fireworks.ai** : Alternative cloud ($6 crédits)
+- **Hugging Face** : Hosting et inference endpoints
+
+### Évaluation
+- **lm-eval-harness** : Benchmarks (MMLU, GSM8K, etc.)
+- **Human evaluation** : Grille de qualité RP (1-5 étoiles)
+
+## 📝 Formats de données
+
+### JSONL (JSON Lines)
+
+Format standard pour les datasets de fine-tuning :
+
+```json
+{"text": "<system>Bonjour, je suis un assistant RP</system>\n<User>Jouerais-tu avec moi ?</User>\n<Model>Avec plaisir ! Quelle histoire veux-tu explorer ?</Model>"}
+```
+
+### Format Axolotl
+
+Structure de conversation :
+
+```json
+{
+  "messages": [
+    {"role": "system", "content": "Tu es un narrateur de RP..."},
+    {"role": "user", "content": "J'aimerais commencer..."},
+    {"role": "assistant", "content": "Très bien !"}
+  ]
+}
+```
+
 ## 🎓 Ressources
 
 - [Guide de scraping](docs/SCRAPING_GUIDE.md)
 - [Format des données](docs/DATA_FORMAT.md)
 - [Métriques d'évaluation](docs/EVALUATION.md)
 
-## 📝 License
+## 📊 Métriques d'évaluation
 
-Projet éducatif - données utilisées avec autorisation des propriétaires
+Après le fine-tuning, évaluer le modèle avec :
+
+- **Qualité narrative** : Score 1-5 sur immersion et cohérence
+- **Cohérence des personnages** : Personnalité maintenue
+- **Grammaire et style** : Français correct et élégant
+- **Creativité** : Réponses originales et intéressantes
+
+## ⚠️ Avertissements légaux
+
+- **Respecte les conditions d'utilisation** des forums scrapés
+- Utilise uniquement pour l'entraînement personnel (non commercial)
+- Anonymise toujours les données personnelles
+- Ne redistribue pas les données originales sans autorisation
+- Respecte les délais entre requêtes (3 secondes min.)
 
 ## 👥 Contribution
 
@@ -108,3 +170,5 @@ Les contributions sont les bienvenues ! Pour participer :
 ---
 
 **Dernière mise à jour:** 2026-05-13
+**Author:** RebelliousSmile
+**License:** MIT (à définir)
