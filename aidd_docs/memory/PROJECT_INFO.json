@@ -1,0 +1,78 @@
+{
+  "project_name": "Suddenly AI Hub",
+  "description": "Fine-tuning LLM pour JDR français",
+  "version": "1.0.0",
+  "start_date": "2026-05-13",
+  "author": "RebelliousSmile",
+  "license": "MIT",
+  "workflow": "AIDD",
+  "phases": {
+    "session1": {
+      "status": "completed",
+      "description": "Exploration jdRoll"
+    },
+    "session2": {
+      "status": "pending",
+      "description": "Scraping 20 campagnes"
+    },
+    "phase3": {
+      "status": "planned",
+      "description": "Fine-tuning Mistral 7B"
+    },
+    "phase4": {
+      "status": "planned",
+      "description": "Amélioration continue"
+    },
+    "phase5": {
+      "status": "planned",
+      "description": "Scaling 100+ campagnes"
+    },
+    "phase6": {
+      "status": "planned",
+      "description": "Production & Haute disponibilité"
+    },
+    "phase7": {
+      "status": "planned",
+      "description": "Communauté & Open source"
+    }
+  },
+  "tech_stack": {
+    "scraping": [
+      "Python",
+      "requests",
+      "beautifulsoup4"
+    ],
+    "training": [
+      "Axolotl",
+      "PyTorch",
+      "LoRA",
+      "QLoRA"
+    ],
+    "inference": [
+      "Together.ai",
+      "Fireworks.ai",
+      "vLLM"
+    ],
+    "storage": [
+      "Hugging Face",
+      "GitHub"
+    ],
+    "workflow": [
+      "AIDD",
+      "GitHub CLI",
+      "Git"
+    ]
+  },
+  "api_keys": {
+    "together_ai": "configured",
+    "fireworks_ai": "configured",
+    "github": "configured",
+    "hugging_face": "configured"
+  },
+  "metrics": {
+    "total_scripts": 13,
+    "total_plans": 7,
+    "total_reviews": 7,
+    "average_review_score": 9.5
+  }
+}
