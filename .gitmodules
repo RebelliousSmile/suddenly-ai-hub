@@ -1,6 +1,0 @@
-[submodule "aidd-custom"]
-	path = aidd-custom
-	url = https://github.com/RebelliousSmile/aidd-custom.git
-[submodule "aidd-overlay"]
-	path = aidd-overlay
-	url = https://github.com/RebelliousSmile/aidd-overlay.git
