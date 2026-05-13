@@ -1,181 +1,169 @@
-# 🚀 Installation Rapide - AIDD Suddenly AI Hub
+# 🚀 Installation Rapide - Suddenly AI Hub
 
-> Guide d'installation en 5 minutes pour commencer à utiliser le framework AIDD
+> Guide d'installation en 5 minutes
+
+## ⏱️ Time to Hello World
+
+**~5 minutes** pour avoir tout configuré et prêt à l'emploi !
 
 ## 📋 Prérequis
 
+- ✅ Python 3.11+ installé
 - ✅ Node.js 18+ installé
 - ✅ npm disponible
-- ✅ Accès internet
+- ✅ Accès GitHub (pour cloner les dépôts)
 
-## 📦 Installation (2 minutes)
+## 🚀 Installation en 3 étapes
 
-### 1️⃣ Installer le CLI
-
-```bash
-# Installer aidd-custom globalement
-npm install -g aidd-custom
-
-# Vérifier l'installation
-aidd-custom --version
-# → Doit afficher: aidd-custom/1.0.0+ (ou similaire)
-```
-
-### 2️⃣ Configurer le Projet
+### **Étape 1 : Installer le CLI AIDD**
 
 ```bash
 # Aller dans suddenly-ai-hub
 cd /home/user/suddenly-ai-hub
 
+# Installer aidd-custom
+cd aidd-custom
+npm install
+npm link
+
+# Vérifier
+aidd-custom --version
+```
+
+### **Étape 2 : Configurer le framework**
+
+```bash
+# Retourner au projet
+cd /home/user/suddenly-ai-hub
+
 # Configurer l'overlay
 aidd-custom setup --repo RebelliousSmile/aidd-overlay
 
-# Installer pour Copilot (recommandé)
-aidd-custom install --ai copilot
-```
+# Installer les configurations
+aidd-custom install
 
-### 3️⃣ Vérifier l'Installation
-
-```bash
-# Voir le statut
-aidd-custom status
-
-# Vérifier la santé
+# Vérifier
 aidd-custom doctor
 ```
 
-## 🎯 Utilisation Immédiate
-
-### Workflow de Base
+### **Étape 3 : Installer les compétences Hermes**
 
 ```bash
-# 1. Créer un nouveau plan pour une feature
-aidd-custom plan create --name "feature-x" --issue 50
+# Les compétences sont dans ~/.hermes/plugins/hermes-vault/
+# Elles sont déjà liées vers ~/.hermes/skills/
 
-# 2. Challenger le plan
-aidd-custom plan challenge phase3_finetuning.md
+# Redémarrer Hermes Agent pour les scanner
+# (Fermer et rouvrir l'interface)
 
-# 3. Implémenter (avec assistance AI)
-
-# 4. Documenter les lessons
-aidd-custom learn --phase 3
-
-# 5. Mettre à jour le changelog
-vim aidd_docs/changelog/CHANGELOG.md
+# Vérifier les compétences
+hermes skills list
 ```
 
-## 📁 Structure du Projet
-
-```
-suddenly-ai-hub/
-├── .claude/              # Configurations Claude
-├── .opencode/            # Configurations Opencode
-├── aidd_docs/            # Documentation AIDD
-│   ├── tasks/            # Plans de phases
-│   ├── reviews/          # Challenges
-│   ├── memory/           # Mémoire
-│   └── changelog/        # CHANGELOG
-└── scripts/              # Scripts Python
-```
-
-## 📚 Commandes Essentielles
-
-| Commande | Description |
-|----------|-------------|
-| `aidd-custom setup` | Configurer le framework |
-| `aidd-custom install --ai copilot` | Installer pour Copilot |
-| `aidd-custom doctor` | Vérifier l'installation |
-| `aidd-custom update` | Mettre à jour |
-| `aidd-custom clean` | Nettoyer |
-| `aidd-custom status` | Voir le statut |
-
-## 🌐 Liens Rapides
-
-- **CLI:** https://github.com/RebelliousSmile/aidd-custom
-- **Overlay:** https://github.com/RebelliousSmile/aidd-overlay
-- **Guide Complet:** `aidd_docs/AIDD_GUIDE.md`
-- **Workflow:** `aidd_docs/WORKFLOW.md`
-
-## ⚠️ Points Importants
-
-### 1️⃣ Pour Copilot vs Autres Outils
+## ✅ Vérification
 
 ```bash
-# ✅ RECOMMANDÉ (fonctionnement le plus proche)
-aidd-custom install --ai copilot
+# 1. CLI AIDD
+aidd-custom --version
 
-# ⚠️ FONCTIONNEMENT DIFFÉRENT (nécessite ajustements)
-aidd-custom install --ai claude
-aidd-custom install --ai cursor
-aidd-custom install --ai opencode
+# 2. Framework
+aidd-custom doctor
+
+# 3. Compétences
+hermes skills list | grep aidd
+
+# 4. Projet
+ls -la suddenly-ai-hub/
 ```
 
-### 2️⃣ Sécurité
+## 🔧 Dépannage
 
-- ❌ NE JAMAIS commit de `.env`
-- ✅ Stocker les tokens dans `~/.hermes/.env`
-- ✅ Utiliser des tokens GitHub avec permissions minimales
-
-### 3️⃣ Maintenance
+### **Problème : aidd-custom n'est pas trouvé**
 
 ```bash
-# Mettre à jour le framework
-aidd-custom update
+# Ajouter au PATH
+export PATH="$HOME/.npm-global/bin:$PATH"
 
-# Nettoyer les anciennes installations
+# Ou utiliser le chemin complet
+/home/user/suddenly-ai-hub/aidd-custom/dist/cli.js --help
+```
+
+### **Problème : Compétences non détectées**
+
+```bash
+# Redémarrer Hermes Agent
+# Fermer et rouvrir l'interface
+
+# Forcer le scan
+hermes skills reload  # Si disponible
+```
+
+### **Problème : Permissions npm**
+
+```bash
+# Si erreur d'installation npm
+sudo chown -R $(whoami) ~/.npm
+```
+
+## 📚 Étapes suivantes
+
+1. ✅ Installer les outils (cette page)
+2. 📖 Lire [README.md](./README.md)
+3. 🎯 Lire [aidd_docs/](./aidd_docs/)
+4. 🚀 Commencer Phase 3 (fine-tuning)
+
+## 🎯 Commandes utiles
+
+```bash
+# AIDD CLI
+aidd-custom setup --repo RebelliousSmile/aidd-overlay
+aidd-custom install
+aidd-custom doctor
 aidd-custom clean
 
-# Synchroniser les modifications locales
-aidd-custom sync
+# Compétences Hermes
+hermes skills list
+hermes skills inspect <skill-name>
+hermes -s <skill-name> "commande"
+
+# Projet
+git status
+git pull origin main
 ```
 
-## 🎉 Premières Étapes
+## 📊 Statistiques d'installation
 
-Une fois installé, tu peux :
+| Élément | Statut | Détails |
+|---------|--------|---------|
+| **CLI AIDD** | ✅ | `aidd-custom` v1.0.0 |
+| **Framework** | ✅ | 112 fichiers installés |
+| **Compétences** | ✅ | 11 compétences custom |
+| **Documentation** | ✅ | 44 fichiers AIDD |
 
-1. ✅ **Lire la documentation:** `aidd_docs/AIDD_GUIDE.md`
-2. ✅ **Voir le workflow:** `aidd_docs/WORKFLOW.md`
-3. ✅ **Implémenter Phase 3:** `aidd_docs/tasks/phase3_finetuning.md`
-4. ✅ **Utiliser le framework** avec tes outils IA préférés
+## 🔐 Variables d'environnement
 
-## 🐛 Dépannage
-
-### Problème: "command not found: aidd-custom"
+Créer `.env` dans le projet :
 
 ```bash
-# Solution 1: Réinstaller
-npm install -g aidd-custom
+# GitHub
+GITHUB_TOKEN=votre_token
 
-# Solution 2: Vérifier le PATH
-echo $PATH | grep node_modules
+# Together.ai
+TOGETHER_API_KEY=votre_key
 
-# Solution 3: Redémarrer le terminal
+# Fireworks.ai
+FIREWORKS_API_KEY=votre_key
+
+# Weights & Biases
+WANDB_API_KEY=votre_key
 ```
 
-### Problème: "Failed to connect to GitHub"
+## 📞 Besoin d'aide ?
 
-```bash
-# Vérifier la connexion
-curl -I https://github.com
-
-# Vérifier les permissions du token
-gh auth status
-```
-
-### Problème: "Overlay not configured"
-
-```bash
-# Réconfigurer
-aidd-custom setup --repo RebelliousSmile/aidd-overlay
-```
-
-## 📞 Support
-
-- **GitHub Issues:** https://github.com/RebelliousSmile/aidd-custom/issues
-- **Documentation:** `aidd_docs/`
+- **Documentation complète** : [README.md](./README.md)
+- **Workflow AIDD** : [aidd_docs/WORKFLOW.md](./aidd_docs/WORKFLOW.md)
+- **Compétences** : [hermes-vault](https://github.com/RebelliousSmile/hermes-vault)
+- **GitHub** : [suddenly-ai-hub](https://github.com/RebelliousSmile/suddenly-ai-hub)
 
 ---
 
-**Installation complète en < 5 minutes !** ⚡
-
-*Dernière mise à jour: 2026-05-13*
+**Installation terminée en ~5 minutes ! 🎉**

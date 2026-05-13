@@ -1,220 +1,226 @@
 # 🚀 Suddenly AI Hub
 
-> Fine-tuning d'un modèle de langage JDR (Jeux de Rôle) en français avec le framework AIDD
+> **Fine-tuning d'un modèle de langage JDR (Jeux de Rôle) en français**
 
-## 📋 Résumé du Projet
+## 📋 Résumé
 
-Ce projet vise à fine-tuner un modèle de langage pour la génération de campagnes de jeu de rôle en français. Utilisant le framework **AIDD** (AI-Driven Development) pour structurer le développement.
+Ce projet vise à fine-tuner un modèle de langage pour générer des dialogues et narrations JDR en français, spécialisé dans l'univers [UNIVERS JDR] (ex: Cyberpunk, Fantasy, Horreur, etc.).
 
-### 🎯 Objectifs
+## 🎯 Objectifs
 
-- **Phase 1-2:** Scraping de données jdRoll (campagnes JDR)
-- **Phase 3:** Fine-tuning du modèle JDR
-- **Phase 4:** Amélioration continue
-- **Phase 5:** Scaling vers 100+ campagnes
-- **Phase 6:** Production
-- **Phase 7:** Communauté
+1. **Phase 1** : Configuration et setup
+2. **Phase 2** : Collecte et préparation des données (scraping)
+3. **Phase 3** : Fine-tuning du modèle JDR
+4. **Phase 4** : Amélioration continue et évaluation
+5. **Phase 5** : Scaling vers 100+ campagnes
+6. **Phase 6** : Production et déploiement
+7. **Phase 7** : Communauté et sharing
 
-## 🚀 Démarrage Rapide
+## 📦 Installation
 
-### 1️⃣ Installer le CLI AIDD
+### **Prérequis**
+
+- Python 3.11+
+- Node.js 18+
+- npm
+- GPU (recommandé pour le fine-tuning)
+
+### **Installation de aidd-custom**
 
 ```bash
-# Installer aidd-custom
-npm install -g aidd-custom
+# Installer le CLI AIDD
+cd /home/user/suddenly-ai-hub/aidd-custom
+npm install
+npm link
 
 # Configurer le framework
-cd /home/user/suddenly-ai-hub
 aidd-custom setup --repo RebelliousSmile/aidd-overlay
 
-# Installer pour Copilot (recommandé)
-aidd-custom install --ai copilot
+# Installer les configurations
+aidd-custom install
 ```
 
-### 2️⃣ Vérifier l'Installation
+### **Installation des compétences Hermes**
 
 ```bash
-aidd-custom doctor
-aidd-custom status
+# Installer les compétences custom
+cd /home/user/hermes-skills
+npm install
+npm link
+
+# Redémarrer Hermes Agent
+# Les compétences seront scannées automatiquement
 ```
 
-### 3️⃣ Lire la Documentation
+## 🏗️ Architecture
 
-- 📖 **[INSTALL.md](./INSTALL.md)** - Installation rapide
-- 📖 **[aidd_docs/AIDD_GUIDE.md](./aidd_docs/AIDD_GUIDE.md)** - Guide complet AIDD
-- 📖 **[aidd_docs/WORKFLOW.md](./aidd_docs/WORKFLOW.md)** - Workflow détaillé
-
-## 📁 Structure du Projet
+### **Structure du projet**
 
 ```
 suddenly-ai-hub/
-├── aidd_docs/                    # Documentation AIDD
-│   ├── tasks/                    # Plans de phases
-│   │   ├── phase3_finetuning.md  # Fine-tuning
-│   │   ├── phase4_improvement.md # Amélioration
-│   │   ├── phase5_scaling.md     # Scaling
-│   │   └── phase6_production.md  # Production
-│   ├── reviews/                  # Challenges validés
-│   ├── memory/                   # Mémoire (décisions, lessons)
-│   ├── changelog/                # CHANGELOG.md
-│   └── AIDD_GUIDE.md             # Guide complet
-├── scripts/                      # Scripts Python
-│   ├── session2_simple.py        # Scraping jdRoll
-│   ├── convert_to_jsonl.py       # Conversion données
-│   └── train_model.py            # Fine-tuning
-├── .env                          # Variables d'environnement (NE PAS commit)
-├── README.md                     # Ce fichier
-└── INSTALL.md                    # Installation rapide
+├── .claude/                # Configurations Claude
+├── .copilot/              # Configurations Copilot
+├── .cursor/               # Configurations Cursor
+├── .opencode/             # Configurations Opencode
+├── aidd_docs/             # Documentation AIDD
+│   ├── tasks/             # Plans de tâches
+│   ├── reviews/           # Challenges validés
+│   ├── changelog/         # CHANGELOG.md + VERSIONS.md
+│   └── memory/            # Templates et mémoire
+├── scripts/               # Scripts de fine-tuning
+│   ├── convert_to_jsonl.py
+│   └── train_model.py
+├── data/                  # Données (à créer)
+├── models/                # Modèles (à créer)
+├── results/               # Résultats (à créer)
+├── INSTALL.md             # Guide d'installation
+├── README.md              # Ce fichier
+└── LICENSE                # Licence
 ```
 
-## 🔧 Configuration
+## 🛠️ Outils utilisés
 
-### Variables d'Environnement
+- **Framework AIDD** : Gestion des configurations et workflows
+- **Hermes Agent** : Compétences custom (11 compétences)
+- **Axolotl** : Fine-tuning
+- **Unsloth** : Fine-tuning optimisé
+- **Axolotl** : Configuration de fine-tuning
+- **WandB** : Tracking des expériences
 
-Créer `.env` dans le dossier racine :
+## 📋 Compétences AIDD
+
+### **Développement**
+- `aidd-workflow` : Workflow AIDD complet
+- `challenge-plan` : Challenge et validation des plans
+- `writing-plans` : Écriture de plans structurés
+- `plan` : Planification de tâches
+
+### **DevOps**
+- `aidd-workflow` : Workflow AIDD
+- `challenge-plan` : Validation des plans
+- `jdroll-data-pipeline` : Pipeline de données JDR
+- `learn` : Documentation des lessons learned
+
+### **Mlops**
+- `fine-tuning-roleplay-rp` : Fine-tuning pour rôleplay
+- `fine-tuning-domain-dialogue` : Fine-tuning domain-specific
+
+### **GitHub**
+- `github-auth` : Authentification GitHub
+- `github-pr-workflow` : Workflow PR
+
+## 📊 Progression
+
+| Phase | Statut | Description |
+|-------|--------|-------------|
+| **Phase 1** | ✅ Terminé | Setup et configuration |
+| **Phase 2** | ⏸️ En attente | Scraping des données (Session 2) |
+| **Phase 3** | 🔧 En préparation | Fine-tuning modèle JDR |
+| **Phase 4** | 📋 Planifié | Amélioration continue |
+| **Phase 5** | 📋 Planifié | Scaling vers 100+ campagnes |
+| **Phase 6** | 📋 Planifié | Production |
+| **Phase 7** | 📋 Planifié | Communauté |
+
+## 🚀 Démarrage rapide
+
+### **1. Installer les outils**
 
 ```bash
-# GitHub (pour les PR et le CLI)
-GITHUB_TOKEN=ghp_********
+# CLI AIDD
+npm install -g aidd-custom
+aidd-custom setup --repo RebelliousSmile/aidd-overlay
+aidd-custom install
 
-# Together.ai (pour l'API)
-TOGETHER_API_KEY=sk-********
-
-# Fireworks.ai (pour l'API)
-FIREWORKS_API_KEY=sk-********
-
-# HuggingFace (pour les modèles)
-HF_TOKEN=hf_********
+# Vérifier
+aidd-custom doctor
 ```
 
-### Clés API et Sécurité
+### **2. Utiliser le framework**
 
-❌ **NE JAMAIS** commit de `.env`  
-✅ **Toujours** utiliser `~/.hermes/.env` pour les clés  
-✅ **Toujours** utiliser des tokens avec permissions minimales
+```bash
+# Créer un plan
+aidd plan create --name "feature-x" --issue 50
+
+# Examiner un plan
+aidd plan examine --plan plan.md
+
+# Décomposer un plan
+aidd decompose --plan plan.md
+
+# Valider un plan
+aidd validate --plan plan.md --challenge challenges.md
+```
+
+### **3. Commencer le fine-tuning**
+
+```bash
+# Convertir les données
+python scripts/convert_to_jsonl.py
+
+# Lancer le fine-tuning
+python scripts/train_model.py --model mistral_7b
+
+# Track avec WandB
+wandb login
+```
 
 ## 📚 Documentation
 
-### Guides d'Installation
+- **[INSTALL.md](./INSTALL.md)** : Guide d'installation rapide
+- **[aidd_docs/](./aidd_docs/)** : Documentation AIDD complète
+  - [`AIDD_GUIDE.md`](./aidd_docs/AIDD_GUIDE.md) : Guide complet
+  - [`UPDATES.md`](./aidd_docs/UPDATES.md) : Mises à jour
+  - [`WORKFLOW.md`](./aidd_docs/WORKFLOW.md) : Workflow AIDD
+  - [`tasks/`](./aidd_docs/tasks/) : Plans de tâches
+  - [`reviews/`](./aidd_docs/reviews/) : Challenges validés
+- **[hermes-vault](https://github.com/RebelliousSmile/hermes-vault)** : Compétences custom
+- **[aidd-custom](https://github.com/RebelliousSmile/aidd-custom)** : CLI AIDD
 
-- **[INSTALL.md](./INSTALL.md)** - Installation en 5 minutes
-- **[aidd_docs/AIDD_GUIDE.md](./aidd_docs/AIDD_GUIDE.md)** - Guide complet AIDD
+## 🔧 Configuration
 
-### Documentation AIDD
-
-- **[aidd_docs/WORKFLOW.md](./aidd_docs/WORKFLOW.md)** - Workflow complet
-- **[aidd_docs/tasks/phase3_finetuning.md](./aidd_docs/tasks/phase3_finetuning.md)** - Plan Phase 3
-- **[aidd_docs/reviews/challenge_phase3.md](./aidd_docs/reviews/challenge_phase3.md)** - Challenge Phase 3
-
-### Ressources Externes
-
-- **AIDD CLI:** https://github.com/RebelliousSmile/aidd-custom
-- **AIDD Overlay:** https://github.com/RebelliousSmile/aidd-overlay
-- **Hermes Agent:** https://hermes-agent.nousresearch.com/
-
-## 🎯 Phases du Projet
-
-### ✅ Phase 1-2: Scraping (Complet)
-
-- ✅ Scraping de jdRoll (20 campagnes)
-- ✅ Extraction des données (title, universe, system, author, description)
-- ✅ Préparation des données pour le fine-tuning
-
-### 🔄 Phase 3: Fine-tuning (En cours)
-
-- 🔄 Conversion des données en JSONL
-- 🔄 Fine-tuning avec Axolotl/Unsloth
-- 🔄 Évaluation du modèle
-
-### ⏭️ Phase 4: Amélioration Continue
-
-- 📊 Collecte de feedback
-- 🔧 Amélioration des prompts
-- 📈 Optimisation des performances
-
-### ⏭️ Phase 5: Scaling
-
-- 📦 Augmentation des données (100+ campagnes)
-- 🚀 Optimisation de l'infrastructure
-- 📊 Monitoring des performances
-
-### ⏭️ Phase 6: Production
-
-- 🎯 Déploiement en production
-- 🔐 Sécurisation des accès
-- 📈 Monitoring et alerting
-
-### ⏭️ Phase 7: Communauté
-
-- 🌐 Publication des modèles
-- 📚 Documentation communautaire
-- 💬 Support et feedback
-
-## 🛠 Utilisation du Framework AIDD
-
-### Commandes Essentielles
+### **Variables d'environnement**
 
 ```bash
-# Configuration
-aidd-custom setup --repo RebelliousSmile/aidd-overlay
+# GitHub
+GITHUB_TOKEN=your_token
 
-# Installation
-aidd-custom install --ai copilot
+# Together.ai
+TOGETHER_API_KEY=your_key
 
-# Maintenance
-aidd-custom doctor
-aidd-custom update
-aidd-custom status
+# Fireworks.ai
+FIREWORKS_API_KEY=your_key
+
+# Weights & Biases
+WANDB_API_KEY=your_key
 ```
 
-### Workflow Typique
+### **Compétences Hermes**
 
+Les compétences sont installées dans `~/.hermes/plugins/hermes-vault/` et liées vers `~/.hermes/skills/`.
+
+Après redémarrage de Hermes Agent, utilisez-les avec :
 ```bash
-# 1. Créer un plan
-aidd-custom plan create --name "feature-x" --issue 50
-
-# 2. Challenger le plan
-aidd-custom plan challenge phase3_finetuning.md
-
-# 3. Implémenter
-
-# 4. Documenter
-aidd-custom learn --phase 3
-
-# 5. Mettre à jour le changelog
-vim aidd_docs/changelog/CHANGELOG.md
+hermes -s aidd-workflow "commande"
 ```
-
-## 📊 Statistiques
-
-| Élément | Statut | Détails |
-|---------|--------|---------|
-| **Campaignes scrapées** | ✅ 20 | jdRoll |
-| **Plans AIDD** | ✅ 5 | Phase 3-7 |
-| **Challenges** | ✅ 5 | Validés |
-| **Scripts Python** | ✅ 3 | Scraping + training |
-| **Documentation AIDD** | ✅ 44+ fichiers | Structure complète |
 
 ## 🤝 Contribution
 
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/amazing`)
-3. Commit les changements (`git commit -m 'Add amazing feature'`)
-4. Push vers la branche (`git push origin feature/amazing`)
+1. Fork le dépôt
+2. Créer une branche (`git checkout -b feature/awesome`)
+3. Commit les changements (`git commit -m 'Add awesome feature'`)
+4. Push vers la branche (`git push origin feature/awesome`)
 5. Ouvrir une Pull Request
 
-## 📝 License
+## 📄 Licence
 
-Ce projet est soumis à la license MIT.
+Ce projet est sous licence MIT - voir le fichier LICENSE pour plus de détails.
 
-## 📞 Support
+## 📞 Contact
 
-- **GitHub Issues:** https://github.com/RebelliousSmile/suddenly-ai-hub/issues
-- **Documentation:** `aidd_docs/`
+- **Auteur** : [RebelliousSmile](https://github.com/RebelliousSmile)
+- **GitHub** : [suddenly-ai-hub](https://github.com/RebelliousSmile/suddenly-ai-hub)
+- **Discord** : #suddenly-ai-hub
 
 ---
 
-**Projet maintenu avec ❤️ par RebelliousSmile**
-
-*Dernière mise à jour: 2026-05-13*
-*Version: 1.0.0*
+**Ce projet utilise le framework AIDD (AI-Driven Development) pour structurer le développement de manière professionnelle et systématique.**
