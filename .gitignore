@@ -44,6 +44,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Cache (model IDs, etc.)
+.cache/
+
 # Configurations AIDD
 .claude/
 .copilot/
@@ -78,3 +81,15 @@ htmlcov/
 *.key
 *.crt
 .aidd/cache/
+
+# Browser session cookies
+*_cookies.json
+
+# Codex CLI config
+.codex/
+
+# OpenCode config
+opencode.json
+
+# MCP config
+.mcp.json
