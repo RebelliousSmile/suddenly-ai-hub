@@ -1,7 +1,7 @@
 {
   "repo": "RebelliousSmile/aidd-overlay",
   "branch": "main",
-  "installedAt": "2026-05-13T22:27:13.500Z",
+  "installedAt": "2026-05-14T15:22:33.379Z",
   "files": [
     ".claude/commands/aidd/01/migrate_docs.md",
     ".claude/commands/aidd/02/decompose_mikado.md",

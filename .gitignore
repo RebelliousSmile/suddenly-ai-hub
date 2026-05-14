@@ -77,3 +77,4 @@ htmlcov/
 *.pem
 *.key
 *.crt
+.aidd/cache/
