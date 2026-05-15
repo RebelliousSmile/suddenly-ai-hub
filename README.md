@@ -1,226 +1,165 @@
-# 🚀 Suddenly AI Hub
+# 🎭 Suddenly AI Hub
 
-> **Fine-tuning d'un modèle de langage JDR (Jeux de Rôle) en français**
+> **Fine-tuned language models for French roleplay — ready to use, ready to build on.**
 
-## 📋 Résumé
+## What this project does
 
-Ce projet vise à fine-tuner un modèle de langage pour générer des dialogues et narrations JDR en français, spécialisé dans l'univers [UNIVERS JDR] (ex: Cyberpunk, Fantasy, Horreur, etc.).
+You get **trained French RP chat models** out of the box. The repo contains the full training pipeline (data collection → corpus preparation → training → evaluation), but at the end of the day, the value is in the **models themselves**.
 
-## 🎯 Objectifs
+## Models
 
-1. **Phase 1** : Configuration et setup
-2. **Phase 2** : Collecte et préparation des données (scraping)
-3. **Phase 3** : Fine-tuning du modèle JDR
-4. **Phase 4** : Amélioration continue et évaluation
-5. **Phase 5** : Scaling vers 100+ campagnes
-6. **Phase 6** : Production et déploiement
-7. **Phase 7** : Communauté et sharing
+Trained models and checkpoints are stored in `models/` (or linked from external storage). To use a fine-tuned model:
 
-## 📦 Installation
+### Quick inference with Transformers
 
-### **Prérequis**
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-- Python 3.11+
-- Node.js 18+
-- npm
-- GPU (recommandé pour le fine-tuning)
+model_name = "models/your-fine-tuned-model"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="auto",
+    device_map="auto"
+)
 
-### **Installation de aidd-custom**
+prompt = "Tu es un maître de jeu dans un univers cyberpunk. Le joueur arrive dans un bar sombre..."
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+outputs = model.generate(**inputs, max_new_tokens=512, temperature=0.8)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+```
+
+### Inference with Ollama (local, no GPU needed for small models)
 
 ```bash
-# Installer le CLI AIDD
-cd /home/user/suddenly-ai-hub/aidd-custom
-npm install
-npm link
+# Pull the model (if on Ollama Hub)
+ollama pull suddenly-ai-hub:latest
 
-# Configurer le framework
-aidd-custom setup --repo RebelliousSmile/aidd-overlay
+# Chat
+ollama run suddenly-ai-hub
 
-# Installer les configurations
-aidd-custom install
+# Or API mode
+ollama serve  # runs on :11434
+curl http://localhost:11434/api/generate -d '{
+  "model": "suddenly-ai-hub",
+  "prompt": "Tu es un PNJ dans un donjon...",
+  "stream": false
+}'
 ```
 
-### **Installation des compétences Hermes**
+### Via Together.ai API (cloud inference)
 
 ```bash
-# Installer les compétences custom
-cd /home/user/hermes-skills
-npm install
-npm link
+pip install together
 
-# Redémarrer Hermes Agent
-# Les compétences seront scannées automatiquement
+python scripts/train_together.py \
+  --model-path models/fine-tuned-checkpoint \
+  --mode inference \
+  --system-prompt "Tu es un maître de jeu..." \
+  --messages '[{"role":"user","content":"J\'entre dans la taverne."}]'
 ```
 
-## 🏗️ Architecture
+## Using fine-tuned models in your projects
 
-### **Structure du projet**
+### As a chat system prompt replacement
 
-```
-suddenly-ai-hub/
-├── .claude/                # Configurations Claude
-├── .copilot/              # Configurations Copilot
-├── .cursor/               # Configurations Cursor
-├── .opencode/             # Configurations Opencode
-├── aidd_docs/             # Documentation AIDD
-│   ├── tasks/             # Plans de tâches
-│   ├── reviews/           # Challenges validés
-│   ├── changelog/         # CHANGELOG.md + VERSIONS.md
-│   └── memory/            # Templates et mémoire
-├── scripts/               # Scripts de fine-tuning
-│   ├── convert_to_jsonl.py
-│   └── train_model.py
-├── data/                  # Données (à créer)
-├── models/                # Modèles (à créer)
-├── results/               # Résultats (à créer)
-├── INSTALL.md             # Guide d'installation
-├── README.md              # Ce fichier
-└── LICENSE                # Licence
+The model is fine-tuned to speak in a specific RP register — no system prompt engineering needed:
+
+```python
+# Before: generic LLM, needs careful prompting
+# "You are a D20 Dungeon Master in a dark fantasy setting..."
+
+# After: the model IS the DM
+response = model.generate(
+    prompt="Le groupe arrive devant la porte enchantée.",
+    max_new_tokens=300,
+    temperature=0.7
+)
 ```
 
-## 🛠️ Outils utilisés
+### As a dialogue engine for game servers
 
-- **Framework AIDD** : Gestion des configurations et workflows
-- **Hermes Agent** : Compétences custom (11 compétences)
-- **Axolotl** : Fine-tuning
-- **Unsloth** : Fine-tuning optimisé
-- **Axolotl** : Configuration de fine-tuning
-- **WandB** : Tracking des expériences
+The model understands scene descriptions, NPC dialogue, and player actions natively. It can power:
 
-## 📋 Compétences AIDD
+- **D&D/JDR bots** on Discord/Telegram
+- **Tabletop companion tools** (scene narration, NPC responses)
+- **Interactive fiction engines** (Ren'Py, Twine, custom)
+- **Campaign preparation** (generating encounters, NPCs, descriptions)
 
-### **Développement**
-- `aidd-workflow` : Workflow AIDD complet
-- `challenge-plan` : Challenge et validation des plans
-- `writing-plans` : Écriture de plans structurés
-- `plan` : Planification de tâches
+### System prompt recipes
 
-### **DevOps**
-- `aidd-workflow` : Workflow AIDD
-- `challenge-plan` : Validation des plans
-- `jdroll-data-pipeline` : Pipeline de données JDR
-- `learn` : Documentation des lessons learned
+The model works best with context-aware prompts:
 
-### **Mlops**
-- `fine-tuning-roleplay-rp` : Fine-tuning pour rôleplay
-- `fine-tuning-domain-dialogue` : Fine-tuning domain-specific
+```
+## Maître de jeu (DM)
+Tu es un maître de jeu. Tu décris les scènes, incarnes les PNJ et gères l'action.
+Le joueur dit: "{user_input}"
 
-### **GitHub**
-- `github-auth` : Authentification GitHub
-- `github-pr-workflow` : Workflow PR
+## PNJ
+Tu es un marchand cynique dans une taverne cyberpunk. Tu vend des informations, pas des armes.
+Le joueur dit: "{user_input}"
 
-## 📊 Progression
+## Narrateur
+Tu racontes une scène de jeu. Style sombre, descriptions sensorielles, rythme tendu.
+Le joueur dit: "{user_input}"
+```
 
-| Phase | Statut | Description |
-|-------|--------|-------------|
-| **Phase 1** | ✅ Terminé | Setup et configuration |
-| **Phase 2** | ⏸️ En attente | Scraping des données (Session 2) |
-| **Phase 3** | 🔧 En préparation | Fine-tuning modèle JDR |
-| **Phase 4** | 📋 Planifié | Amélioration continue |
-| **Phase 5** | 📋 Planifié | Scaling vers 100+ campagnes |
-| **Phase 6** | 📋 Planifié | Production |
-| **Phase 7** | 📋 Planifié | Communauté |
+## Training pipeline overview
 
-## 🚀 Démarrage rapide
+If you want to train your own models, the pipeline is:
 
-### **1. Installer les outils**
+```
+data/                          # Raw collected dialogues
+  ├── renpy-corpus.jsonl       # Synthetic French corpus (5 genres)
+  ├── train.jsonl              # Training set (Axolotl format)
+  └── val.jsonl                # Validation set
+
+scripts/crawl_rpv/             # Data collection tools
+  ├── generate_corpus.py       # Generate synthetic RP dialogues
+  ├── extract_real_dialogues.py # Extract from Ren'Py VN repos
+  └── github_search.py         # Find VNs on GitHub
+
+scripts/train_together.py      # Training & inference script
+```
+
+### Training
 
 ```bash
-# CLI AIDD
-npm install -g aidd-custom
-aidd-custom setup --repo RebelliousSmile/aidd-overlay
-aidd-custom install
+# Fine-tune via Together.ai (SFT)
+python scripts/train_together.py \
+  --mode train \
+  --train-file data/train.jsonl \
+  --val-file data/val.jsonl \
+  --base-model Qwen/Qwen2.5-7B-Instruct \
+  --output-dir models/output/
 
-# Vérifier
-aidd-custom doctor
+# Or with Axolotl (local GPU)
+axolotl train configs/qwen2.5_7b_rp.yaml
 ```
 
-### **2. Utiliser le framework**
+### Corpus composition
 
-```bash
-# Créer un plan
-aidd plan create --name "feature-x" --issue 50
+The training data combines:
 
-# Examiner un plan
-aidd plan examine --plan plan.md
+| Source | Type | Languages | Size |
+|--------|------|-----------|------|
+| Synthetic Ren'Py | Scene + dialogue pairs | French | ~50 entries, 5 genres |
+| Ren'Py VNs (GitHub) | Real VN dialogues | English + FR translation | ~10k+ dialogues |
+| RP forum scraping | Forum-style roleplay | French | Pending |
 
-# Décomposer un plan
-aidd decompose --plan plan.md
+## Data format
 
-# Valider un plan
-aidd validate --plan plan.md --challenge challenges.md
+All training data follows the **Axolotl JSONL format**:
+
+```jsonl
+{"messages": [{"role":"system","content":"Tu es un PNJ..."},{"role":"user","content":"Bonjour"},{"role":"assistant","content":"Salut, que cherches-tu..."}]}
 ```
 
-### **3. Commencer le fine-tuning**
+## License
 
-```bash
-# Convertir les données
-python scripts/convert_to_jsonl.py
+MIT — use the models for anything. Commercial projects welcome.
 
-# Lancer le fine-tuning
-python scripts/train_model.py --model qwen2.5_7b
+## Contact
 
-# Track avec WandB
-wandb login
-```
-
-## 📚 Documentation
-
-- **[INSTALL.md](./INSTALL.md)** : Guide d'installation rapide
-- **[aidd_docs/](./aidd_docs/)** : Documentation AIDD complète
-  - [`AIDD_GUIDE.md`](./aidd_docs/AIDD_GUIDE.md) : Guide complet
-  - [`UPDATES.md`](./aidd_docs/UPDATES.md) : Mises à jour
-  - [`WORKFLOW.md`](./aidd_docs/WORKFLOW.md) : Workflow AIDD
-  - [`tasks/`](./aidd_docs/tasks/) : Plans de tâches
-  - [`reviews/`](./aidd_docs/reviews/) : Challenges validés
-- **[hermes-vault](https://github.com/RebelliousSmile/hermes-vault)** : Compétences custom
-- **[aidd-custom](https://github.com/RebelliousSmile/aidd-custom)** : CLI AIDD
-
-## 🔧 Configuration
-
-### **Variables d'environnement**
-
-```bash
-# GitHub
-GITHUB_TOKEN=your_token
-
-# Together.ai
-TOGETHER_API_KEY=your_key
-
-# Fireworks.ai
-FIREWORKS_API_KEY=your_key
-
-# Weights & Biases
-WANDB_API_KEY=your_key
-```
-
-### **Compétences Hermes**
-
-Les compétences sont installées dans `~/.hermes/plugins/hermes-vault/` et liées vers `~/.hermes/skills/`.
-
-Après redémarrage de Hermes Agent, utilisez-les avec :
-```bash
-hermes -s aidd-workflow "commande"
-```
-
-## 🤝 Contribution
-
-1. Fork le dépôt
-2. Créer une branche (`git checkout -b feature/awesome`)
-3. Commit les changements (`git commit -m 'Add awesome feature'`)
-4. Push vers la branche (`git push origin feature/awesome`)
-5. Ouvrir une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence MIT - voir le fichier LICENSE pour plus de détails.
-
-## 📞 Contact
-
-- **Auteur** : [RebelliousSmile](https://github.com/RebelliousSmile)
-- **GitHub** : [suddenly-ai-hub](https://github.com/RebelliousSmile/suddenly-ai-hub)
-- **Discord** : #suddenly-ai-hub
-
----
-
-**Ce projet utilise le framework AIDD (AI-Driven Development) pour structurer le développement de manière professionnelle et systématique.**
+- **Author**: [RebelliousSmile](https://github.com/RebelliousSmile)
+- **GitHub**: [suddenly-ai-hub](https://github.com/RebelliousSmile/suddenly-ai-hub)
