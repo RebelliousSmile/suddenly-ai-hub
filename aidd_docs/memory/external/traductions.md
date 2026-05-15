@@ -61,6 +61,28 @@ Pour la traduction des corpus EN -> FR (traductions CC BY-NC-SA de Doctorow, Wat
 - **Parsing JSON** : Les grands modèles rajoutent souvent du markdown (```json ... ```). Un script de nettoyage robuste (suppression des backticks) est obligatoire avant le `json.loads()`.
 - **Rate-limiting** : Toujours inclure un délai (`BATCH_DELAY`) entre les batchs pour éviter le bannissement de l'IP.
 
+## 7. Retour d'expérience : Pipeline Ren'Py (386 entrées — 2026-05-15)
+
+**Contexte** : Traduction massive de 386 conversations Ren'Py (EN -> FR) pour le corpus LoRA (#58).
+**Fournisseur** : Together AI (serverless Llama 3.3 70B).
+**Coût total** : ~3 € (Pass 1 : 1.50€, Pass 2 : 1.50€).
+**Durée** : ~60-90 minutes.
+
+### Architecture 3 passes
+1. **Pass 1 (Brute)** : Traduction littérale pour récupérer le sens.
+2. **Pass 2 (Style)** : Affinage stylistique (registres, idiomes, ton RP).
+3. **Pass 3 (Nettoyage)** : Validation JSON, correction des champs vides/malformés.
+
+### Limitations Together AI observées
+- **Rate-limiting strict** : 8 workers concurrents provoquent des erreurs `HTTP 429` (bloquantes).
+  - *Solution* : Réduction à **3 workers** + `BATCH_DELAY=2.0s`.
+- **Latence variable** : Environ 60s/req en serverless, compensée par le parallélisme (3 workers = ~20s effective/entrée).
+- **Parsing JSON fragile** : Le modèle retourne parfois du JSON vide ou entouré de texte dans Pass 2, faisant crasher `json.loads()` en Pass 3.
+  - *Solution* : Fallback vers l'entrée originale si parsing échoue, nettoyage agressif des backticks.
+
+### Conclusion
+Together AI reste viable pour du batch *si* on accepte la latence et qu'on réduit la concurrence. Pour un coût de ~3€, la qualité est bonne. Pour des volumes futurs >1k entrées, Ollama local reste plus stable et gratuit.
+
 ---
 ## 🆕 À venir : Traduction du Cyberpunk (#64)
 - Corpus source : Traductions CC BY-NC-SA (Doctorow, Watts, etc.)
