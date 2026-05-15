@@ -21,7 +21,7 @@ labels:
 Déployer le modèle fine-tuned en production avec une API haute disponibilité, monitoring avancé et scaling automatique
 
 **Contexte :**
-- Phase 5 : Dataset 100+ campagnes, Mixtral 8x7B fine-tuned
+- Phase 5 : Dataset 100+ campagnes, Qwen2.5-14B fine-tuned
 - Modèle validé et performant (PPL < 4, Qualité ≥85%)
 - **Objectif Phase 6** : Déploiement production robuste
 
@@ -35,7 +35,7 @@ Déployer le modèle fine-tuned en production avec une API haute disponibilité,
 
 ### État actuel (fin Phase 5)
 - ✅ Dataset : 5000+ conversations
-- ✅ Modèle : Mixtral 8x7B LoRA fine-tuned
+- ✅ Modèle : Qwen2.5-14B LoRA fine-tuned
 - ✅ PPL : < 4, Qualité : ≥85%
 - ✅ Coût total : < 150$
 
@@ -252,7 +252,7 @@ GET  /metrics           # Métriques de performance
 - **AWS WAF**: Web application firewall
 
 ### Modèles
-- **Mixtral 8x7B**: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
+- **Qwen2.5-14B-Instruct**: https://huggingface.co/Qwen/Qwen2.5-14B-Instruct
 - **vLLM**: https://vllm.readthedocs.io/
 
 ## 🔗 Liens AIDD

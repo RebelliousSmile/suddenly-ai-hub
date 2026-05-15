@@ -44,7 +44,7 @@ recommendations: 0
 
 ### ✅ Configuration (3/3)
 - ✅ Ressources Définies (GPU/VRAM)
-- ✅ Modèle Sélectionné (Mistral/Mixtral)
+- ✅ Modèle Sélectionné (Qwen2.5-7B/Qwen2.5-14B)
 - ✅ LoRA/QLoRA Configuré
 
 ### ✅ Training (3/3)

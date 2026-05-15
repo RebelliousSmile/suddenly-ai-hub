@@ -31,7 +31,7 @@ project: suddenly-ai-hub
 
 ### Infrastructure
 - **Virtualenv** : Environnement Python isolé et propre
-- **GitHub Issues** : Syncronisation entre kanban interne et GitHub
+- **GitHub Issues** : Gestion des tâches et suivi via les issues GitHub
 - **Structure de fichiers** : Organisation claire (scripts/, configs/, data/, logs/)
 
 ## ❌ Ce qui a mal fonctionné
@@ -224,13 +224,13 @@ project: suddenly-ai-hub
 1. [ ] Lancer `scripts/convert_to_jsonl.py`
 2. [ ] Créer `scripts/train_model.py`
 3. [ ] Configurer Axolotl (`axolotl_config.yaml`)
-4. [ ] Lancer le fine-tuning Mistral 7B
+4. [ ] Lancer le fine-tuning Qwen2.5-7B
 
 ### Moyen terme (Phase 4-5)
 1. [ ] Évaluer le modèle fine-tuned
 2. [ ] Améliorations itératives (A/B testing)
 3. [ ] Collection de données supplémentaires
-4. [ ] Fine-tuning Mixtral 8x7B
+4. [ ] Fine-tuning Qwen2.5-14B
 
 ### Long terme (Phase 6-7)
 1. [ ] Déploiement en production

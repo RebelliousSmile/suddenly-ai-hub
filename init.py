@@ -122,7 +122,7 @@ def create_memory_files():
             "phases": {
                 "session1": {"status": "completed", "description": "Exploration jdRoll"},
                 "session2": {"status": "pending", "description": "Scraping 20 campagnes"},
-                "phase3": {"status": "planned", "description": "Fine-tuning Mistral 7B"},
+                "phase3": {"status": "planned", "description": "Fine-tuning Qwen2.5-7B"},
                 "phase4": {"status": "planned", "description": "Amélioration continue"},
                 "phase5": {"status": "planned", "description": "Scaling 100+ campagnes"},
                 "phase6": {"status": "planned", "description": "Production & Haute disponibilité"},

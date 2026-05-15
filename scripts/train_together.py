@@ -15,7 +15,7 @@ Usage:
 Model list (fine-tunable on Together.ai):
   - Qwen/Qwen2.5-7B-Instruct
   - meta-llama/Llama-3.1-70B-Instruct-Turbo
-  - mistralai/Mixtral-8x24B-Instruct-v0.1
+  - Qwen/Qwen2.5-14B-Instruct
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ DEFAULT_SYSTEM_PROMPT = (
 FINE_TUNABLE_MODELS = [
     "Qwen/Qwen2.5-7B-Instruct",
     "meta-llama/Llama-3.1-70B-Instruct-Turbo",
-    "mistralai/Mixtral-8x24B-Instruct-v0.1",
+    "Qwen/Qwen2.5-14B-Instruct",
 ]
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"

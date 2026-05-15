@@ -38,20 +38,13 @@ env/
 .DS_Store
 Thumbs.db
 
-# AIDD
-.aidd/
+# Env
 .env
 .env.local
 .env.*.local
 
 # Cache (model IDs, etc.)
 .cache/
-
-# Configurations AIDD
-.claude/
-.copilot/
-.cursor/
-.opencode/
 
 # Scripts de fine-tuning
 *.ckpt
@@ -61,6 +54,7 @@ Thumbs.db
 training_logs/
 models/
 results/
+data/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -80,16 +74,6 @@ htmlcov/
 *.pem
 *.key
 *.crt
-.aidd/cache/
 
 # Browser session cookies
 *_cookies.json
-
-# Codex CLI config
-.codex/
-
-# OpenCode config
-opencode.json
-
-# MCP config
-.mcp.json

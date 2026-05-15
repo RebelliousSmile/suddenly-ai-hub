@@ -32,7 +32,7 @@ Améliorer le modèle fine-tuned en fonction des retours d'évaluation et optimi
 ## 📝 Contexte
 
 ### Après Phase 3
-- ✅ Modèle fine-tuned entraîné (Mistral/Mixtral LoRA)
+- ✅ Modèle fine-tuned entraîné (Qwen2.5 LoRA)
 - ✅ Dataset JDROLL généré (20 campagnes)
 - ✅ Évaluation initiale effectuée
 - ✅ Coût total documenté (<50$)
@@ -251,9 +251,9 @@ weight_decay: 0.01                 # Régularisation
 - **A/B Testing** : https://github.com/gokceneraslan/ab_testing
 
 ### Modèles
-- **v1.0** : Mistral 7B LoRA (Phase 3)
-- **v1.1** : Mistral 7B LoRA + Optimisation (Phase 4)
-- **v2.0** : Mixtral 8x7B (future iteration)
+- **v1.0** : Qwen2.5-7B LoRA (Phase 3)
+- **v1.1** : Qwen2.5-7B LoRA + Optimisation (Phase 4)
+- **v2.0** : Qwen2.5-14B (future iteration)
 
 ## 🔗 Liens AIDD
 
@@ -276,7 +276,7 @@ weight_decay: 0.01                 # Régularisation
 - [ ] Scraper 100+ campagnes
 - [ ] Multi-source data (forums, transcripts)
 - [ ] Dataset 5000+ conversations
-- [ ] Fine-tuning Mixtral 8x7B
+- [ ] Fine-tuning Qwen2.5-14B
 
 ### Phase 6 : Production
 - [ ] API haute disponibilité

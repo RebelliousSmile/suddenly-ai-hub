@@ -17,7 +17,7 @@
     },
     "phase3": {
       "status": "planned",
-      "description": "Fine-tuning Mistral 7B"
+      "description": "Fine-tuning Qwen2.5-7B"
     },
     "phase4": {
       "status": "planned",

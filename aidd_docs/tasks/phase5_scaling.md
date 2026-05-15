@@ -17,13 +17,13 @@ labels:
 # 📈 Phase 5 - Scaling vers 100+ Campagnes
 
 ## 🎯 Objectif
-Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 5000+ conversations et entraîner un modèle plus puissant (Mixtral 8x7B)
+Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 5000+ conversations et entraîner un modèle plus puissant (Qwen2.5-14B)
 
 **Contexte :**
 - Phase 3 : 20 campagnes → ~500 conversations
 - Phase 4 : Optimisation et A/B testing
 - **Objectif Phase 5** : 100+ campagnes → 5000+ conversations
-- **Modèle cible** : Mixtral 8x7B Instruct (plus puissant que Mistral 7B)
+- **Modèle cible** : Qwen2.5-14B-Instruct (plus puissant que Qwen2.5-7B)
 
 **Principes AIDD appliqués :**
 - **Scaling** : Augmenter progressivement la quantité de données
@@ -35,7 +35,7 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 ### État actuel (fin Phase 4)
 - ✅ 20 campagnes scrapées de jdRoll.org
 - ✅ ~500 conversations extraites
-- ✅ Modèle Mistral 7B LoRA fine-tuned
+- ✅ Modèle Qwen2.5-7B LoRA fine-tuned
 - ✅ PPL < 5, Qualité ~75%
 - ✅ Coût total < 50$
 
@@ -46,7 +46,7 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
    - Diversifier les univers JDR (10+ vs 5)
 
 2. **Modèle plus puissant**
-   - Passer de Mistral 7B à Mixtral 8x7B
+   - Passer de Qwen2.5-7B à Qwen2.5-14B
    - Meilleure compréhension du contexte
    - Réponses plus riches et immersives
 
@@ -72,7 +72,7 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 - [x] Formats variés : JSONL, CSV, TXT
 
 ### Model training
-- [x] Mixtral 8x7B LoRA/QLoRA configuré
+- [x] Qwen2.5-14B LoRA/QLoRA configuré
 - [x] Training loss < 1.5
 - [x] Validation PPL < 4
 - [x] Qualité globale ≥85%
@@ -138,8 +138,8 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 - ✅ Format JSONL standardisé
 - ✅ Diversité ≥10 univers
 
-### Phase 5.5 : Entraînement Mixtral 8x7B (3-4h)
-- [x] Configurer Mixtral 8x7B Instruct
+### Phase 5.5 : Entraînement Qwen2.5-14B (3-4h)
+- [x] Configurer Qwen2.5-14B-Instruct
 - [x] Utiliser QLoRA 4-bit pour économie VRAM
 - [x] Training avec 5000+ conversations
 - [x] Monitorer les métriques
@@ -150,20 +150,20 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 - ✅ PPL validation < 4
 
 ### Phase 5.6 : Évaluation et A/B Testing (1h)
-- [x] Comparer Mistral 7B (Phase 4) vs Mixtral 8x7B
+- [x] Comparer Qwen2.5-7B (Phase 4) vs Qwen2.5-14B
 - [x] 50 prompts de test standardisés
 - [x] Évaluation quantitative et qualitative
 - [x] Choisir le meilleur modèle
 
 **Checkpoints :**
-- ✅ Mixtral 8x7B ≥ Mistral 7B en qualité
+- ✅ Qwen2.5-14B ≥ Qwen2.5-7B en qualité
 - ✅ Feedback utilisateur positif
 - ✅ Performance dans les temps
 
 ## ⚠️ Deal Breakers
 
 - [ ] Coût > 150$ total → Arrêter et optimiser
-- [ ] Dataset < 5000 conversations → Rester sur Mistral 7B
+- [ ] Dataset < 5000 conversations → Rester sur Qwen2.5-7B
 - [ ] Qualité < 80% → Retourner au dataset de Phase 4
 - [ ] Blocage par les sources → Changer de stratégie
 - [ ] Hallucinations > 10% → Réduire le dataset ou augmenter le filtrage
@@ -186,7 +186,7 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 ### Infrastructure
 - ✅ Coût total: < 150$ (vs 50$ Phase 4)
 - ✅ Temps total: < 8h (vs 4h Phase 4)
-- ✅ VRAM: ≤80GB (Mixtral 8x7B)
+- ✅ VRAM: ≤80GB (Qwen2.5-14B)
 
 ## 📝 Notes de debugging
 
@@ -197,7 +197,7 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 2. **Données de mauvaise qualité**
    - Solution: Filtrage automatique + validation manuelle
 
-3. **VRAM insuffisante pour Mixtral**
+3. **VRAM insuffisante pour Qwen2.5-14B**
    - Solution: QLoRA 4-bit, A100 80GB cloud
 
 4. **Coût qui explose**
@@ -218,8 +218,8 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 - **Transcriptions YouTube**: À collecter manuellement
 
 ### Infrastructure
-- **Together.ai**: Mixtral 8x7B - $0.60/M tokens
-- **Fireworks.ai**: Mixtral 8x7B - $0.40/M tokens
+- **Together.ai**: Qwen2.5-14B - $0.50/M tokens
+- **Fireworks.ai**: Qwen2.5-14B - $0.50/M tokens
 - **Hugging Face**: A100 80GB - ~$2/h
 
 ### Outils
@@ -228,8 +228,8 @@ Passer d'un dataset de 20 à 100+ campagnes de JDR pour créer un dataset de 500
 - **Whisper**: Transcription automatique
 
 ### Modèles
-- **Mixtral 8x7B**: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
-- **Mistral 7B**: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3
+- **Qwen2.5-14B-Instruct**: https://huggingface.co/Qwen/Qwen2.5-14B-Instruct
+- **Qwen2.5-7B-Instruct**: https://huggingface.co/Qwen/Qwen2.5-7B-Instruct
 
 ## 🔗 Liens AIDD
 

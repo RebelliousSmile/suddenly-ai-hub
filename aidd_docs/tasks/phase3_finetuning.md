@@ -22,7 +22,7 @@ Entraîner un modèle de langage spécialisé dans le Jeu de Rôle (JDR) francop
 **Contexte :**
 - Données disponibles : 20 campagnes JDR (en cours de scraping)
 - Format de sortie : JSONL Axolotl
-- Modèles cibles : Mistral 7B, Mixtral 8x7B (ou équivalents quantifiés)
+- Modèles cibles : Qwen2.5-7B-Instruct, Qwen2.5-14B-Instruct
 - Infrastructure : Together.ai / Fireworks.ai / Hugging Face
 
 **Principes AIDD appliqués :**
@@ -39,7 +39,7 @@ Entraîner un modèle de langage spécialisé dans le Jeu de Rôle (JDR) francop
 
 ### Modèle cible
 - **Type** : LLM spécialisé JDR français
-- **Architecture** : Mistral 7B Instruct / Mixtral 8x7B Instruct
+- **Architecture** : Qwen2.5-7B-Instruct / Qwen2.5-14B-Instruct
 - **Approche** : LoRA / QLoRA (efficient)
 - **Quantization** : 4-bit (pour VRAM limité)
 
@@ -91,14 +91,14 @@ Entraîner un modèle de langage spécialisé dans le Jeu de Rôle (JDR) francop
 
 ### Phase 3.2 : Configuration Axolotl (10 min)
 - [x] Créer `axolotl_config.yaml`
-- [x] Définir le modèle cible (Mistral/Mixtral)
+- [x] Définir le modèle cible (Qwen2.5-7B/Qwen2.5-14B)
 - [x] Configurer LoRA/QLoRA
 - [x] Paramètres de training (lr, batch_size, epochs)
 - [x] Définir les paths (data, output, logs)
 
 **Checkpoints :**
 - ✅ Config YAML valide
-- ✅ Modèle choisi (Mistral 7B ou Mixtral 8x7B)
+- ✅ Modèle choisi (Qwen2.5-7B ou Qwen2.5-14B)
 - ✅ LoRA activé avec rank=64
 - ✅ Learning rate: 2e-4
 - ✅ Epochs: 3-5
@@ -209,8 +209,8 @@ Entraîner un modèle de langage spécialisé dans le Jeu de Rôle (JDR) francop
 - LoRA: https://arxiv.org/abs/2106.09685
 
 ### Modèles
-- Mistral 7B: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3
-- Mixtral 8x7B: https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
+- Qwen2.5-7B-Instruct: https://huggingface.co/Qwen/Qwen2.5-7B-Instruct
+- Qwen2.5-14B-Instruct: https://huggingface.co/Qwen/Qwen2.5-14B-Instruct
 
 ### Scripts
 - Convert: `scripts/convert_to_jsonl.py`

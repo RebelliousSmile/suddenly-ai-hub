@@ -4,7 +4,7 @@
 
 ## 🎯 Objectif
 
-Entraîner des modèles LLM (Mistral, Llama) sur des données de RP francophones
+Entraîner des modèles LLM (Qwen2.5, Llama) sur des données de RP francophones
 pour améliorer leurs compétences en narration, dialogue, et immersion.
 
 Ce projet utilise **aidd-framework** (via `aidd-custom` et `aidd-overlay`)

@@ -16,10 +16,10 @@
 # Usage : axolotl train training/lora-univers.yml
 #         (après substitution des placeholders)
 
-base_model: BASE_MODEL_DIR   # ex: ./outputs/suddenly-7b ou mistralai/Mistral-7B-v0.3
+base_model: BASE_MODEL_DIR   # ex: ./outputs/suddenly-7b ou Qwen/Qwen2.5-7B-Instruct
 
-model_type: MistralForCausalLM
-tokenizer_type: LlamaTokenizer
+model_type: Qwen2ForCausalLM
+tokenizer_type: AutoTokenizer
 
 # --- Quantization ---
 load_in_4bit: true
@@ -48,7 +48,7 @@ lora_target_modules:
 # JSONL de sessions filtrées pour ce genre (produit par pipeline/formatting)
 # Format attendu par ligne :
 #   {"messages": [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
-chat_template: mistral_v1
+chat_template: qwen
 datasets:
   - path: DATASET_PATH    # ex: data/corpus-medieval-fantastique.jsonl
     type: chat_template

@@ -158,7 +158,7 @@ aidd validate --plan plan.md --challenge challenges.md
 python scripts/convert_to_jsonl.py
 
 # Lancer le fine-tuning
-python scripts/train_model.py --model mistral_7b
+python scripts/train_model.py --model qwen2.5_7b
 
 # Track avec WandB
 wandb login

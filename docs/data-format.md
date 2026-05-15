@@ -22,7 +22,7 @@ Les exemples d'entraînement sont au format **JSONL** (JSON Lines) — un objet 
 
 ### Règles de structure
 
-- **Alternance obligatoire** : les rôles `user` et `assistant` doivent s'alterner strictement. Deux messages consécutifs du même rôle font échouer le template Mistral.
+- **Alternance obligatoire** : les rôles `user` et `assistant` doivent s'alterner strictement. Deux messages consécutifs du même rôle font échouer le chat template.
 - **System optionnel** : si présent, le message `system` doit être le premier élément de `messages`.
 - **Minimum** : au moins une paire `user` / `assistant` (system optionnel).
 - **Exemple minimal valide** :
@@ -63,13 +63,13 @@ Les exemples d'entraînement sont au format **JSONL** (JSON Lines) — un objet 
 
 ## Gestion du `system` prompt
 
-Le chat template natif de Mistral v0.3 ne supporte pas le rôle `system` en position autonome dans la structure `[INST]`. Le pipeline d'ingestion doit **fusionner le system dans le premier message user** :
+Le chat template natif de Qwen2 supporte le rôle `system` nativement. Aucun traitement spécifique n'est nécessaire — le pipeline d'ingestion conserve les messages tels quels :
 
 ```
-[INST] {system_content}\n\n{user_content_1} [/INST] {assistant_content_1}</s>
+<|im_start|>system\n{system_content}<|im_end|>\n<|im_start|>user\n{user_content_1}<|im_end|>\n<|im_start|>assistant\n{assistant_content_1}<|im_end|>
 ```
 
-Cette fusion est effectuée automatiquement par `mistral_common` et par le chat template Axolotl `mistral_v1`. Le corpus source peut conserver le champ `system` — la transformation est appliquée au moment du preprocessing Axolotl.
+Le chat template Axolotl `qwen` gère nativement les rôles system/user/assistant. Aucune fusion n'est requise.
 
 ---
 
@@ -129,6 +129,6 @@ Session RP 3 tours avec system prompt :
 ## Références
 
 - [Axolotl — Dataset formats : chat_template](https://docs.axolotl.ai/docs/dataset-formats/conversation.html)
-- [Axolotl — exemple QLoRA Mistral](https://github.com/OpenAccess-AI-Collective/axolotl/blob/main/examples/mistral/qlora.yml)
+- [Axolotl — exemple QLoRA Qwen2](https://github.com/OpenAccess-AI-Collective/axolotl/blob/main/examples/qwen2/qlora.yml)
 - [Together.ai — Data Preparation](https://docs.together.ai/docs/fine-tuning-data-preparation)
-- [Mistral v0.3 — chat template discussion](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3/discussions/37)
+- [Qwen2 chat template — HF docs](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/blob/main/chat_template.txt)

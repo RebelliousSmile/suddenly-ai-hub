@@ -34,7 +34,7 @@ Publier le modèle en open source, créer une communauté d'utilisateurs et enco
 
 ### État actuel (fin Phase 6)
 - ✅ API en production (99.9% uptime)
-- ✅ Modèle Mixtral 8x7B fine-tuned
+- ✅ Modèle Qwen2.5-14B fine-tuned
 - ✅ Performance : PPL < 4, Qualité ≥85%
 - ✅ Coût/inference : <$0.0005
 
