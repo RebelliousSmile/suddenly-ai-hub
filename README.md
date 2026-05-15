@@ -6,51 +6,95 @@
 
 Trained language models specialized in French roleplay. They understand scene descriptions, NPC dialogue, and player actions natively — without complex prompting.
 
-## Using the models
-
-### Python
+## Quick Start
 
 ```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, LoraConfig, get_linear_schedule_with_warmup, BitsAndBytesConfig
+import torch
 
+# 1. Load base model + LoRA adapter for your chosen universe
+model_id = "suddenly-ai-hub/cyberpunk-dm"  # see model registry below
+tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(
-    "models/your-model",
-    torch_dtype="auto",
-    device_map="auto"
+    model_id,
+    torch_dtype=torch.float16,
+    device_map="auto",
+    use_auth_token=False  # local path or HF token
 )
-tokenizer = AutoTokenizer.from_pretrained("models/your-model")
 
-inputs = tokenizer("Le groupe arrive devant la porte enchantée.", return_tensors="pt").to(model.device)
+# 2. Run inference
+prompt = "Le groupe arrive devant la porte enchantée."
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 outputs = model.generate(**inputs, max_new_tokens=300, temperature=0.7)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```
 
-### Local inference
+## Model Registry
+
+All trained models are LoRA adapters fine-tuned on French RP dialogues. Browse available models:
 
 ```bash
-# Run the model locally
-python scripts/infer.py --checkpoint models/your-model --prompt "Tu es un PNJ..."
-
-# REST API mode
-python scripts/api.py --checkpoint models/your-model --port 8080
+python scripts/list_models.py
 ```
 
-### System prompt patterns
+**Available universes & roles:**
 
-The model works best with role-specific prompts:
+| Universe | Roles (LoRA adapters) | Description |
+|----------|----------------------|-------------|
+| **cyberpunk** | `dm`, `npc_merchant`, `narrator` | Neon noir, corporate intrigue |
+| **fantasy** | `dm`, `npc_village`, `narrator` | Medieval, magic, dungeons |
+| **horror** | `dm`, `npc_survivor`, `narrator` | Lovecraftian, psychological, dark |
+| **scifi** | `dm`, `npc_officer`, `narrator` | Space opera, dystopian, AI |
+| **seinen** | `dm`, `npc_mentor`, `narrator` | Mature themes, complex drama |
+
+Each universe comes with 3 LoRA variants:
+- **`dm`** — Dungeon Master style (scene description + NPC dialogue + action management)
+- **`npc_*`** — Single character roleplay (specific personality, consistent voice)
+- **`narrator`** — Pure storytelling (descriptive, atmospheric, third-person)
+
+## Using models in your project
+
+### Swap universes at runtime
+
+```python
+# Load base model once, then swap LoRA adapters
+from peft import PeftModel
+
+base_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-7B-Instruct", torch_dtype="auto", device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct")
+
+# Switch to cyberpunk DM
+base_model = PeftModel.from_pretrained(base_model, "models/cyberpunk-dma-adapter/")
+# Switch to fantasy NPC
+base_model = PeftModel.from_pretrained(base_model, "models/fantasy-npc-village-adapter/")
+```
+
+### Context-aware prompting
+
+The model is trained to respect the role context:
 
 ```
-## Maître de jeu (DM)
-Tu es un maître de jeu. Tu décris les scènes, incarnes les PNJ et gères l'action.
-Le joueur dit: "{user_input}"
+## Cyberpunk DM
+Context: Year 2089, Neo-Tokyo district 7. Corporate guards patrol the rain-slicked streets.
+Player: "{user_input}"
 
-## PNJ
-Tu es un marchand cynique dans une taverne cyberpunk. Tu vends des informations, pas des armes.
-Le joueur dit: "{user_input}"
+## Fantasy NPC
+Context: You are a cynical tavern keeper in a medieval fantasy setting. You sell information, not weapons.
+Player: "{user_input}"
 
-## Narrateur
-Tu racontes une scène de jeu. Style sombre, descriptions sensorielles, rythme tendu.
-Le joueur dit: "{user_input}"
+## Horror Narrator
+Context: Describe a scene with sensory details, slow pacing, and mounting dread.
+Player: "{user_input}"
+```
+
+### Local CLI
+
+```bash
+# Quick inference
+python scripts/infer.py --adapter models/cyberpunk-dm --prompt "Le groupe arrive devant la porte..."
+
+# List available adapters
+python scripts/list_models.py
 ```
 
 ## What you can build
