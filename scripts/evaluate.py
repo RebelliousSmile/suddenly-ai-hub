@@ -15,6 +15,7 @@ Each prompt has criteria with keyword lists for PASS/FAIL scoring.
 """
 import argparse
 import json
+import random
 import re
 import sys
 from collections import defaultdict
@@ -67,6 +68,7 @@ def load_model_stacked(
         (adapter2, mult2, "situation"),
         (adapter3, mult3, "voix"),
     ]
+    loaded_names = []
     for adapter_id, mult, axis_name in adapters:
         if mult == 0.0:
             continue
@@ -75,7 +77,9 @@ def load_model_stacked(
             model = PeftModel.from_pretrained(
                 model, str(adapter_path), adapter_name=axis_name
             )
-    model.set_adapter(["univers", "situation", "voix"])
+            loaded_names.append(axis_name)
+    if loaded_names:
+        model.set_adapter(loaded_names)
     return model, tokenizer
 
 
@@ -114,7 +118,12 @@ def extract_criteria_score(output: str, criteria: dict) -> tuple[bool, dict]:
 
     Returns (passed: bool, details: dict) where passed is True only if
     ALL dimensions have at least one keyword match.
+    
+    No criteria = no validation possible → False (reject, don't auto-pass).
     """
+    if not criteria:
+        return False, {}
+    
     output_lower = output.lower()
     details = {}
     all_passed = True
@@ -176,15 +185,17 @@ def score_output(output: str, prompt_data: dict) -> dict:
 
     overall, details = extract_criteria_score(output, criteria)
 
-    # Convert to float scores (match ratio per dimension)
+    # Convert to float scores (match ratio per dimension, capped at 1.0)
     scores = {}
     for dim, d in details.items():
         if dim == "langue":
-            scores[dim] = d.get("matched_count", 0) / 3.0
+            # Normalized against a standard vocabulary of ~27 common French words
+            french_vocab_size = 27
+            scores[dim] = min(d.get("matched_count", 0) / french_vocab_size, 1.0)
         else:
             matched = len(d.get("matched", []))
             expected = len(d.get("expected", []))
-            scores[dim] = matched / max(expected, 1)
+            scores[dim] = min(matched / max(expected, 1), 1.0)
 
     return {
         "pass": overall,
@@ -192,6 +203,28 @@ def score_output(output: str, prompt_data: dict) -> dict:
         "scores": scores,
         "reason": "ok",
     }
+
+
+def generate_mock_response(prompt_data: dict) -> str:
+    """Génère une réponse keyword-matching pour tests TDD.
+
+    Retourne les mots-clés de tous les critères concaténés, suivis
+    de mots français communs pour passer le critère "langue".
+
+    Ex: univers=["épée"] + mots communs → "épée le la dans"
+    → scoring: univers ✅ (épée trouvé), langue ✅ (3+ mots communs)
+
+    DÉTERMINISTE : toujours le même output pour un prompt donné.
+    """
+    criteria = prompt_data.get("criteria", {})
+    words = []
+    for dim, kws in criteria.items():
+        if dim != "langue" and isinstance(kws, list):
+            words.extend(kws)
+    # Passer le critère "langue" : extract_criteria_score()
+    # vérifie la présence de 3+ mots français hardcodés
+    words.extend(["le", "la", "dans"])
+    return " ".join(words) if words else "le la dans"
 
 
 def compute_category_scores(results: list[dict]) -> dict[str, Any]:
@@ -394,8 +427,10 @@ def main():
     # TDD evaluation flags
     parser.add_argument("--baseline", action="store_true",
                        help="Evaluate base model without LoRA (TDD: should FAIL)")
+    parser.add_argument("--mock", action="store_true",
+                       help="Mock evaluation using keyword injection (TDD: should PASS)")
     parser.add_argument("--compare", action="store_true",
-                       help="Compare baseline vs fine-tuned (use with --stack)")
+                       help="Compare baseline vs fine-tuned (use with --stack or --mock)")
 
     args = parser.parse_args()
 
@@ -413,6 +448,7 @@ def main():
     # Initialize for potential comparison
     baseline_results = None
     fine_tuned_results = None
+    mock_results = None
 
     if args.baseline:
         # === TDD STEP 1: Baseline evaluation (should FAIL) ===
@@ -430,6 +466,45 @@ def main():
         if not args.compare:
             print("\n💡 Run with --compare to also evaluate fine-tuned and see the diff")
             return
+
+    if args.mock:
+        # === TDD MOCK MODE: keyword-injection, should PASS ===
+        print(f"\n📋 MOCK MODE (simulation keyword-matching)")
+        print(f"   → Expected: PASS (mock responses inject all criteria keywords)")
+        print("-" * 70)
+
+        mock_results = []
+        for data in test_data:
+            output = generate_mock_response(data)
+            score = score_output(output, data)
+            mock_results.append({
+                "id": data["id"],
+                "prompt": data["prompt"],
+                "output": output,
+                "criteria": data.get("criteria", {}),
+                "score": score,
+                "metadata": {
+                    "univers": data.get("univers", ""),
+                    "situation": data.get("situation", ""),
+                    "voice": data.get("voice", ""),
+                    "category": data.get("category", ""),
+                }
+            })
+        print_results(mock_results, "Mock Evaluation (should PASS)")
+
+        if args.compare:
+            if baseline_results is not None:
+                run_compare(baseline_results, mock_results)
+            elif mock_results:
+                # --mock --compare sans --baseline : auto-lance baseline
+                print(f"\n📋 Running baseline for comparison...")
+                model_b, tokenizer_b = load_base_model(args.base)
+                baseline_results = run_evaluation(
+                    model_b, tokenizer_b, test_data, mode="baseline",
+                    max_new_tokens=args.max_new_tokens, temperature=args.temperature,
+                )
+                run_compare(baseline_results, mock_results)
+        return
 
     if args.stack:
         if not args.adapter_1 or not args.adapter_2 or not args.adapter_3:
@@ -463,22 +538,20 @@ def main():
                 max_new_tokens=args.max_new_tokens, temperature=args.temperature,
             )
 
-        if fine_tuned_results is None:
-            print(f"\n📋 Evaluating fine-tuned model for comparison...")
-            if not args.stack:
-                parser.error("--compare requires --stack")
-            model, tokenizer = load_model_stacked(
-                args.adapter_1, args.adapter_2, args.adapter_3,
-                args.multiplier_1, args.multiplier_2, args.multiplier_3,
-            )
-            fine_tuned_results = run_evaluation(
-                model, tokenizer, test_data, mode="stacked",
-                max_new_tokens=args.max_new_tokens, temperature=args.temperature,
-            )
-            print_results(fine_tuned_results, "Fine-Tuned Evaluation (should PASS)")
-
-        if baseline_results and fine_tuned_results:
+        if fine_tuned_results is not None:
+            # Compare baseline vs fine-tuned (--stack)
             run_compare(baseline_results, fine_tuned_results)
+        elif mock_results is not None:
+            # Compare baseline vs mock (--mock) — should not reach here
+            # due to mock's early return, but safety net
+            run_compare(baseline_results, mock_results)
+        else:
+            # --compare with --baseline but no --stack/--mock
+            # Just show baseline results (the TDD "should FAIL" step)
+            print("\n💡 No fine-tuned model to compare against.")
+            print("   Add --mock for TDD comparison, or --stack + adapters for LoRA.")
+            print("   Showing baseline results only:")
+            print_results(baseline_results, "Baseline (comparison target)")
 
 
 if __name__ == "__main__":

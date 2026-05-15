@@ -11,18 +11,35 @@ Modes d'exécution :
   3. --mode simulate  → réponses fictives pour tester le pipeline
 
 Usage :
-  python evaluate_lora.py --mode local
-  python evaluate_lora.py --mode api --provider together --model suddenly-7b-lora
-  python evaluate_lora.py --mode simulate --output reports/
+  python evaluation/evaluate_lora.py --mode local
+  python -m evaluation.evaluate_lora --mode api --provider together
+  python evaluation/evaluate_lora.py --mode simulate --output reports/
 """
 
-import argparse
-import json
-import csv
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
+
+# --- Auto-load .env if present ---
+_env_path = Path(__file__).resolve().parents[1] / ".env"
+if _env_path.exists():
+    from dotenv import load_dotenv
+    load_dotenv(_env_path, override=True)
+del _env_path
+
+# Ensure project root is on sys.path so `from evaluation.providers` works
+# regardless of whether the script is run as:
+#   python evaluation/evaluate_lora.py
+#   python -m evaluation.evaluate_lora
+_project_root = Path(__file__).resolve().parents[1]
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+del _project_root
+
+import argparse
+import csv
+import json
+from datetime import datetime
 from typing import Optional
 
 # --- Configuration ---
@@ -90,64 +107,8 @@ def get_response_local(prompt: dict, model: str = "suddenly-7b",
         return None
 
 
-def get_response_together(prompt: dict, api_key: str, model: str = "Qwen/Qwen2.5-7B-Instruct",
-                          temperature: float = 0.7, max_tokens: int = 1024) -> Optional[str]:
-    """Envoie le prompt à l'API Together.ai."""
-    import urllib.request
-
-    url = "https://api.together.xyz/v1/chat/completions"
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt["prompt"]}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=data,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST"
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read())
-            return result["choices"][0]["message"]["content"]
-    except Exception as e:
-        print(f"  [✗] Erreur Together.ai pour {prompt['id']} : {e}")
-        return None
-
-
-def get_response_fireworks(prompt: dict, api_key: str, model: str = "accounts/fireworks/models/qwen2.5-7b-instruct",
-                           temperature: float = 0.7, max_tokens: int = 1024) -> Optional[str]:
-    """Envoie le prompt à l'API Fireworks.ai."""
-    import urllib.request
-
-    url = "https://api.fireworks.ai/inference/v1/chat/completions"
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt["prompt"]}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=data,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST"
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read())
-            return result["choices"][0]["message"]["content"]
-    except Exception as e:
-        print(f"  [✗] Erreur Fireworks.ai pour {prompt['id']} : {e}")
-        return None
+# Provider abstraction — replaced duplicated get_response_together / get_response_fireworks
+# All provider calls go through evaluation.providers.get_provider()
 
 
 def get_response_simulate(prompt: dict) -> str:
@@ -515,13 +476,26 @@ def main():
             if args.mode == "local":
                 response = get_response_local(prompt, args.model, args.temperature)
             elif args.mode == "api":
-                if not args.api_key:
-                    print("❌ --api-key requis pour le mode API")
-                    sys.exit(1)
-                if args.provider == "together":
-                    response = get_response_together(prompt, args.api_key, args.model, args.temperature)
-                elif args.provider == "fireworks":
-                    response = get_response_fireworks(prompt, args.api_key, args.model, args.temperature)
+                from evaluation.providers import get_provider, ChatMessage, CompletionRequest
+
+                try:
+                    provider = get_provider(args.provider)
+                except ValueError as e:
+                    print(f"  [✗] Erreur provider : {e}")
+                    response = "[Échec provider]"
+                else:
+                    try:
+                        request = CompletionRequest(
+                            model=args.model,
+                            messages=[ChatMessage(role="user", content=prompt["prompt"])],
+                            temperature=args.temperature,
+                        )
+                        resp = provider.chat_completion(request)
+                        response = resp.content
+                        print(f"  [✓] Réponse collectée via {provider.name} ({len(response)} caractères)")
+                    except Exception as e:
+                        print(f"  [✗] Erreur API {provider.name} : {e}")
+                        response = "[Échec API]"
             elif args.mode == "simulate":
                 response = get_response_simulate(prompt)
 

@@ -1,6 +1,6 @@
 # Analyse des Issues — suddenly-ai-hub
 
-**2026-05-15** — Dernière mise à jour — **20 issues fermées, 0 ouvertes**
+**2026-05-15** — Dernière mise à jour — **20 issues fermées, 6 ouvertes**
 
 ---
 
@@ -13,7 +13,7 @@
 | #44 | Préparer l'environnement Python | venv-together avec SDK + pip installées | ✅ Terminé |
 | #45 | Tester l'API Together.ai | Upload + FT job complété, benchmark pivot Fireworks | ✅ Terminé |
 | #46 | Dataset test minimal | 10 exemples validés, uploadé, utilisé dans FT | ✅ Terminé |
-| #47 | Scrape La Cour d'Obéron | Mis de côté (forum en refonte, pas accessible) | ⏸️ En attente |
+| #47 | Scrape La Cour d'Obéron | Mis de côté (décision éthique : pas de scraping de forums PB) | ⏸️ Archivé |
 | #48 | Nettoyage/anonymisation des données | Pipeline prêt, pas de données à traiter | ⏸️ En attente |
 | #49 | Convertir en JSONL Axolotl | Format validé sur dataset test, pas de corpus réel | ⏸️ En attente |
 | #50 | Configurer Axolotl | 4 configs créées (suddenly-7b, 13b, lora-situation, lora-univers) | ✅ Terminé |
@@ -27,7 +27,7 @@
 | # | Issue | Résultat | Biblio |
 |---|-------|----------|--------|
 | #29 | [SPIKE] Archi LoRA 2 axes + pre-merge | Architecture validée et documentée | `lora-strategy.md` |
-| #33 | [SPIKE] Taxonomie genres/situations | Taxonomie validée et documentée | `taxonomia.md` |
+| #33 | [SPIKE] Taxonomie genres/situations | Taxonomie validée et documentée | `taxonomy.md` |
 
 ### Issues fermées en attente (production/features)
 
@@ -60,26 +60,36 @@ Ces issues définissent des features futures à lancer **après** que le pipelin
 | `lora-strategy.md` | Architecture LoRA 2 axes, fusion offline, fallback hierarchy, seuils |
 | `taxonomy.md` | 14 genres + 6 situations, mécanisme de tagging |
 | `benchmark-fireworks-vs-together.md` | Comparatif prix/inférence/serverless, recommandation hybride |
+| `sources-litteraires.md` | Guide juridique & sources légales FR (DP vie+70, Wikisource, Gallica) |
 
 ---
 
 ## 📋 État des dépendances restantes
 
-### Pipeline de données (en attente de corpus réel)
+### Pipeline de données (re-direction stratégique)
+
+**Décision 2026-05-15** : Arrêt du scraping de forums Pavé de France (PB). Raison éthique — les forums de création privée ne sont pas des sources ouvertes. Direction actuelle : **sources littéraires + Visual Novels publics**.
+
 ```
-#47 (Scrape) → #48 (Nettoyage) → #49 (Conversion) → #51 (Fine-tuning)
-  ⏸️            ⏸️              ⏸️              ⏸️
+#62 (Horreur — pipeline pilote) → #63 (Genres — industrialisation) → #64 (Cyberpunk — traduction)
+   ⏸️                              ⏸️                                  ⏸️
 ```
 
-**Blocage** : Aucun corpus réel disponible. Options :
-- Corpus synthétique généré par LLM
-- Forums RP francophones publics
-- Logs Discord/IRC publics
+**Sources prioritaires actuelles** :
 
-**Options corpus identifiées** :
-- **#58 Ren'Py** → Visual novels Ren'Py publics GitHub (2M tokens est.)
-- **#59 Playwright** → Scraping sites modernes JS (completé, lourd)
-- **#60 Google Books** → Livres domaine public FR (20M tokens est., style uniquement)
+| Source | Type | Volume est. | Statut juridique |
+|--------|------|-------------|------------------|
+| **Visual Novels Ren'Py** (#58) | Dialogues VN publics GitHub | ~2M tokens | Publics (GitHub releases) |
+| **Classiques FR** (Wikisource/Gallica) | Romans domaine public | ~20M tokens | DP France (†<1955) |
+| **Traductions CC** (#64) | Romans EN → FR (Doctorow, Watts) | ~2M tokens | CC BY-NC-SA (traduit) |
+
+**Sources archivées / non prioritaires** :
+
+| Source | Raison de la mise de côté |
+|--------|--------------------------|
+| **#47 La Cour d'Obéron** | Décision éthique : pas de scraping de forums PB |
+| **#59 Playwright** | Trop lourd, scraping de sites modernes JS |
+| **#60 Google Books** | Déplacé en source secondaire (envisagé si besoin) |
 
 ### Modèle de base (en attente de GPU)
 - Configurations Axolotl : ✅ prêtes
@@ -95,3 +105,17 @@ Ces issues définissent des features futures à lancer **après** que le pipelin
 ### Production/Features (hors chemin critique)
 - Toutes les features (hub beta, discovery, rollout, etc.) en attente du modèle FT opérationnel
 - Pas de dépendance entre elles — à lancer séquentiellement après FT
+
+---
+
+## 🆕 Issues ouvertes
+
+| # | Issue | Description |
+|---|-------|-------------|
+| #57 | Tests de validation LoRA par genre/situation | Script Python + prompts, scoring 1-5, rapport JSON/CSV |
+| #58 | Scrapper Visual Novels Ren'Py depuis GitHub | Collecte dialogues VN publics (~2M tokens) |
+| #59 | Scraping JavaScript avec Playwright | Sites modernes JS (mis de côté, trop lourd) |
+| #62 | Phase 1 : Pipeline pilote Horreur | Téléchargement ePub → nettoyage → classification Ollama → chunking → audit |
+| #63 | Phase 2 : Industrialisation corpus genres | Répéter pipeline Horreur pour SF, Fantasy, Polar, Steampunk, Aventure |
+| #64 | Phase 3 : LoRA Cyberpunk via traduction | Workflow curation EN → traduction Mistral/Ollama → export JSONL |
+| #65 | Répartition provider Together.ai vs Fireworks.ai | Stratégie hybride : Together inférence, Fireworks batch/FT/embeddings |

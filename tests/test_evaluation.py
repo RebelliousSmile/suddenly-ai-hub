@@ -11,6 +11,8 @@ from evaluate import (
     score_output,
     load_test_data,
     compute_category_scores,
+    run_compare,
+    generate_mock_response,
 )
 
 
@@ -116,10 +118,10 @@ class TestExtractCriteriaScore:
         assert passed is False  # langue + univers should fail
 
     def test_empty_criteria(self):
-        """Empty criteria dict — no dimension check possible."""
+        """Empty criteria dict — no dimension check possible → FAIL (reject, don't auto-pass)."""
         output = "test"
         passed, details = extract_criteria_score(output, {})
-        assert passed is True  # No criteria = vacuous truth
+        assert passed is False  # No criteria = reject, not auto-pass
 
     def test_case_insensitive(self):
         """Matching should be case-insensitive."""
@@ -164,7 +166,7 @@ class TestScoreOutput:
         assert result["reason"] == "no_criteria"
 
     def test_score_returns_float_values(self):
-        """Scores should be float 0.0-1.0."""
+        """Scores should be float 0.0-1.0 (capped)."""
         output = "Le chevalier brandit son épée."
         prompt_data = {
             "criteria": {
@@ -177,7 +179,7 @@ class TestScoreOutput:
         result = score_output(output, prompt_data)
         for dim, score in result["scores"].items():
             assert isinstance(score, float) or isinstance(score, int)
-            assert 0.0 <= score <= 2.0  # Could exceed 1.0 if matched_count > expected
+            assert 0.0 <= score <= 1.0  # Scores are now capped at 1.0
 
 
 class TestComputeCategoryScores:
@@ -342,6 +344,188 @@ class TestCyberpunkWorld:
         assert details["univers"]["pass"] is False  # No cyberpunk keywords
 
 
+class TestLangueScoreNormalization:
+    """Test that langue scores are properly normalized and capped."""
+
+    def test_langue_score_normalization(self):
+        """Even with many French words, score should be normalized."""
+        # Text with many common French words
+        output = "Le chat noir est sur la table en attendant de manger avec de la soupe dans un bol."
+        prompt_data = {
+            "criteria": {
+                "univers": ["chat"],
+                "langue": ["fr"],
+            }
+        }
+        result = score_output(output, prompt_data)
+        assert "langue" in result["scores"]
+        # ~14 common French words found, normalized to 14/27 ≈ 0.52, not > 1.0
+        assert 0.0 <= result["scores"]["langue"] <= 1.0
+
+    def test_langue_score_capped_at_one(self):
+        """Score should not exceed 1.0 even with many matches."""
+        # Text with lots of common French words
+        output = "Le la les de du des et est dans avec sur pour que une ce son sa ses un il elle ils elles au aux en ne pas plus tout comme le la les de du des et est dans avec sur."
+        prompt_data = {
+            "criteria": {
+                "univers": ["mot"],
+                "langue": ["fr"],
+            }
+        }
+        result = score_output(output, prompt_data)
+        assert result["scores"]["langue"] <= 1.0
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])
+
+
+class TestGenerateMockResponse:
+    """Test mock response generation for TDD."""
+
+    def test_mock_contains_all_keywords(self):
+        """The mock should include ALL keywords from ALL criteria."""
+        prompt_data = {
+            "criteria": {
+                "univers": ["épée", "lumière", "royaume"],
+                "situation": ["combat", "attaque"],
+                "voix": ["solennel", "grave"],
+                "langue": ["fr"],
+            }
+        }
+        output = generate_mock_response(prompt_data)
+        # Univers keywords
+        assert "épée" in output
+        assert "lumière" in output
+        assert "royaume" in output
+        # Situation keywords
+        assert "combat" in output
+        assert "attaque" in output
+        # Voix keywords
+        assert "solennel" in output
+        assert "grave" in output
+        # langue keywords should NOT be included
+        assert "fr" not in output.split()
+
+    def test_mock_contains_french_common_words(self):
+        """Mock should include 'le', 'la', 'dans' to pass langue criterion."""
+        prompt_data = {
+            "criteria": {
+                "univers": ["épée"],
+                "situation": ["combat"],
+                "voix": ["solennel"],
+                "langue": ["fr"],
+            }
+        }
+        output = generate_mock_response(prompt_data)
+        assert "le" in output
+        assert "la" in output
+        assert "dans" in output
+
+    def test_mock_with_empty_criteria(self):
+        """Empty criteria → should return just 'le la dans'."""
+        prompt_data = {"criteria": {}}
+        output = generate_mock_response(prompt_data)
+        assert output == "le la dans"
+
+    def test_mock_deterministic(self):
+        """Same prompt_data → same output."""
+        prompt_data = {
+            "criteria": {
+                "univers": ["dragon"],
+                "situation": ["vol"],
+                "voix": ["terrible"],
+                "langue": ["fr"],
+            }
+        }
+        output1 = generate_mock_response(prompt_data)
+        output2 = generate_mock_response(prompt_data)
+        assert output1 == output2
+
+
+class TestMockPassesAllPrompts:
+    """Integration test: mock must pass ALL 50 real prompts."""
+
+    def test_mock_passes_all_real_prompts(self):
+        """All 50 prompts from test-prompts.jsonl should PASS with mock."""
+        test_data = load_test_data("data/test-prompts.jsonl")
+        assert len(test_data) == 50
+
+        passed = 0
+        for data in test_data:
+            output = generate_mock_response(data)
+            result = score_output(output, data)
+            if result["pass"]:
+                passed += 1
+            else:
+                # Debug: show which prompt failed
+                print(f"\n  FAILED: {data.get('id')} - {data.get('category', '?')} "
+                      f"({data.get('univers', '?')})")
+                print(f"    Output: {output[:80]}")
+                print(f"    Criteria: {data.get('criteria', {})}")
+                print(f"    Score: {result}")
+
+        assert passed == 50, f"Only {passed}/50 prompts passed mock evaluation"
+
+    def test_mock_scores_are_valid_floats(self):
+        """All mock score values should be valid floats 0.0-1.0."""
+        test_data = load_test_data("data/test-prompts.jsonl")
+        for data in test_data[:10]:  # Sample 10
+            output = generate_mock_response(data)
+            result = score_output(output, data)
+            for dim, score in result["scores"].items():
+                assert 0.0 <= score <= 1.0, f"Score {dim}={score} out of range"
+
+
+class TestMockVsBaselineCompare:
+    """Test mock vs baseline comparison flow."""
+
+    def test_run_compare_with_mock_results(self):
+        """run_compare should work when called with mock results."""
+        # Simulate mock results (all pass)
+        test_data = load_test_data("data/test-prompts.jsonl")
+        mock_results = []
+        for data in test_data[:5]:  # Sample 5 for speed
+            output = generate_mock_response(data)
+            score = score_output(output, data)
+            mock_results.append({
+                "id": data["id"],
+                "prompt": data["prompt"],
+                "output": output,
+                "criteria": data.get("criteria", {}),
+                "score": score,
+                "metadata": {
+                    "univers": data.get("univers", ""),
+                    "situation": data.get("situation", ""),
+                    "voice": data.get("voice", ""),
+                    "category": data.get("category", ""),
+                }
+            })
+
+        # Simulate baseline results (all fail)
+        baseline_results = []
+        for data in test_data[:5]:
+            score = score_output("generic baseline output", data)
+            baseline_results.append({
+                "id": data["id"],
+                "prompt": data["prompt"],
+                "output": "generic baseline output",
+                "criteria": data.get("criteria", {}),
+                "score": score,
+                "metadata": {
+                    "univers": data.get("univers", ""),
+                    "situation": data.get("situation", ""),
+                    "voice": data.get("voice", ""),
+                    "category": data.get("category", ""),
+                }
+            })
+
+        # run_compare should execute without error
+        # (it prints to stdout, we just verify it doesn't crash)
+        run_compare(baseline_results, mock_results)
+
+        # Verify baseline failed, mock passed
+        b_passed = sum(1 for r in baseline_results if r["score"]["pass"])
+        m_passed = sum(1 for r in mock_results if r["score"]["pass"])
+        assert b_passed < m_passed, "Baseline should have fewer passes than mock"
