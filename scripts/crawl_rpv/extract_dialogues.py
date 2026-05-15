@@ -228,19 +228,26 @@ class RenPyCorpusBuilder:
             "tokens_generated": 0
         }
     
-    def process_repo(self, repo: Dict) -> List[Dict]:
+    def process_repo(self, repo: Dict, genre: str = "inconnu", situation: str = "inconnu") -> List[Dict]:
         """Traite un repo Ren'Py et retourne les conversations extraites."""
         repo_name = repo.get("name", "unknown")
         rpy_files = repo.get("rpy_files", [])
         
         print(f"\n📁 Traitement du repo {repo_name} ({len(rpy_files)} fichiers .rpy)")
         
-        for file_info in rpy_files[:5]:  # Limiter à 5 fichiers par repo
+        # Traiter les fichiers .rpy — favoriser les scripts (priorité à script, dialogue, action)
+        sorted_files = sorted(rpy_files, key=lambda f: (
+            0 if any(k in f["path"].lower() for k in ["script", "dialogue", "act", "chapter", "scene"])
+            else 1,
+            f["size"]
+        ))
+        
+        for file_info in sorted_files[:20]:  # Traiter jusqu'à 20 fichiers par repo
             file_path = file_info["path"]
             file_url = file_info["url"]
             
             try:
-                content = self._download_file(file_url)
+                content = self._download_file(file_url, repo_name, file_path)
                 if not content:
                     print(f"   ⏭️  {file_path}: fichier trop gros ou inaccessible")
                     continue
@@ -256,7 +263,8 @@ class RenPyCorpusBuilder:
                 
                 print(f"   ✅ {parsed['total_dialogues']} dialogues, {len(parsed['total_characters'])} personnages")
                 
-                # Convertir les scènes
+                # Convertir les scènes avec genre/situation
+                self.converter = DialogueConverter(genre, situation)  # Mettre à jour pour ce repo
                 for scene in parsed["scenes"]:
                     if len(scene["dialogues"]) < 2:  # Minimun 2 dialogues
                         continue
@@ -278,13 +286,41 @@ class RenPyCorpusBuilder:
         
         return self.corpus[-len(rpy_files):]
     
-    def _download_file(self, file_url: str) -> Optional[str]:
-        """Télécharge le contenu d'un fichier GitHub."""
+    def _download_file(self, file_url: str, repo_name: str = "", file_path: str = "") -> Optional[str]:
+        """Télécharge le contenu d'un fichier GitHub.
+
+        Handles both raw.githubusercontent.com URLs and GitHub API blob URLs
+        (which return JSON with base64-encoded content).
+        For large files (>1MB), uses raw.githubusercontent.com as fallback.
+        """
+        import base64
         try:
-            response = requests.get(file_url)
+            # For large files, use raw.githubusercontent.com directly
+            if repo_name and file_path:
+                raw_url = f"https://raw.githubusercontent.com/{repo_name}/main/{file_path}"
+                response = requests.get(raw_url, timeout=60)
+                if response.status_code == 200 and len(response.text) > 1000:
+                    return response.text
+                # If raw URL doesn't work, try 'master' branch
+                raw_url = f"https://raw.githubusercontent.com/{repo_name}/master/{file_path}"
+                response = requests.get(raw_url, timeout=60)
+                if response.status_code == 200 and len(response.text) > 1000:
+                    return response.text
+
+            # Otherwise use the provided URL (GitHub API blob or raw)
+            response = requests.get(file_url, timeout=30)
             response.raise_for_status()
+
+            # If it looks like a GitHub API blob response (JSON with base64 content)
+            if file_url.startswith("https://api.github.com"):
+                data = response.json()
+                content_b64 = data.get("content", "")
+                if content_b64:
+                    return base64.b64decode(content_b64).decode("utf-8", errors="replace")
+
+            # If it's a raw URL, return text directly
             return response.text
-        except requests.exceptions.RequestException:
+        except (requests.exceptions.RequestException, ValueError, KeyError):
             return None
     
     def save_corpus(self, output_path: str, min_tokens: int = 100):
