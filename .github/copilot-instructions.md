@@ -27,6 +27,7 @@ All instructions and information above are willing to be up to date, but always 
 <aidd_project_memory>
 [aidd_docs/memory/DECISIONS.md](../aidd_docs/memory/DECISIONS.md)
 [aidd_docs/memory/LESSONS.md](../aidd_docs/memory/LESSONS.md)
+[aidd_docs/memory/benchmark-fireworks-vs-together.md](../aidd_docs/memory/benchmark-fireworks-vs-together.md)
 [aidd_docs/memory/lessons_sessions_1-2.md](../aidd_docs/memory/lessons_sessions_1-2.md)
 [aidd_docs/memory/tracking.md](../aidd_docs/memory/tracking.md)
 </aidd_project_memory>
