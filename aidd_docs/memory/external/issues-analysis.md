@@ -76,6 +76,11 @@ Ces issues définissent des features futures à lancer **après** que le pipelin
 - Forums RP francophones publics
 - Logs Discord/IRC publics
 
+**Options corpus identifiées** :
+- **#58 Ren'Py** → Visual novels Ren'Py publics GitHub (2M tokens est.)
+- **#59 Playwright** → Scraping sites modernes JS (completé, lourd)
+- **#60 Google Books** → Livres domaine public FR (20M tokens est., style uniquement)
+
 ### Modèle de base (en attente de GPU)
 - Configurations Axolotl : ✅ prêtes
 - Dataset test : ✅ validé
