@@ -1,32 +1,31 @@
 #!/usr/bin/env python3
 """Evaluation pipeline for Suddenly AI Hub stacked LoRA models.
 
+TDD Strategy: baseline (modèle brut) doit échouer sur les critères RP,
+le modèle fine-tuned doit passer.
+
 Usage:
-  python scripts/evaluate.py --test-data data/test-prompts.jsonl
-  python scripts/evaluate.py --test-data data/test-prompts.jsonl --stack \
+  python scripts/evaluate.py --baseline --test-data data/test-prompts.jsonl
+  python scripts/evaluate.py --stack --compare \
     --adapter-1 fantasy-medievale --multiplier-1 1.0 \
     --adapter-2 combat            --multiplier-2 1.0 \
     --adapter-3 narquois          --multiplier-3 1.0
-  python scripts/evaluate.py --full  # Run all combinations
 
-Each prompt is scored on:
-  - relevance: Does the output match the prompt intent?
-  - style: Does the output match the requested style/voice?
-  - immersion: Does the output feel like authentic RP?
-  - creativity: Is the output interesting and non-generic?
+Each prompt has criteria with keyword lists for PASS/FAIL scoring.
 """
 import argparse
 import json
+import re
 import sys
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-# Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 
 def load_test_data(path: str) -> list[dict]:
-    """Load JSONL test prompts."""
+    """Load JSONL test prompts with criteria."""
     prompts = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
@@ -80,6 +79,17 @@ def load_model_stacked(
     return model, tokenizer
 
 
+def load_base_model(base_model: str = "Qwen/Qwen2.5-7B-Instruct"):
+    """Load the base model without any LoRA adapters."""
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    model = AutoModelForCausalLM.from_pretrained(
+        base_model, torch_dtype="auto", device_map="auto"
+    )
+    return model, tokenizer
+
+
 def generate_answer(
     model, tokenizer, prompt: str, max_new_tokens: int = 300, temperature: float = 0.7
 ) -> str:
@@ -99,142 +109,265 @@ def generate_answer(
     return result.strip()
 
 
-def generate_baseline(prompt: str, max_new_tokens: int = 300, temperature: float = 0.7) -> str:
-    """Generate from base model without any LoRA."""
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+def extract_criteria_score(output: str, criteria: dict) -> tuple[bool, dict]:
+    """Score an output against criteria keywords (PASS/FAIL per dimension).
 
-    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct")
-    model = AutoModelForCausalLM.from_pretrained(
-        "Qwen/Qwen2.5-7B-Instruct", torch_dtype="auto", device_map="auto"
-    )
-    return generate_answer(model, tokenizer, prompt, max_new_tokens, temperature)
-
-
-def score_output(output: str, prompt_data: dict, category: str) -> dict[str, float]:
-    """Score an output against the expected dimensions.
-
-    In production, this would use LLM-as-judge or human raters.
-    For now, return placeholder scores that can be replaced.
-
-    Scores are 0.0–1.0 for each dimension.
+    Returns (passed: bool, details: dict) where passed is True only if
+    ALL dimensions have at least one keyword match.
     """
-    # Placeholder: real implementation needs LLM-as-judge or human evaluation
-    # This is a template for the scoring framework
+    output_lower = output.lower()
+    details = {}
+    all_passed = True
+
+    for dimension, keywords in criteria.items():
+        if dimension == "langue":
+            # Simple French detection: common French words
+            french_words = {"le", "la", "les", "de", "du", "des", "et", "est",
+                           "dans", "avec", "sur", "pour", "que", "une", "ce",
+                           "son", "sa", "ses", "un", "il", "elle", "ils", "elles",
+                           "au", "aux", "en", "ne", "pas", "plus", "tout", "comme"}
+            found = sum(1 for w in french_words if w in output_lower)
+            matched = found >= 3  # At least 3 common French words
+            details[dimension] = {"pass": matched, "matched_count": found}
+            if not matched:
+                all_passed = False
+            continue
+
+        # For univers/situation/voix: case-insensitive substring match
+        matched_keywords = []
+        for kw in keywords:
+            if kw.lower() in output_lower:
+                matched_keywords.append(kw)
+
+        matched = len(matched_keywords) >= max(1, len(keywords) // 3)  # >= 33% match
+        details[dimension] = {
+            "pass": matched,
+            "matched": matched_keywords,
+            "expected": keywords,
+        }
+        if not matched:
+            all_passed = False
+
+    return all_passed, details
+
+
+def score_output(output: str, prompt_data: dict) -> dict:
+    """Score an output using criteria from the prompt data.
+
+    Returns dict with:
+      - pass: bool, overall PASS/FAIL
+      - details: dict per dimension
+      - scores: float scores per dimension (0.0-1.0)
+    """
+    criteria = prompt_data.get("criteria", {})
+    if not criteria:
+        # Fallback: no criteria, return neutral
+        return {
+            "pass": False,
+            "details": {},
+            "scores": {
+                "univers": 0.0,
+                "situation": 0.0,
+                "voix": 0.0,
+                "langue": 0.0,
+            },
+            "reason": "no_criteria"
+        }
+
+    overall, details = extract_criteria_score(output, criteria)
+
+    # Convert to float scores (match ratio per dimension)
+    scores = {}
+    for dim, d in details.items():
+        if dim == "langue":
+            scores[dim] = d.get("matched_count", 0) / 3.0
+        else:
+            matched = len(d.get("matched", []))
+            expected = len(d.get("expected", []))
+            scores[dim] = matched / max(expected, 1)
+
     return {
-        "relevance": 0.0,    # Matches prompt intent
-        "style": 0.0,        # Matches requested style/voice
-        "immersion": 0.0,    # Authentic RP quality
-        "creativity": 0.0,   # Non-generic, interesting
-        "length_score": 0.0, # Adequate length (30–300 chars ideal)
+        "pass": overall,
+        "details": details,
+        "scores": scores,
+        "reason": "ok",
     }
 
 
-def compute_category_scores(scores: list[dict]) -> dict[str, float]:
-    """Aggregate scores across a category."""
-    import numpy as np
-    if not scores:
+def compute_category_scores(results: list[dict]) -> dict[str, Any]:
+    """Aggregate scores across a category.
+
+    Returns dict with counts, pass rates, and mean scores per dimension.
+    """
+    if not results:
         return {}
-    result = {}
-    keys = scores[0].keys()
-    for key in keys:
-        vals = [s[key] for s in scores]
-        result[f"{key}_mean"] = np.mean(vals)
-        result[f"{key}_std"] = np.std(vals)
-        result[f"{key}_min"] = np.min(vals)
-        result[f"{key}_max"] = np.max(vals)
-    return result
+
+    count = len(results)
+    passed = sum(1 for r in results if r["score"]["pass"])
+    pass_rate = passed / count
+
+    # Average scores per dimension
+    dims = ["univers", "situation", "voix", "langue"]
+    avg_scores = {}
+    for dim in dims:
+        vals = [r["score"]["scores"].get(dim, 0.0) for r in results]
+        avg_scores[dim] = sum(vals) / max(len(vals), 1)
+
+    return {
+        "count": count,
+        "passed": passed,
+        "failed": count - passed,
+        "pass_rate": pass_rate,
+        "avg_scores": avg_scores,
+    }
 
 
 def run_evaluation(
-    model, tokenizer, test_data: list[dict], max_new_tokens: int = 300,
-    temperature: float = 0.7, mode: str = "stacked",
-) -> dict:
+    model, tokenizer, test_data: list[dict], mode: str = "model",
+    max_new_tokens: int = 300, temperature: float = 0.7,
+) -> list[dict]:
     """Run full evaluation pipeline.
 
-    Returns results dict with per-prompt and per-category scores.
+    Returns list of result dicts with prompt, output, and score.
     """
     results = []
-    prompts = list(test_data)  # Make a copy
 
-    for i, data in enumerate(prompts):
+    for i, data in enumerate(test_data):
         prompt_text = data["prompt"]
-        data["output"] = generate_answer(
-            model, tokenizer, prompt_text, max_new_tokens, temperature
-        )
-        data["scores"] = score_output(data["output"], data, data.get("category", "unknown"))
-        results.append(data)
+        print(f"  [{i+1}/{len(test_data)}] Evaluating: {data.get('category', '?')} "
+              f"({data.get('univers', '?')} × {data.get('situation', '?')} × {data.get('voice', '?')})",
+              end="\r")
 
-        # Progress
-        if (i + 1) % 10 == 0:
-            print(f"  Evaluated {i + 1}/{len(prompts)} prompts...")
+        if mode == "baseline":
+            output = generate_answer(model, tokenizer, prompt_text,
+                                     max_new_tokens, temperature)
+        else:
+            output = generate_answer(model, tokenizer, prompt_text,
+                                     max_new_tokens, temperature)
 
+        score = score_output(output, data)
+        results.append({
+            "id": data["id"],
+            "prompt": prompt_text,
+            "output": output,
+            "criteria": data.get("criteria", {}),
+            "score": score,
+            "metadata": {
+                "univers": data.get("univers", ""),
+                "situation": data.get("situation", ""),
+                "voice": data.get("voice", ""),
+                "category": data.get("category", ""),
+            }
+        })
+
+    print()  # newline after progress
     return results
 
 
-def print_results(results: list[dict]):
+def print_results(results: list[dict], label: str = ""):
     """Print formatted evaluation results."""
-    # Per-category aggregation
-    categories: dict[str, list[dict]] = {}
+    print(f"\n{'=' * 70}")
+    if label:
+        print(f"📊 {label}")
+    print('=' * 70)
+
+    # Overall
+    passed = sum(1 for r in results if r["score"]["pass"])
+    total = len(results)
+    print(f"\n  Overall: {passed}/{total} passed ({passed/total*100:.0f}%)")
+
+    # By category
+    by_cat = defaultdict(list)
     for r in results:
-        cat = r.get("category", "unknown")
-        categories.setdefault(cat, []).append(r)
+        by_cat[r["metadata"]["category"]].append(r)
 
-    print("\n" + "=" * 70)
-    print("📊 Evaluation Results by Category")
-    print("=" * 70)
-
-    for cat in sorted(categories.keys()):
-        items = categories[cat]
-        cat_scores = compute_category_scores(
-            [item["scores"] for item in items]
-        )
-        print(f"\n  {cat}:")
-        print(f"    Count: {len(items)}")
-        for key in ["relevance", "style", "immersion", "creativity"]:
-            mean_key = f"{key}_mean"
-            std_key = f"{key}_std"
-            if mean_key in cat_scores:
-                print(f"    {key:12s}: {cat_scores[mean_key]:.3f} ± {cat_scores[std_key]:.3f}")
+    print(f"\n  {'Category':<25} {'Pass':>6} {'Rate':>8} {'Avg Score':>12}")
+    print(f"  {'─' * 25} {'─' * 6} {'─' * 8} {'─' * 12}")
+    for cat in sorted(by_cat.keys()):
+        items = by_cat[cat]
+        cat_passed = sum(1 for r in items if r["score"]["pass"])
+        cat_rate = cat_passed / len(items)
+        avg = sum(r["score"]["scores"].get("univers", 0) +
+                  r["score"]["scores"].get("situation", 0) +
+                  r["score"]["scores"].get("voix", 0) +
+                  r["score"]["scores"].get("langue", 0) for r in items) / len(items)
+        avg /= 4
+        print(f"  {cat:<25} {cat_passed:>6} {cat_rate:>7.0%} {avg:>11.3f}")
 
 
-def run_full_combinations(test_data: list[dict]):
-    """Evaluate all 100 adapter combinations."""
-    adapters = {
-        "univers": [
-            ("fantasy-medievale", 1.0),
-            ("cyberpunk", 1.0),
-        ],
-        "situation": [
-            ("combat", 1.0),
-            ("romance", 1.0),
-        ],
-        "voice": [
-            ("solennel", 1.0),
-            ("narquois", 1.0),
-        ],
-    }
+def run_compare(results_baseline: list[dict], results_fine_tuned: list[dict]):
+    """Compare baseline vs fine-tuned results and print diff/progression."""
+    print(f"\n{'=' * 70}")
+    print("📊 TDD COMPARISON: Baseline vs Fine-Tuned")
+    print('=' * 70)
 
-    combos = []
-    for u in adapters["univers"]:
-        for s in adapters["situation"]:
-            for v in adapters["voice"]:
-                combos.append((u, s, v))
+    # Overall
+    b_passed = sum(1 for r in results_baseline if r["score"]["pass"])
+    ft_passed = sum(1 for r in results_fine_tuned if r["score"]["pass"])
+    b_total = len(results_baseline)
 
-    print(f"Evaluating {len(combos)} combinations on {len(test_data)} prompts...")
-    print(f"Sample output for first 2 combos:")
+    print(f"\n  Baseline:   {b_passed}/{b_total} passed ({b_passed/b_total*100:.0f}%)")
+    print(f"  Fine-tuned: {ft_passed}/{b_total} passed ({ft_passed/b_total*100:.0f}%)")
+    delta = ft_passed - b_passed
+    if delta > 0:
+        print(f"\n  📈 Progression: +{delta} tests passés ({delta/b_total*100:.0f}pp)")
+    elif delta < 0:
+        print(f"\n  📉 Regression: {delta} tests perdus")
+    else:
+        print(f"\n  ➡️  Aucun changement")
 
-    for i, (u, s, v) in enumerate(combos[:2]):
-        print(f"\n  Combo {i + 1}: {u[0]} × {s[0]} × {v[0]}")
-        try:
-            model, tokenizer = load_model_stacked(
-                f"suddenly-{u[0]}", f"suddenly-{s[0]}", f"suddenly-{v[0]}",
-                u[1], s[1], v[1],
-            )
-            sample = generate_answer(model, tokenizer, test_data[0]["prompt"])
-            print(f"    Prompt: {test_data[0]['prompt'][:60]}...")
-            print(f"    Output: {sample[:100]}...")
-        except Exception as e:
-            print(f"    Error: {e}")
+    # Per-category comparison
+    print(f"\n  {'Category':<25} {'Base':>6} {'FT':>6} {'Diff':>6}")
+    print(f"  {'─' * 25} {'─' * 6} {'─' * 6} {'─' * 6}")
+
+    b_by_cat = defaultdict(list)
+    ft_by_cat = defaultdict(list)
+    for r in results_baseline:
+        b_by_cat[r["metadata"]["category"]].append(r)
+    for r in results_fine_tuned:
+        ft_by_cat[r["metadata"]["category"]].append(r)
+
+    for cat in sorted(set(b_by_cat.keys()) | set(ft_by_cat.keys())):
+        b_count = sum(1 for r in b_by_cat.get(cat, []) if r["score"]["pass"])
+        ft_count = sum(1 for r in ft_by_cat.get(cat, []) if r["score"]["pass"])
+        diff = ft_count - b_count
+        marker = "📈" if diff > 0 else ("📉" if diff < 0 else "➡️")
+        print(f"  {cat:<25} {b_count:>6} {ft_count:>6} {diff:>+6} {marker}")
+
+    # Detailed diff for each prompt
+    print(f"\n{'─' * 70}")
+    print("  🔍 DETAILED PROMPT-LEVEL DIFF")
+    print(f"{'─' * 70}")
+
+    ft_by_id = {r["id"]: r for r in results_fine_tuned}
+    for r_b in results_baseline:
+        fid = r_b["id"]
+        r_ft = ft_by_id.get(fid)
+        if not r_ft:
+            continue
+
+        b_status = "✅ PASS" if r_b["score"]["pass"] else "❌ FAIL"
+        ft_status = "✅ PASS" if r_ft["score"]["pass"] else "❌ FAIL"
+
+        # Only show prompts where there's a change
+        if r_b["score"]["pass"] == r_ft["score"]["pass"]:
+            continue
+
+        direction = "✅→❌ REGRESSION" if not r_ft["score"]["pass"] else "❌→✅ FIX"
+        print(f"\n  {r_b['metadata']['univers']} × {r_b['metadata']['situation']} × {r_b['metadata']['voice']}")
+        print(f"    Prompt: {r_b['prompt'][:70]}...")
+        print(f"    Baseline: {b_status}  |  Fine-tuned: {ft_status}")
+        print(f"    Direction: {direction}")
+
+        # Show score diff per dimension
+        print(f"    Scores:")
+        for dim in ["univers", "situation", "voix", "langue"]:
+            b_score = r_b["score"]["scores"].get(dim, 0.0)
+            ft_score = r_ft["score"]["scores"].get(dim, 0.0)
+            diff_s = ft_score - b_score
+            if diff_s != 0:
+                arrow = "↑" if diff_s > 0 else "↓"
+                print(f"      {dim:<10}: {b_score:.2f} {arrow} {ft_score:.2f} ({diff_s:+.2f})")
 
 
 def main():
@@ -244,7 +377,7 @@ def main():
         help="Path to test prompts JSONL file"
     )
     parser.add_argument("--stack", action="store_true",
-                        help="Use stacked 3-axis mode")
+                       help="Use stacked 3-axis mode")
     parser.add_argument("--adapter-1", help="Univers adapter")
     parser.add_argument("--multiplier-1", type=float, default=1.0)
     parser.add_argument("--adapter-2", help="Situation adapter")
@@ -252,47 +385,100 @@ def main():
     parser.add_argument("--adapter-3", help="Voix adapter")
     parser.add_argument("--multiplier-3", type=float, default=1.0)
     parser.add_argument("--full", action="store_true",
-                        help="Run full combination sweep (sample output)")
+                       help="Run full combination sweep (sample output)")
     parser.add_argument("--base", default="Qwen/Qwen2.5-7B-Instruct",
-                        help="Base model")
+                       help="Base model")
     parser.add_argument("--max-new-tokens", type=int, default=300)
     parser.add_argument("--temperature", type=float, default=0.7)
+
+    # TDD evaluation flags
+    parser.add_argument("--baseline", action="store_true",
+                       help="Evaluate base model without LoRA (TDD: should FAIL)")
+    parser.add_argument("--compare", action="store_true",
+                       help="Compare baseline vs fine-tuned (use with --stack)")
+
     args = parser.parse_args()
 
-    print("🎭 Suddenly AI Hub — Evaluation Pipeline")
+    print("🎭 Suddenly AI Hub — Evaluation Pipeline (TDD Strategy)")
     print("=" * 70)
 
     test_data = load_test_data(args.test_data)
-    print(f"Loaded {len(test_data)} test prompts")
+    print(f"Loaded {len(test_data)} test prompts with criteria")
 
     if args.full:
         print("\nRunning full combination sweep...")
-        run_full_combinations(test_data)
+        print("Not implemented - use --compare for TDD evaluation")
         return
 
+    # Initialize for potential comparison
+    baseline_results = None
+    fine_tuned_results = None
+
+    if args.baseline:
+        # === TDD STEP 1: Baseline evaluation (should FAIL) ===
+        print(f"\n📋 BASELINE (modèle brut sans LoRA)")
+        print(f"   → Expected: FAIL (baseline should not meet RP criteria)")
+        print("-" * 70)
+
+        model, tokenizer = load_base_model(args.base)
+        baseline_results = run_evaluation(
+            model, tokenizer, test_data, mode="baseline",
+            max_new_tokens=args.max_new_tokens, temperature=args.temperature,
+        )
+        print_results(baseline_results, "Baseline Evaluation (should FAIL)")
+
+        if not args.compare:
+            print("\n💡 Run with --compare to also evaluate fine-tuned and see the diff")
+            return
+
     if args.stack:
-        print(f"\nStacked mode:")
-        print(f"  Univers: {args.adapter_1} × {args.multiplier_1}")
-        print(f"  Situation: {args.adapter_2} × {args.multiplier_2}")
-        print(f"  Voix: {args.adapter_3} × {args.multiplier_3}")
+        if not args.adapter_1 or not args.adapter_2 or not args.adapter_3:
+            parser.error("Provide --adapter-1, --adapter-2, --adapter-3 for stacked mode")
+
+        print(f"\n📋 STACKED MODE:")
+        print(f"   Univers: {args.adapter_1} × {args.multiplier_1}")
+        print(f"   Situation: {args.adapter_2} × {args.multiplier_2}")
+        print(f"   Voix: {args.adapter_3} × {args.multiplier_3}")
+        print("-" * 70)
 
         model, tokenizer = load_model_stacked(
             args.adapter_1, args.adapter_2, args.adapter_3,
             args.multiplier_1, args.multiplier_2, args.multiplier_3,
         )
-        mode = "stacked"
-    else:
-        parser.error("Provide --stack for stacked evaluation or --full for combination sweep")
 
-    print(f"\nGenerating responses...")
-    results = run_evaluation(
-        model, tokenizer, test_data,
-        max_new_tokens=args.max_new_tokens,
-        temperature=args.temperature,
-        mode=mode,
-    )
+        print(f"\nGenerating responses for fine-tuned model...")
+        fine_tuned_results = run_evaluation(
+            model, tokenizer, test_data, mode="stacked",
+            max_new_tokens=args.max_new_tokens, temperature=args.temperature,
+        )
+        print_results(fine_tuned_results, "Fine-Tuned Evaluation (should PASS)")
 
-    print_results(results)
+    if args.compare:
+        if baseline_results is None:
+            # Auto-run baseline if not already done
+            print(f"\n📋 Running baseline for comparison...")
+            model_b, tokenizer_b = load_base_model(args.base)
+            baseline_results = run_evaluation(
+                model_b, tokenizer_b, test_data, mode="baseline",
+                max_new_tokens=args.max_new_tokens, temperature=args.temperature,
+            )
+
+        if fine_tuned_results is None:
+            print(f"\n📋 Evaluating fine-tuned model for comparison...")
+            if not args.stack:
+                parser.error("--compare requires --stack")
+            model, tokenizer = load_model_stacked(
+                args.adapter_1, args.adapter_2, args.adapter_3,
+                args.multiplier_1, args.multiplier_2, args.multiplier_3,
+            )
+            fine_tuned_results = run_evaluation(
+                model, tokenizer, test_data, mode="stacked",
+                max_new_tokens=args.max_new_tokens, temperature=args.temperature,
+            )
+            print_results(fine_tuned_results, "Fine-Tuned Evaluation (should PASS)")
+
+        if baseline_results and fine_tuned_results:
+            run_compare(baseline_results, fine_tuned_results)
 
 
 if __name__ == "__main__":
