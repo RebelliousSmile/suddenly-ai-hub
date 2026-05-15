@@ -4,39 +4,28 @@ from pathlib import Path
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
-# Suddenly AI features — from issues #76 to #84
-FEATURES = {
-    "suddenly-dialogue": {
-        "issue": "#77",
-        "desc": "Suggestion de dialogue pour un personnage",
+# Suddenly AI — 3 axes stacking
+
+AXES = {
+    "Axe 1 — Univers (genre/lore)": {
+        "suddenly-fantasy-medievale": {"desc": "Épées, magie, féodalité, royaumes"},
+        "suddenly-cyberpunk": {"desc": "Techno, mégacorporations, implants"},
+        "suddenly-steampunk": {"desc": "Vapeur, engrenages, époque victorienne"},
+        "suddenly-horreur-gothique": {"desc": "Vampires, atmosphère sombre"},
     },
-    "suddenly-action": {
-        "issue": "#78",
-        "desc": "Suggestion d'action pour un personnage",
+    "Axe 2 — Situation (ton/rythme)": {
+        "suddenly-combat": {"desc": "Escarmouches, batailles, tensions physiques"},
+        "suddenly-romance": {"desc": "Relations interpersonnelles, tension émotionnelle"},
+        "suddenly-intrigue": {"desc": "Manœuvres politiques, trahisons, mystères"},
+        "suddenly-politique": {"desc": "Négociations, alliances, diplomatie"},
+        "suddenly-quotidien": {"desc": "Moments de repos, interactions sociales légères"},
     },
-    "suddenly-description": {
-        "issue": "#79",
-        "desc": "Suggestion de description de scène",
-    },
-    "suddenly-thought": {
-        "issue": "#80",
-        "desc": "Suggestion de pensée intérieure",
-    },
-    "suddenly-consistency-scene": {
-        "issue": "#81",
-        "desc": "Analyse de cohérence RP sur une scène",
-    },
-    "suddenly-consistency-session": {
-        "issue": "#82",
-        "desc": "Analyse de cohérence RP sur toute la session",
-    },
-    "suddenly-summary": {
-        "issue": "#83",
-        "desc": "Génération automatique du résumé de session",
-    },
-    "suddenly-federation": {
-        "issue": "#84",
-        "desc": "Suggestions de liens claim/adopt/fork via IA",
+    "Axe 3 — Voix (personnalité narrative)": {
+        "suddenly-solennel": {"desc": "Ton grave, solennel, épique"},
+        "suddenly-narquois": {"desc": "Ironique, pince-sans-rire, espiègle"},
+        "suddenly-theatral": {"desc": "Spectaculaire, emphatique, dramatique"},
+        "suddenly-neutre": {"desc": "Sobre, direct, non-intrusif"},
+        "suddenly-lyrique": {"desc": "Poétique, descriptif, sensuel"},
     },
 }
 
@@ -45,20 +34,35 @@ def main():
     print("🎭 Suddenly AI Hub — Available LoRA Adapters")
     print("=" * 70)
     print()
-    print(f"{'Adapter':30s} {'Status':10s}  Issue  Feature")
-    print("-" * 70)
-
-    for adapter_id, info in sorted(FEATURES.items()):
-        adapter_path = MODELS_DIR / adapter_id
-        status = "✅" if adapter_path.exists() else "📋"
-        print(f"  {adapter_id:30s} {status:10s}  {info['issue']}  {info['desc']}")
-
+    print("  3-axis stacking: Univers × Situation × Voix")
+    print(f"  Combinations: {sum(len(v) for v in AXES.values())} adapters")
     print()
-    print("Usage:")
-    print("  python scripts/infer.py --adapter <adapter_id> --prompt '...'")
+
+    for axis_name, adapters in AXES.items():
+        print(f"{'═' * 70}")
+        print(f"  {axis_name}")
+        print(f"{'─' * 70}")
+        print(f"  {'Adapter':32s}  Status  Description")
+        for adapter_id, info in sorted(adapters.items()):
+            adapter_path = MODELS_DIR / adapter_id
+            status = "✅" if adapter_path.exists() else "📋"
+            print(f"  {adapter_id:32s}  {status}  {info['desc']}")
+        print()
+
+    print(f"{'═' * 70}")
+    print()
+    print("Usage — Stacked inference:")
+    print("  python scripts/infer.py --stack \\")
+    print("    --adapter-1 fantasy-medievale --multiplier-1 1.0 \\")
+    print("    --adapter-2 combat           --multiplier-2 1.0 \\")
+    print("    --adapter-3 narquois         --multiplier-3 1.0 \\")
+    print("    --prompt 'Le marchand sort son épée...'")
+    print()
+    print("Usage — Single adapter:")
+    print("  python scripts/infer.py --adapter fantasy-medievale --prompt '...'")
     print()
     print("  from peft import PeftModel")
-    print("  model = PeftModel.from_pretrained(base_model, 'models/<adapter_id>/')")
+    print("  model = PeftModel.from_pretrained(base, 'models/<adapter>/')")
 
 
 if __name__ == "__main__":
