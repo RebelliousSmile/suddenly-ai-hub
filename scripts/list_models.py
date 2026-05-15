@@ -1,37 +1,39 @@
 #!/usr/bin/env python3
 """List all available LoRA adapters in the models/ directory."""
 from pathlib import Path
-import json
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
-# Universe/role registry
-REGISTRY = {
-    "cyberpunk": {
-        "dm": "Dungeon Master — scene description + NPC dialogue + action management",
-        "npc_merchant": "Cynical information broker in a neon-lit bazaar",
-        "narrator": "Noir storyteller, atmospheric and gritty",
-    },
-    "fantasy": {
-        "dm": "Dungeon Master — medieval fantasy, magic, dungeons",
-        "npc_village": "Tavern keeper, village elder, or guild master",
-        "narrator": "Epic fantasy narrator, mythic tone",
-    },
-    "horror": {
-        "dm": "Horror DM — Lovecraftian dread, psychological tension",
-        "npc_survivor": "Paranoid survivor, fragmented memories",
-        "narrator": "Atmospheric horror, slow-burn tension",
-    },
-    "scifi": {
-        "dm": "Sci-fi DM — space opera, dystopian, AI themes",
-        "npc_officer": "Stellar fleet officer, by-the-book but pragmatic",
-        "narrator": "Hard sci-fi narrator, clinical yet poetic",
-    },
-    "seinen": {
-        "dm": "Seinen DM — mature themes, complex moral situations",
-        "npc_mentor": "Wise but flawed mentor figure",
-        "narrator": "Literary narrator, introspective and nuanced",
-    },
+# 3 independent dimensions
+UNIVERSES = {
+    "cyberpunk": "Neon noir, corporate intrigue, gritty tech",
+    "fantasy": "Medieval magic, dungeons, epic quests",
+    "horror": "Lovecraftian dread, psychological tension",
+    "scifi": "Space opera, dystopian, AI themes",
+    "seinen": "Mature themes, complex moral situations",
+}
+
+NARRATION_TYPES = {
+    "combat": "Fast-paced, visceral, tactical descriptions",
+    "romance": "Tension, intimacy, emotional depth",
+    "intrigue": "Political maneuvering, hidden agendas, dialogue-heavy",
+    "exploration": "Wonder, discovery, world-building, sensory detail",
+    "dialogue": "Natural conversation, personality, wit",
+    "drama": "Character depth, moral complexity, consequences",
+}
+
+ROLES = {
+    "dm": "Dungeon Master — scene description + NPC dialogue + action management",
+    "npc": "Single character — specific personality, consistent voice",
+    "narrator": "Pure storytelling — descriptive, atmospheric, third-person",
+}
+
+NPC_NAMES = {
+    "cyberpunk": "merchant",
+    "fantasy": "village",
+    "horror": "survivor",
+    "scifi": "officer",
+    "seinen": "mentor",
 }
 
 
@@ -40,14 +42,30 @@ def main():
     print("=" * 60)
     print()
 
-    for universe, roles in sorted(REGISTRY.items()):
-        print(f"  🌐 {universe.upper()}")
-        for role, desc in sorted(roles.items()):
-            model_id = f"{universe}-{role}"
-            adapter_path = MODELS_DIR / model_id
-            status = "✅" if adapter_path.exists() else "📋"
-            print(f"     {status} {model_id:30s} — {desc}")
+    # Show available adapters
+    print("Available adapters:")
+    print()
+
+    for universe in sorted(UNIVERSES):
+        print(f"  🌐 {universe.upper()} — {UNIVERSES[universe]}")
         print()
+
+        for role in sorted(ROLES):
+            npc_tag = f"-{NPC_NAMES[universe]}" if role == "npc" else ""
+            adapter_base = f"{universe}-{role}{npc_tag}"
+            adapter_path = MODELS_DIR / adapter_base
+            status = "✅" if adapter_path.exists() else "📋"
+            print(f"     {status} {adapter_base:40s} — {ROLES[role]}")
+
+        print()
+
+    # Show combination matrix
+    print("Combination matrix:")
+    print()
+    print("  Each model can be combined with narration types:")
+    for ntype, ndesc in sorted(NARRATION_TYPES.items()):
+        print(f"    • {ntype:15s} — {ndesc}")
+    print()
 
     print("Usage:")
     print("  python scripts/infer.py --adapter <universe-role> --prompt '...'\n")

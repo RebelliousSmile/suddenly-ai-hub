@@ -37,20 +37,38 @@ All trained models are LoRA adapters fine-tuned on French RP dialogues. Browse a
 python scripts/list_models.py
 ```
 
-**Available universes & roles:**
+The model adapts to **2 independent dimensions**:
 
-| Universe | Roles (LoRA adapters) | Description |
-|----------|----------------------|-------------|
-| **cyberpunk** | `dm`, `npc_merchant`, `narrator` | Neon noir, corporate intrigue |
-| **fantasy** | `dm`, `npc_village`, `narrator` | Medieval, magic, dungeons |
-| **horror** | `dm`, `npc_survivor`, `narrator` | Lovecraftian, psychological, dark |
-| **scifi** | `dm`, `npc_officer`, `narrator` | Space opera, dystopian, AI |
-| **seinen** | `dm`, `npc_mentor`, `narrator` | Mature themes, complex drama |
+### Axis 1 — Universe (theme)
 
-Each universe comes with 3 LoRA variants:
-- **`dm`** — Dungeon Master style (scene description + NPC dialogue + action management)
-- **`npc_*`** — Single character roleplay (specific personality, consistent voice)
-- **`narrator`** — Pure storytelling (descriptive, atmospheric, third-person)
+| Universe | Vibe |
+|----------|------|
+| **cyberpunk** | Neon noir, corporate intrigue, gritty tech |
+| **fantasy** | Medieval magic, dungeons, epic quests |
+| **horror** | Lovecraftian dread, psychological tension |
+| **scifi** | Space opera, dystopian, AI themes |
+| **seinen** | Mature themes, complex moral situations |
+
+### Axis 2 — Narration type (scene genre)
+
+| Type | LoRA tag | What it does |
+|------|----------|-------------|
+| **combat** | `combat` | Fast-paced, visceral, tactical descriptions |
+| **romance** | `romance` | Tension, intimacy, emotional depth |
+| **intrigue** | `intrigue` | Political maneuvering, hidden agendas, dialogue-heavy |
+| **exploration** | `exploration` | Wonder, discovery, world-building, sensory detail |
+| **dialogue** | `dialogue` | Natural conversation, personality, wit |
+| **drama** | `drama` | Character depth, moral complexity, consequences |
+
+### Axis 3 — Role
+
+| Role | Description |
+|------|-------------|
+| **`dm`** | Dungeon Master — scene description + NPC dialogue + action management |
+| **`npc_*`** | Single character — specific personality, consistent voice |
+| **`narrator`** | Pure storytelling — descriptive, atmospheric, third-person |
+
+**Combining them:** pick one from each axis. Example: a cyberpunk romance scene played as NPC = `models/cyberpunk-npc_merchant-romance/`
 
 ## Using models in your project
 
