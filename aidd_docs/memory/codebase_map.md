@@ -5,38 +5,45 @@ description: Project structure documentation
 
 # Codebase Structure
 
-```mermaid
-flowchart TD
----
-title: suddenly-ai-hub — Macro Overview
----
-    Gateway["gateway/ (API Gateway)"]
-    Pipeline["pipeline/ (Ingestion & Format)"]
-    Training["training/ (Fine-tuning)"]
-    Infra["infra/ (Docker & RunPod)"]
-    Docs["docs/ (Architecture & Transparency)"]
-    Storage["Storage"]
-    Inference["Inference"]
-    Model["Model"]
-
-    Gateway -- "routes requests" --> Inference
-    Pipeline -- "feeds" --> Storage
-    Training -- "produces" --> Model
-    Infra -- "deploys" --> Gateway
-    Infra -- "deploys" --> Pipeline
-    Infra -- "deploys" --> Training
-    Docs -.-> Gateway
-    Docs -.-> Pipeline
-    Docs -.-> Training
+```
+suddenly-ai-hub/
+├── gateway/              # FastAPI API Gateway (déployé sur Railway)
+│   ├── main.py           # uvicorn entry point (gateway.main:app)
+│   ├── adapter_router.py # routing LoRA adapters
+│   ├── auth.py           # HTTP signature auth
+│   ├── vllm_client.py    # client vers backend vLLM
+│   ├── requirements.txt  # deps Docker (utilisées par Railway)
+│   └── Dockerfile        # image Railway
+├── pipelines/            # Tout le code Python non-gateway
+│   ├── anonymization/    # ex-pipeline/ — anonymize, evaluate, format_corpus, generate_eval
+│   ├── crawl_rpv/        # ex-scripts/crawl_rpv/ — scraping + NLLB + scoring
+│   ├── evaluation/       # ex-evaluation/ — providers Together/Fireworks, evaluate_lora
+│   └── training/         # ex-training/ — Axolotl configs (suddenly-7b/13b.yml, lora-*.yml)
+├── scripts/              # Scripts hors pipelines : baseline, infer, evaluate, scrape_*
+├── tests/                # pytest, imports via pipelines.*
+├── infra/                # docker-compose.yml, mock-instance
+├── config/               # scraping_config.ini
+├── data/                 # gitignored sauf data/bench/ et fichiers nommés .jsonl tracés
+├── aidd_docs/            # toute la doc (memory/, memory/external/, memory/internal/)
+├── pyproject.toml        # deps unifiées avec extras [gateway, pipelines, scraper, dev]
+├── README.md, CLAUDE.md, AGENTS.md
+└── init.py, init.sh      # bootstrap scripts
 ```
 
-## Current state
-- Phase 0: only AIDD tooling exists (`.claude/`, `aidd_docs/`, `.aidd/`)
-- No application code yet — `gateway/`, `pipeline/`, `training/`, `infra/` not created
+## Conventions imports
 
-## Planned modules
-- `gateway/` — FastAPI API Gateway
-- `pipeline/` — ingestion, anonymisation, formatage
-- `training/` — fine-tuning scripts (Axolotl configs)
-- `infra/` — Docker Compose, RunPod scripts
-- `docs/` — architecture.md, data-format.md, transparency.md
+- Code dans `pipelines/anonymization/` → `from pipelines.anonymization.X import Y`
+- Code dans `pipelines/evaluation/` → `from pipelines.evaluation.X import Y`
+- Gateway autonome : `from gateway.X import Y`
+- Les tests utilisent `pythonpath = ["."]` (cf. `pyproject.toml [tool.pytest.ini_options]`).
+
+## Déploiement
+
+- **Gateway** : Railway, build Docker depuis `gateway/Dockerfile`, deps via `gateway/requirements.txt`.
+- **Training** : RunPod A100-40G, Axolotl, configs dans `pipelines/training/suddenly-{7b,13b}.yml`.
+- **Inference** : vLLM (backend), client dans `gateway/vllm_client.py`.
+
+## Data
+
+- `data/bench/` : corpus de benchmark CC, **in-repo** (petit volume, référencé par `pipelines/crawl_rpv/extract_cyberpunk_samples.py`).
+- Reste de `data/` : gitignored (datasets lourds, pas de backup distant — voir mémoire `project_suddenly_ai_hub.md`).

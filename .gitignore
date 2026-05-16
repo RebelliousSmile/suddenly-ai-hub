@@ -9,7 +9,23 @@
 __pycache__/
 *.py[cod]
 .venv/
+venv/
 *.egg-info/
+.pytest_cache/
+.cache/
+
+# Logs
+logs/
 
 # Docker
 .docker/
+
+# Data : tout gitignoré sauf bench/ (corpus de référence CC, in-repo, petit volume)
+data/*
+!data/bench/
+!data/renpy-corpus.jsonl
+!data/test-dataset-rp.jsonl
+
+# Pipelines cache
+.cache/
+pipelines/**/.cache/
