@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from evaluation.providers.fireworks import FireworksProvider
-from evaluation.providers.base import ChatMessage, CompletionRequest
+from pipelines.evaluation.providers.fireworks import FireworksProvider
+from pipelines.evaluation.providers.base import ChatMessage, CompletionRequest
 
 
 class TestFireworksProviderValidation:

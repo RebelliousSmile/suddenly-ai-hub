@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pipeline.evaluate import (
+from pipelines.anonymization.evaluate import (
     _compute_length_ratio,
     _compute_repetition,
     _compute_summary,

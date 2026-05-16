@@ -1,7 +1,7 @@
-"""Tests for evaluation.providers.base module."""
+"""Tests for pipelines.evaluation.providers.base module."""
 
 import pytest
-from evaluation.providers.base import (
+from pipelines.evaluation.providers.base import (
     BaseProvider,
     ChatMessage,
     CompletionRequest,

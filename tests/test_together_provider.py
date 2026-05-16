@@ -2,8 +2,8 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from evaluation.providers.together import TogetherProvider
-from evaluation.providers.base import ChatMessage, CompletionRequest
+from pipelines.evaluation.providers.together import TogetherProvider
+from pipelines.evaluation.providers.base import ChatMessage, CompletionRequest
 
 
 class TestTogetherProviderValidation:

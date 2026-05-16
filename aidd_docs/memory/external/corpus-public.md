@@ -114,7 +114,7 @@ python pipeline/format_corpus.py \
 # 2. Anonymiser les noms propres (issue #10)
 python -c "
 import json, sys
-from pipeline.anonymize import anonymize_session
+from pipelines.anonymization.anonymize import anonymize_session
 
 with open('data/corpus-dialogue.jsonl') as fin, \
      open('data/corpus-rp-general.jsonl', 'w') as fout:

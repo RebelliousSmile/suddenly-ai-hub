@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from pipeline.anonymize import anonymize_session, _replace_persons, _detect_lang
+from pipelines.anonymization.anonymize import anonymize_session, _replace_persons, _detect_lang
 
 
 def _make_ent(text: str, label: str, start_char: int, end_char: int) -> MagicMock:

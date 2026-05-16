@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from evaluation.providers.factory import (
+from pipelines.evaluation.providers.factory import (
     _is_key_valid,
     get_provider,
     list_available_providers,

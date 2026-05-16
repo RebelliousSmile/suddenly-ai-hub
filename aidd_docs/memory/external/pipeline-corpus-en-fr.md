@@ -12,7 +12,7 @@ Chaine en 4 etapes pour produire un corpus FR exploitable pour entrainer des LoR
 [sources EN]  ->  [NLLB 1.3B local]  ->  [scoring/curation]  ->  [(optionnel) benchmark LLM]  ->  [LoRA training]
 ```
 
-Chaque etape est un script independant dans `scripts/crawl_rpv/`, communiquant par CSV. Tout tourne en local sur RTX 2080 Super (8 GB VRAM). Budget : 0 EUR.
+Chaque etape est un script independant dans `pipelines/crawl_rpv/`, communiquant par CSV. Tout tourne en local sur RTX 2080 Super (8 GB VRAM). Budget : 0 EUR.
 
 ---
 
@@ -61,7 +61,7 @@ Memoire associee : `feedback_naming_translation_outputs.md`.
 ## 5. Etape 1 : Traduction NLLB
 
 ```bash
-python scripts/crawl_rpv/translate_csv_nllb.py <input.csv>
+python pipelines/crawl_rpv/translate_csv_nllb.py <input.csv>
 ```
 
 Comportement cle :
@@ -82,7 +82,7 @@ Contraintes pratiques :
 ## 6. Etape 2 : Curation par scoring
 
 ```bash
-python scripts/crawl_rpv/score_corpus.py <translated.csv> [-w "0.5,0.3,0.2"] [--jaccard 0.85]
+python pipelines/crawl_rpv/score_corpus.py <translated.csv> [-w "0.5,0.3,0.2"] [--jaccard 0.85]
 ```
 
 Trois axes, ponderes (defaut 0.5 / 0.3 / 0.2) :
@@ -100,7 +100,7 @@ Usage typique : prendre le top-N (ex. top 70 %) pour le set d'entrainement LoRA,
 ## 7. Etape 3 (optionnelle) : Benchmark vs LLM
 
 ```bash
-python scripts/crawl_rpv/benchmark_translation.py <translated.csv> -m mistral-nemo:12b-instruct-2407-q4_K_M -n 50
+python pipelines/crawl_rpv/benchmark_translation.py <translated.csv> -m mistral-nemo:12b-instruct-2407-q4_K_M -n 50
 ```
 
 Sur un echantillon avec seed, retraduit chaque ligne via Ollama (prompt litteraire FR, temperature 0.35, garde placeholders), et produit un CSV side-by-side `(content_en, content_nllb, content_ollama)` pour jugement humain.
@@ -146,14 +146,14 @@ Pour un nouveau corpus EN -> dataset LoRA :
 
 ```bash
 # 1. Traduction (long, sature GPU)
-python scripts/crawl_rpv/translate_csv_nllb.py data/<corpus>.csv
+python pipelines/crawl_rpv/translate_csv_nllb.py data/<corpus>.csv
 
 # 2. Scoring (rapide, CPU)
-python scripts/crawl_rpv/score_corpus.py data/<corpus>_en-to-fr_nllb-1.3B.csv
+python pipelines/crawl_rpv/score_corpus.py data/<corpus>_en-to-fr_nllb-1.3B.csv
 
 # 3. (optionnel) Benchmark sur 50 lignes (lent, Ollama)
 ollama pull mistral-nemo:12b-instruct-2407-q4_K_M
-python scripts/crawl_rpv/benchmark_translation.py data/<corpus>_en-to-fr_nllb-1.3B.csv -n 50
+python pipelines/crawl_rpv/benchmark_translation.py data/<corpus>_en-to-fr_nllb-1.3B.csv -n 50
 
 # 4. Selection top-N du scored.csv -> data/litterature/<genre>.jsonl
 #    (etape manuelle pour l'instant, a scripter plus tard)

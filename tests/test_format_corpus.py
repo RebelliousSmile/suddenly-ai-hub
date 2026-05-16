@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pipeline.format_corpus import (
+from pipelines.anonymization.format_corpus import (
     SYSTEM_PROMPT_RP,
     _is_valid_session,
     _parse_dialogue,
