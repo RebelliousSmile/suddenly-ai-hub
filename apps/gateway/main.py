@@ -7,6 +7,8 @@ from typing import Optional
 import httpx
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import Depends, FastAPI, HTTPException
+import boto3
+from botocore.config import Config as BotoConfig
 
 from . import vllm_client
 from .adapter_router import resolve_adapter
@@ -100,10 +102,39 @@ async def health():
             vllm_ok = resp.is_success
     except Exception:
         pass
+
+    s3_ok = None
+    if cfg.s3_endpoint:
+        s3_ok = False
+        try:
+            s3 = boto3.client(
+                "s3",
+                endpoint_url=cfg.s3_endpoint,
+                aws_access_key_id=cfg.s3_access_key,
+                aws_secret_access_key=cfg.s3_secret_key,
+                region_name=cfg.s3_region,
+                config=BotoConfig(signature_version="s3v4"),
+            )
+            s3.head_bucket(Bucket=cfg.s3_bucket)
+            s3_ok = True
+        except Exception:
+            pass
+
+    if vllm_ok and (s3_ok is None or s3_ok):
+        status = "ok"
+    elif not vllm_ok and s3_ok is None:
+        # S3 not configured, vLLM down = degraded (not error)
+        status = "degraded"
+    elif vllm_ok or s3_ok:
+        status = "degraded"
+    else:
+        status = "error"
+
     return HealthResponse(
-        status="ok" if vllm_ok else "degraded",
+        status=status,
         vllm_reachable=vllm_ok,
         models_loaded=len(cfg.models) if vllm_ok else 0,
+        s3_reachable=s3_ok,
     )
 
 

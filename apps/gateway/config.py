@@ -54,6 +54,22 @@ class GatewayConfig:
     mock_instance_url: str = field(
         default_factory=lambda: os.environ.get("MOCK_INSTANCE_URL", "http://mock-instance:8080")
     )
+    # Cloudflare R2 / S3-compatible storage
+    s3_endpoint: str = field(
+        default_factory=lambda: os.environ.get("S3_ENDPOINT", "")
+    )
+    s3_access_key: str = field(
+        default_factory=lambda: os.environ.get("S3_ACCESS_KEY", "")
+    )
+    s3_secret_key: str = field(
+        default_factory=lambda: os.environ.get("S3_SECRET_KEY", "")
+    )
+    s3_bucket: str = field(
+        default_factory=lambda: os.environ.get("S3_BUCKET", "suddenly-ai-hub")
+    )
+    s3_region: str = field(
+        default_factory=lambda: os.environ.get("S3_REGION", "auto")
+    )
 
 
 # Instance globale — remplacée au démarrage via lifespan ou dans les tests

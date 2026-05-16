@@ -71,6 +71,7 @@ class HealthResponse(BaseModel):
     status: Literal["ok", "degraded", "error"]
     vllm_reachable: bool
     models_loaded: int
+    s3_reachable: Optional[bool] = None
 
 
 # ---------------------------------------------------------------------------

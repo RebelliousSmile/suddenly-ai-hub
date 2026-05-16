@@ -113,7 +113,7 @@ class TestAdapterRouter:
 # ---------------------------------------------------------------------------
 
 class TestHealth:
-    def test_vllm_unreachable(self, client):
+    def test_vllm_unreachable_no_s3(self, client):
         mock_cls = MagicMock()
         mock_cls.return_value.__aenter__ = AsyncMock(side_effect=httpx.ConnectError("refused"))
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -124,6 +124,7 @@ class TestHealth:
         assert data["status"] == "degraded"
         assert data["vllm_reachable"] is False
         assert data["models_loaded"] == 0
+        assert data["s3_reachable"] is None
 
     def test_vllm_reachable(self, client):
         mock_resp = MagicMock()
