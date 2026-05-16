@@ -122,9 +122,8 @@ async def health():
             s3.list_objects_v2(Bucket=cfg.s3_bucket, MaxKeys=1)
             s3_ok = True
         except Exception as exc:
-            import logging
-            logging.getLogger("gateway.health").warning("S3 healthcheck failed: %s", exc)
-            s3_error = str(exc)
+            print(f"[gateway.health] S3 healthcheck failed: {type(exc).__name__}: {exc}", flush=True)
+            s3_error = f"{type(exc).__name__}: {exc}"
 
     if vllm_ok and (s3_ok is None or s3_ok):
         status = "ok"
