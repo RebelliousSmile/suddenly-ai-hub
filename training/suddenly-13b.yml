@@ -1,16 +1,15 @@
 # suddenly-13b.yml
-# Full fine-tuning du modèle de base Mistral NeMo 12B sur corpus RP long-contexte
-# Modèle retenu : mistralai/Mistral-Nemo-Base-2407 (12B, Apache 2.0, 128k ctx natif)
-# Raisons du choix vs LLaMA 3 13B :
-#   - Apache 2.0 (LLaMA 3 a des restrictions usage commercial)
-#   - 128k context natif (vs 8k LLaMA 3 base) — critique pour analyze_session/generate_summary
-#   - Drop-in replacement de Mistral 7B (même tokenizer Tekken, même architecture)
+# Full fine-tuning du modèle de base Qwen2.5-14B sur corpus RP long-contexte
+# Modèle retenu : Qwen/Qwen2.5-14B-Instruct (14B, Apache 2.0, 32k ctx natif)
+# Raisons du choix :
+#   - Apache 2.0 (licence libre)
+#   - 32k context natif — critique pour analyze_session/generate_summary
 #   - Compatible vLLM et même pipeline Axolotl que suddenly-7b
 # GPU cible : RunPod A100-40G (40GB VRAM) — QLoRA requis pour tenir en mémoire
 # Usage : axolotl train training/suddenly-13b.yml
 
-base_model: mistralai/Mistral-Nemo-Base-2407
-model_type: MistralForCausalLM
+base_model: Qwen/Qwen2.5-14B-Instruct
+model_type: Qwen2ForCausalLM
 tokenizer_type: AutoTokenizer
 
 # --- Quantization ---
@@ -39,7 +38,7 @@ lora_target_modules:
 # --- Dataset ---
 # Format : JSONL avec clé "messages", rôles system/user/assistant
 # Corpus long-contexte : sessions > 2k tokens (analyze_session, generate_summary, suggest_links)
-chat_template: mistral_v1
+chat_template: qwen
 datasets:
   - path: data/corpus-rp-longctx.jsonl
     type: chat_template

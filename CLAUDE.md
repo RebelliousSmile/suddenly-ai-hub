@@ -30,14 +30,19 @@ All instructions and information above are willing to be up to date, but always 
 ### Project memory
 
 <aidd_project_memory>
+@aidd_docs/memory/DECISIONS.md
+@aidd_docs/memory/LESSONS.md
 @aidd_docs/memory/agents_coordination.md
 @aidd_docs/memory/architecture.md
+@aidd_docs/memory/benchmark-fireworks-vs-together.md
 @aidd_docs/memory/codebase_map.md
 @aidd_docs/memory/coding_assertions.md
 @aidd_docs/memory/deployment.md
 @aidd_docs/memory/golden_principles.md
+@aidd_docs/memory/lessons_sessions_1-2.md
 @aidd_docs/memory/project_brief.md
 @aidd_docs/memory/testing.md
+@aidd_docs/memory/tracking.md
 @aidd_docs/memory/vcs.md
 </aidd_project_memory>
 

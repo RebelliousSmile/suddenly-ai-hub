@@ -1,0 +1,49 @@
+{
+  "session": 1,
+  "date": "2026-05-13T18:31:05.863085",
+  "plan_ref": "session1_jdroll_exploration.md",
+  "challenged": true,
+  "requests": [
+    {
+      "request_num": 1,
+      "name": "Page d'accueil",
+      "url": "http://www.jdroll.org/",
+      "status_code": 200,
+      "response_time": "0.33s",
+      "size": 24141,
+      "timestamp": "2026-05-13T18:32:42.153342",
+      "headers_used": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...",
+      "success": true,
+      "html_saved": "data/session1_req1_20260513_183242.html"
+    },
+    {
+      "request_num": 2,
+      "name": "Forum #392",
+      "url": "http://www.jdroll.org/viewforum.php?f=392",
+      "status_code": 404,
+      "response_time": "0.03s",
+      "size": 16,
+      "timestamp": "2026-05-13T18:35:24.903332",
+      "headers_used": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb...",
+      "success": false
+    }
+  ],
+  "observations": [
+    {
+      "timestamp": "2026-05-13T18:31:06.194112",
+      "type": "auth_check",
+      "status": "doubtful",
+      "note": "Pas de logout détecté, mais continuation autorisée"
+    }
+  ],
+  "metrics": {
+    "total_requests": 4,
+    "successful": 2,
+    "failed": 2,
+    "avg_response_time": 0,
+    "success_rate": "50.0%"
+  },
+  "forums": [],
+  "topics": [],
+  "recommendations": []
+}

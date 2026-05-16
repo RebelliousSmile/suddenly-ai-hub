@@ -1,125 +1,104 @@
----
-name: architecture
-description: Module architecture and structure
----
+# 🏗️ Architecture du projet Suddenly AI Hub
 
-# Architecture
+Ce document décrit l'architecture technique du projet, la chaîne de fabrication des modèles fine-tunés, et les décisions techniques prises.
 
-## Language/Framework
+## Contexte
 
-- FastAPI — API Gateway (Python)
-- vLLM — Inference engine (GPU, RunPod)
-- Axolotl — Fine-tuning scripts (configs)
-- PostgreSQL — Hub database
-- S3-compatible — Object storage (Backblaze B2 or Hetzner)
-- ActivityPub — Authentication protocol
+Les modèles sont fine-tunés pour les **features AI de Suddenly** (#76-#84) :
 
-```mermaid
-flowchart LR
----
-title: Hub Architecture
----
-    Instances["Fediverse Instances"]
-    Gateway["API Gateway (FastAPI)"]
-    Inference["Inference Engine (vLLM)"]
-    Ingestion["Data Ingestion Pipeline"]
-    Training["Training Pipeline (Axolotl)"]
-    Postgres["PostgreSQL"]
-    S3["S3 Storage"]
+1. **#77** — Suggestion de dialogue
+2. **#78** — Suggestion d'action
+3. **#79** — Suggestion de description de scène
+4. **#80** — Suggestion de pensée intérieure
+5. **#81** — Analyse de cohérence RP (scène)
+6. **#82** — Analyse de cohérence RP (session)
+7. **#83** — Résumé de session
+8. **#84** — Suggestions de liens fédérés
 
-    Instances -- inference request --> Gateway
-    Instances -- contribution --> Gateway
-    Gateway --> Inference
-    Gateway --> Ingestion
-    Ingestion --> Postgres
-    Ingestion --> S3
-    Ingestion -.-> Training
-    Training -.-> Inference
+Chaque feature correspond à un LoRA adapter spécifique.
+
+## Stack technique
+
+- **Base model** : Qwen2.5-7B-Instruct
+- **Framework training** : Axolotl (via Together.ai)
+- **Optimization** : LoRA (Low-Rank Adaptation)
+- **Environnement** : AIDD + Hermes Agent
+
+## Structure du projet
+
+```
+suddenly-ai-hub/
+├── models/                    # LoRA adapters fine-tunés
+│   ├── suddenly-dialogue/     # #77
+│   ├── suddenly-action/       # #78
+│   ├── suddenly-description/  # #79
+│   ├── suddenly-thought/      # #80
+│   ├── suddenly-consistency-scene/   # #81
+│   ├── suddenly-consistency-session/  # #82
+│   ├── suddenly-summary/      # #83
+│   └── suddenly-federation/   # #84
+├── scripts/
+│   ├── train_together.py      # Pipeline training via Together.ai
+│   ├── list_models.py         # Registry des adapters
+│   ├── infer.py               # CLI inference
+│   └── utils/
+├── aidd_docs/
+│   └── memory/
+│       └── architecture.md    # Ce fichier
+└── README.md                  # Documentation utilisateur (usage uniquement)
 ```
 
-## API Endpoints
+## Pipeline de données
 
-- `POST /v1/chat/completions` — inférence (chemin conservé par convention, pas par contrainte OpenAI)
-- `GET /v1/models` — modèles et adapters disponibles
-- `GET /v1/health` — statut du hub
-- `POST /v1/contribute` — soumission de session (**push** depuis instance après opt-in, modèle retenu définitivement)
-- `GET /v1/stats` — statistiques publiques
+5 sources de données RP français :
 
-> Pas de contrainte de compatibilité OpenAI SDK — le client est écrit par nous (#20).
+1. **Discord RP logs** — RPDiscord, RPDiscord2, RPDiscord3 (formats variés)
+2. **Forum RP** — La Cour d'Obéron, autres forums (formats variés)
+3. **Ren'Py dialogues** — extraits de dialogues de jeux textuels français
+4. **Google Books** — extraits de fiction RP française
+5. **Playwright scraping** — contenu RP (via Playwright)
 
-## Models
+## Format Axolotl
 
-### Base models (full fine-tuned on general RP corpus)
-- `suddenly-7b` — 7B
-- `suddenly-7b-q4` — 7B quantized
-- `suddenly-13b` — 13B
+Les données sont converties au format Axolotl :
 
-### LoRA adapters — deux axes indépendants, pre-merged au service
-
-vLLM ne stacke pas deux LoRA en live. Solution : entraîner chaque axe séparément, pre-merger les delta weights offline, servir un seul adapter pre-merged par requête.
-
-**Axe univers** (taxonomie GROG — legrog.org/themes, par priorité corpus) :
-- `lora-medieval-fantastique`, `lora-historique-fantastique`, `lora-scifi`
-- `lora-contemporain-fantastique`, `lora-space-opera`, `lora-contemporain`
-- `lora-post-apocalyptique`, `lora-cyberpunk`, `lora-super-heros`, `lora-oriental-manga`
-- `lora-generique` — sessions sans genre identifié ou corpus "Générique"/"Inclassables" GROG
-
-**Axe situation** :
-- `lora-romance`, `lora-combat`, `lora-enquete`
-- `lora-diplomatie`, `lora-exploration`, `lora-introspection`
-
-### Déclenchement et pre-merge
-- Chaque adapter entraîné dès que son corpus propre atteint **500 sessions**
-- Pre-merge `lora-{univers}-{situation}` dès que les **deux adapters individuels existent**
-- Pre-merge déclenché automatiquement par le pipeline, pas d'attente de corpus combiné
-
-### Format des paramètres
 ```json
-POST /v1/chat/completions
 {
-  "model": "suddenly-7b",
-  "messages": [...],
-  "genre": "medieval-fantastique",
-  "situation": "combat"
+  "conversations": [
+    {"from": "human", "value": "Prompt utilisateur"},
+    {"from": "gpt", "value": "Réponse RP"}
+  ]
 }
 ```
-- `genre` et `situation` : optionnels, slugs minuscules avec tirets
-- Enum dynamique : chargé depuis la DB au démarrage (= adapters réellement déployés)
-- Valeur inconnue → HTTP 422 avec liste des valeurs acceptées
-- Enum défini dans `docs/taxonomy.md` (spike #33)
 
-### Fallback complet (par ordre de priorité)
-1. `lora-{univers}-{situation}` — les deux fournis et pre-merged disponible
-2. `lora-{situation}` — situation fournie (univers absent ou pre-merge inexistant)
-3. `lora-{univers}` — univers fourni, situation absente
-4. `lora-generique` — ni genre ni situation fournis, adapter entraîné
-5. `suddenly-7b` / `suddenly-13b` base — aucun adapter disponible
+## Configuration d'entraînement
 
-## Authentication
-
-- Instance sends `Authorization: ActivityPub {instance_domain}` + HTTP signature
-- Hub fetches instance actor public key from instance
-- Hub verifies HTTP signature against public key
-
-## Storage
-
-- PostgreSQL — corpus metadata, session records
-- S3-compatible — corpus files (Backblaze B2 or Hetzner)
-
-## Training Data Format
-
-- Chat messages JSON — `system`, `user`, `assistant` roles
-
-## Planned Structure
-
-```
-gateway/     # FastAPI API Gateway
-pipeline/    # Ingestion, anonymisation, formatting
-training/    # Fine-tuning scripts (Axolotl configs)
-infra/       # Docker Compose, RunPod scripts
-docs/        # architecture, data-format, transparency
+```yaml
+# train_together.py
+base_model: "Qwen/Qwen2.5-7B-Instruct"
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+epochs: 3
+batch_size: 4
+learning_rate: 2e-4
 ```
 
-## Naming Conventions
+## Coûts
 
-- Not yet established — no code written
+- **Together.ai** : ~$0.02/heure d'entraînement
+- **Hetzner S3** : ~$5/mo pour le stockage des données
+- **AIDD** : infrastructure gratuite
+
+## Sécurité
+
+- Les données RP sont anonymisées (noms remplacés par {{char}}/{{user}})
+- Les tokens API sont stockés dans les secrets AIDD
+- Les modèles fine-tunés sont stockés dans `models/` (git-lfs)
+
+## Évolutions futures
+
+- [ ] Support de Qwen3
+- [ ] Fine-tuning complet (pas que LoRA)
+- [ ] Dataset crowdsourced (RP community)
+- [ ] Benchmarks de qualité RP

@@ -9,7 +9,7 @@
 Le dataset `training/eval-dataset.jsonl` contient 100 sessions RP de référence réparties sur les 11 genres GROG. Il est **exclusivement réservé à l'évaluation** — il ne doit jamais apparaître dans les `datasets:` d'un fichier yml Axolotl.
 
 L'évaluation se fait en deux temps :
-1. **Avant fine-tuning** : baseline du modèle de base (Mistral 7B v0.3 ou Mistral NeMo 12B)
+1. **Avant fine-tuning** : baseline du modèle de base (Qwen2.5-7B-Instruct ou Qwen2.5-14B-Instruct)
 2. **Après fine-tuning** : modèle suddenly-7b ou suddenly-13b
 
 Le delta entre les deux mesures quantifie l'apport du fine-tuning.
@@ -156,9 +156,8 @@ for ref in refs:
     msgs = ref["messages"]
     # Trouver la position de la dernière réponse assistant
     prompt_msgs = msgs[:-1] if msgs[-1]["role"] == "assistant" else msgs
-    # Formater selon le template Mistral v1
-    # (utiliser mistral_common ou le tokenizer du modèle)
-    prompt = format_mistral_prompt(prompt_msgs)
+    # Formater selon le template Qwen
+    prompt = format_qwen_prompt(prompt_msgs)
     output = llm.generate([prompt], params)[0].outputs[0].text
     pred = dict(ref)
     pred["messages"] = prompt_msgs + [{"role": "assistant", "content": output}]
@@ -177,7 +176,7 @@ Le fichier JSON produit par `evaluate.py` peut être comparé entre plusieurs ru
 
 ```python
 import json
-baseline = json.load(open("results/eval-mistral-7b-base.json"))
+baseline = json.load(open("results/eval-qwen2.5-7b-base.json"))
 finetuned = json.load(open("results/eval-suddenly-7b.json"))
 
 delta_chrf = finetuned["summary"]["avg_chrf"] - baseline["summary"]["avg_chrf"]
