@@ -72,6 +72,8 @@ Cette propriété distingue Muses des LLM commerciaux opaques. Elle découle du 
 
 Pas de GPU, pas d'inférence LLM en production. Tous les composants ML tournent sur CPU : classifieurs légers, embeddings, rerankers.
 
+**Aucun composant ne génère de texte token par token.** Les étages ML produisent des scores, des classifications, des vecteurs. Le texte sortant est toujours une recomposition de lignes curées des tables (sélection, remplissage de slots typés, assemblage par règles d'accord). Les modèles d'embedding tokenisent leur entrée en interne, mais leur sortie est un vecteur de dimension fixe — coût par texte borné, pas linéaire à la longueur de sortie.
+
 Ce choix n'est pas une contrainte budgétaire : c'est une condition de **viabilité économique** pour un service partagé et gratuit pour les instances Suddenly. Et une condition d'**indépendance technologique** vis-à-vis des providers d'inférence commerciaux.
 
 ## 8. Ce que Muses n'est pas
@@ -81,7 +83,7 @@ Ce choix n'est pas une contrainte budgétaire : c'est une condition de **viabili
 - Pas une instance Suddenly de plus.
 - Pas un assistant généraliste : son terrain est la rédaction de fiction narrative et dialoguée (les features de `use-cases.md`). Pas la productivité bureautique, pas la traduction, pas le code.
 - Pas un système versionné. Pas de « v2 du modèle ». C'est un service continu.
-- Pas une inférence payante par token. Le coût est dans l'orchestration et la curation, pas dans la génération.
+- Pas de génération autoregressive. Le coût d'inférence est borné par un nombre fixe de forward passes (embeddings, classifieurs, scoreurs), indépendant de la longueur de la sortie.
 
 ---
 
