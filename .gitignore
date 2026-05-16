@@ -1,79 +1,15 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+.aidd/cache/
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
+# Environment secrets
 .env
 .env.local
 .env.*.local
 
-# Cache (model IDs, etc.)
-.cache/
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
 
-# Scripts de fine-tuning
-*.ckpt
-*.safetensors
-*.bin
-*.gguf
-training_logs/
-models/
-results/
-data/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Logs
-*.log
-logs/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-
-# Secrets
-*.pem
-*.key
-*.crt
-
-# Browser session cookies
-*_cookies.json
+# Docker
+.docker/

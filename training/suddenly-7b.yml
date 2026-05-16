@@ -1,12 +1,12 @@
 # suddenly-7b.yml
-# Full fine-tuning du modèle de base Qwen2.5-7B-Instruct sur corpus RP général
+# Full fine-tuning du modèle de base Mistral 7B v0.3 sur corpus RP général
 # Méthode : QLoRA sur A100-40G (full FFT requiert A100-80G ou 2xA100-40G)
 # GPU cible : RunPod A100-40G (40GB VRAM)
 # Usage : axolotl train training/suddenly-7b.yml
 
-base_model: Qwen/Qwen2.5-7B-Instruct
-model_type: Qwen2ForCausalLM
-tokenizer_type: AutoTokenizer
+base_model: mistralai/Mistral-7B-v0.3
+model_type: MistralForCausalLM
+tokenizer_type: LlamaTokenizer
 
 # --- Quantization ---
 load_in_4bit: true
@@ -34,7 +34,7 @@ lora_target_modules:
 # --- Dataset ---
 # Format : JSONL avec clé "messages", rôles system/user/assistant
 # Fichier produit par pipeline/formatting après anonymisation
-chat_template: qwen
+chat_template: mistral_v1
 datasets:
   - path: data/corpus-rp-general.jsonl
     type: chat_template
