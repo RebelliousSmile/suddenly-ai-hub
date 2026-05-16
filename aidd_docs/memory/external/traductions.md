@@ -1,90 +1,195 @@
 # Méthodologie de Traduction de Gros Volumes (EN -> FR)
 
-**2026-05-15** — Dernière mise à jour — **Pour usage interne et Passe Cyberpunk (#64)**
+**2026-05-16** — Dernière mise à jour — **Guide de référence complet — Pour usage interne et Passe Cyberpunk (#64)**
 
 ---
 
 ## 1. Objectif
 Traduire et adapter massivement des corpus de dialogues (Visual Novels, scénarios de RP, romans SF) de l'anglais vers un français naturel, en conservant le registre, les idiomes et le ton (doux, dramatique, etc.).
 
-## 2. Pipeline Technique
+**Contrainte budget :** 0€ — exécution locale uniquement.
 
-### A. Architecture du script de traduction
-1. **Extraction du texte** : Isoler les dialogues et le contexte (genre, situation) dans le corpus source.
-2. **Préparation des prompts** : Construire un prompt système standard + un prompt utilisateur pour chaque entrée.
-3. **Appels API parallélisés** : Envoyer les requêtes en masse via `asyncio` ou `ThreadPoolExecutor` pour saturer le débit de l'API.
-4. **Nettoyage et parsing** : Extraire le JSON de la réponse (souvent encadré de ` ```json `), le valider et le réinsérer dans le corpus de sortie.
+---
 
-### B. Prompt Engineering
-Le prompt doit être **concis** pour limiter les tokens (coût et latence) tout en imposant une **structure de sortie stricte**.
+## 2. Méthodes Essayées — Retour d'Expérience Complet
 
-**Modèle de prompt recommandé :**
-> *System* : Tu es un traducteur spécialisé en jeux de rôle textuels français. Traduire et adapter un dialogue de Visual Novel de l'anglais vers un français de jeu de rôle naturel. Utilise le tiret français (-) pour les dialogues courts. Conserve la structure JSON originale. Ne fournis aucun commentaire.
->
-> *User* : Genre: [genre], Situation: [situation].
-> [JOUEUR]: {dialogue_joueur}
-> [PERSONNAGE]: {dialogue_bot}
+### 🔴 Méthode 1 : Together AI + Llama 3.3-70B (3 passes)
 
-## 3. Fournisseurs et Modèles Testés (Retour d'expérience)
+**Date :** 2026-05-15
+**Entrées :** 386 conversations Ren'Py
+**Coût :** ~3€
+**Durée :** ~60-90 minutes
 
-### A. Together AI
-**Statut actuel :** ⚠️ **Restreint / Réorganisé**
-Depuis le redéploiement de leurs infrastructures, Together AI a retiré la plupart des gros modèles (Mistral Large, Llama 3 70B) de l'accès serverless (pricing à la demande).
+#### Architecture
+3 passes successives sur les mêmes 386 entrées :
+1. **Pass 1 (Brute)** : Traduction littérale EN->FR
+2. **Pass 2 (Style)** : Affinage stylistique (registres, idiomes, ton RP)
+3. **Pass 3 (Nettoyage)** : Validation JSON, correction des champs vides/malformés
 
-**Modèles restants disponibles en mode serverless :**
-| Modèle | Vitesse | Qualité FR | Statut |
-|--------|---------|------------|--------|
-| `Qwen/Qwen2.5-7B-Instruct-Turbo` | ⚡ Ultra (0.5s/req) | Faible (style technique) | Utilisable pour dé-doublonnage ou pré-traitement, pas pour traduction créative |
-| `meta-llama/Llama-3.3-70B-Instruct-Turbo` | 🐌 Lent (~60s/req) | ✅ Excellente | Rentabilité faible pour le volume (>10h de traduction pour 386 entrées) |
-| `mistralai/Mistral-Large-2411` | — | — | ❌ **Disponible** (Erreur 404 sur l'API Together) |
+#### Résultats
+| Pass | Succès | Erreurs | Taux |
+|------|--------|---------|------|
+| 1 | 302/386 | 84 HTTP 429 | 78% |
+| 2 | 302/386 | 84 HTTP 429 | 78% |
+| 3 | CRASH | JSONDecodeError sur champs vides | — |
 
-*Note :* La plupart des modèles requis nécessitent désormais la création d'un **endpoint dédié** (coûteux à l'heure, pas adapté au batch léger).
+#### Problèmes identifiés
+- **Rate-limiting strict** : 8 workers provoquent des 429. Solution : réduction à 3 workers + `BATCH_DELAY=2.0s`.
+- **Latence variable** : ~60s/req en serverless. 3 workers = ~20s effective/entrée.
+- **Parsing JSON fragile** : Le modèle retourne du JSON vide ou entouré de texte, crashant `json.loads()` en Pass 3.
+- **Sortie format nested invalide** : La structure `{messages: [], metadata: {}}` est **complètement altérée** par le modèle. Sortie : `{"SCÈNE": ...}` au lieu de JSON structuré. Contenus FR non alignés avec EN. 386 entrées **inutilisables pour LoRA**.
 
-### B. Solutions alternatives pour les gros volumes
-- **Ollama (Local)** : ✅ **Recommandé**. La solution zéro-coût la plus robuste. `ollama pull mistral` ou `llama3.3` (70B quantifié) pour une traduction de qualité locale et gratuite.
-- **OpenRouter** : Permet d'acheter de petites quantités de modèles mid-tier (ex: Mistral 7B, Llama 3 70B) au token. Bon compromis si le hardware local manque.
+#### Décision
+> ❌ **Abandonnée.** Le format JSON nested + 3 passes LLM = le modèle réorganise les clés et mélange les dialogues. Résultat : désalignement source/cible et hallucinations multilingues.
 
-## 4. Recommandations pour la Passe Cyberpunk (#64)
+---
 
-Pour la traduction des corpus EN -> FR (traductions CC BY-NC-SA de Doctorow, Watts, etc.), voici la stratégie recommandée :
+### 🔴 Méthode 2 : Ollama Local + Llama/Mistral (3 passes)
 
-1. **Pré-traitement** : Utiliser un modèle rapide (Qwen 2.5-7B sur Together ou Ollama) pour la traduction *brute* (sens littéral) ou pour le dé-doublonnage préliminaire.
-2. **Traduction créative (Style RP)** : Utiliser **Ollama en local** avec `mistral` ou `llama3.3` pour l'adaptation des idiomes, du registre SF/technologique et du ton.
-3. **Post-traitement** : Script de validation pour s'assurer que les noms de personnages sont cohérents et que le format JSONL n'est pas corrompu.
+**Date :** 2026-05-15
+**Entrées :** 386 conversations Ren'Py
+**Coût :** 0€
+**Durée :** ~Échec rapide
 
-## 5. Scripts et Outils Disponibles
-- `scripts/crawl_rpv/translate_rpv_to_french.py` : Pipeline batch classique (Threading).
-- `scripts/crawl_rpv/translate_rpv_to_french_async.py` : Pipeline asynchrone (`asyncio`/`httpx`) — *Plus performant pour les appels API massifs (gère 8 requêtes en parallèle).*
+#### Problèmes identifiés
+- **Instabilité en batch** : Les modèles conversationnels (Llama, Mistral via Ollama/Together) ne respectent pas les contraintes de nombre de lignes par requête, causant des désalignements critiques.
+- **Résultat : désalignement source/cible** — chaque entrée EN ne correspond plus à sa traduction FR correspondante.
+
+#### Décision
+> ❌ **Abandonnée.** Les LLM (générateurs de texte) hallucinent et réorganisent le contenu. Impossible de garantir l'alignement 1:1 nécessaire pour un corpus d'entraînement.
+
+---
+
+### 🟡 Méthode 3 : NLLB Local (`facebook/nllb-200-distilled-600M`)
+
+**Date :** 2026-05-16 (en cours)
+**Entrées :** 10 665 lignes (CSV plat)
+**Coût :** 0€
+**Statut :** ⏳ En cours d'exécution sur CPU
+
+#### Pourquoi NLLB ?
+- **Modèle de traduction pure** : Pas de génération de texte libre. Sortie prévisible et 100% alignée.
+- **Pas de clés API** : 100% offline, coût 0€.
+- **Spécialisé EN->FR** : Entraîné spécifiquement pour la traduction, pas pour la conversation.
+
+#### Format CSV plat (décision critique)
+- Ancien format JSON nested (1 entrée = plusieurs messages imbriqués) → abandonné car impossible à préserver fidèlement par un LLM.
+- Nouveau format : **1 tour de dialogue = 1 ligne CSV** (`genre`, `situation`, `role`, `content`).
+- Garantit un alignement 1:1 entre source et cible.
+
+#### Configuration
+```python
+src_lang="eng_Latn"  # Anglais
+tgt_lang="fra_Latn"  # Français
+batch_size=16
+```
+
+#### Environnement
+- Python 3.12, PyTorch 2.12.0+cu130, transformers 4.x
+- **CPU uniquement** — RTX 2080 Super non détectée par WSL2 (problème de pilote pont)
+- Estimation : 1-2 heures restantes sur CPU
+
+#### Décision
+> 🟡 **En cours.** La méthode la plus fiable pour l'alignement, mais lente sur CPU.
+
+---
+
+## 3. Décision Tree — Quelle Méthode Utiliser ?
+
+```
+Besoin de traduction EN->FR massives ?
+├── Volume < 500 entrées ?
+│   └── ✅ Together AI + Llama 3.3-70B (3 passes)
+│       - Acceptable si rate-limiting géré (3 workers, delay 2s)
+│       - Coût ~3€ pour 386 entrées
+│       - Format JSON nested → à éviter (modèle réorganise)
+│
+├── Volume > 500 entrées + GPU local ?
+│   └── ✅ NLLB (facebook/nllb-200-distilled-600M)
+│       - 100% offline, 0€, prévisible
+│       - Format CSV plat (1 tour = 1 ligne)
+│       - Besoin d'un bon GPU pour vitesse acceptable
+│
+├── Volume > 500 + Pas de GPU ?
+│   └── ⚠️ NLLB sur CPU
+│       - Fonctionnel mais lent (1-2h pour 10k lignes)
+│       - À lancer en background
+│
+└── Besoin de style RP/adaptation créative ?
+    └── ✅ Ollama local (Llama/Mistral) sur ENTRÉES FLATTES
+        - Jamais sur format nested JSON
+        - Pas en batch >1 (désalignement garanti)
+        - Acceptable pour validation manuelle de 50-100 entrées
+```
+
+---
+
+## 4. Format de Sortie Validé
+
+### CSV Plat (Format Unique Valide)
+```csv
+genre,situation,role,content
+romance,introduction,JOUEUR,Hey, how are you today?
+romance,introduction,PERSONNAGE,I'm fine, thank you for asking.
+horror,découverte,JOUEUR,What was that sound?
+horror,découverte,PERSONNAGE,I don't want to tell you...
+```
+
+**Règle :** 1 tour de dialogue = 1 ligne. Colonnes obligatoires : `genre`, `situation`, `role`, `content`.
+
+### Pourquoi ce format ?
+- **Alignement 1:1 garanti** — aucune ambiguïté source/cible
+- **Modèle ne réorganise pas** — NLLB traduit ligne par ligne
+- **Compatible LoRA** — format Axolotl directement exportable
+
+---
+
+## 5. État Actuel
+
+### Fichiers de données
+| Fichier | Lignes | Statut |
+|---------|--------|--------|
+| `data/renpy-corpus-flat.csv` | 10 665 | ✅ Source complète (généré depuis 386 conversations) |
+| `data/renpy-corpus-nllb-fr.csv` | En cours | ⏳ NLLB en cours d'exécution sur CPU |
+| `data/renpy-corpus-final.jsonl` | 386 | ❌ 386 entrées inutilisables (format nested corrompu) |
+
+### Environnement
+| Composant | Statut |
+|-----------|--------|
+| Python 3.12 | ✅ |
+| PyTorch 2.12.0+cu130 | ✅ installé |
+| GPU CUDA (RTX 2080 Super) | ❌ WSL2 — pont pilote non configuré |
+| NLLB 600M | ✅ disponible |
+
+### Tickets associés
+| # | Titre | Statut |
+|---|-------|--------|
+| #58 | Scraper Visual Novels Ren'Py depuis GitHub | ✅ Terminé (386 conversations → 10 665 lignes) |
+| #64 | Phase 3 : LoRA Cyberpunk via traduction | ⏸️ En attente (ce fichier documente la méthode) |
+
+---
 
 ## 6. Limitations connues & Astuces
+
 - **Limites de taille** : Toujours tronquer le `content` des messages système (>300-500 chars) pour ne pas saturer le budget `max_tokens`.
 - **Parsing JSON** : Les grands modèles rajoutent souvent du markdown (```json ... ```). Un script de nettoyage robuste (suppression des backticks) est obligatoire avant le `json.loads()`.
 - **Rate-limiting** : Toujours inclure un délai (`BATCH_DELAY`) entre les batchs pour éviter le bannissement de l'IP.
 
-## 7. Retour d'expérience : Pipeline Ren'Py (386 entrées — 2026-05-15)
+---
 
-**Contexte** : Traduction massive de 386 conversations Ren'Py (EN -> FR) pour le corpus LoRA (#58).
-**Fournisseur** : Together AI (serverless Llama 3.3 70B).
-**Coût total** : ~3 € (Pass 1 : 1.50€, Pass 2 : 1.50€).
-**Durée** : ~60-90 minutes.
+## 7. Checklist Validation Qualité (pour NLLB)
 
-### Architecture 3 passes
-1. **Pass 1 (Brute)** : Traduction littérale pour récupérer le sens.
-2. **Pass 2 (Style)** : Affinage stylistique (registres, idiomes, ton RP).
-3. **Pass 3 (Nettoyage)** : Validation JSON, correction des champs vides/malformés.
-
-### Limitations Together AI observées
-- **Rate-limiting strict** : 8 workers concurrents provoquent des erreurs `HTTP 429` (bloquantes).
-  - *Solution* : Réduction à **3 workers** + `BATCH_DELAY=2.0s`.
-- **Latence variable** : Environ 60s/req en serverless, compensée par le parallélisme (3 workers = ~20s effective/entrée).
-- **Parsing JSON fragile** : Le modèle retourne parfois du JSON vide ou entouré de texte dans Pass 2, faisant crasher `json.loads()` en Pass 3.
-  - *Solution* : Fallback vers l'entrée originale si parsing échoue, nettoyage agressif des backticks.
-
-### Conclusion
-Together AI reste viable pour du batch *si* on accepte la latence et qu'on réduit la concurrence. Pour un coût de ~3€, la qualité est bonne. Pour des volumes futurs >1k entrées, Ollama local reste plus stable et gratuit.
+Une fois la traduction NLLB terminée :
+1. **Audit aléatoire** : Vérifier 50-100 entrées manuellement (ton RP, idiomes, alignement)
+2. **Vérification colonnes** : Confirmer que `content` FR correspond à `content` EN (pas de mélange de lignes)
+3. **Détection doublons** : Lancer l'audit de vocabulaire existant sur le corpus FR
+4. **Export JSONL** : Regrouper les lignes CSV en format Axolotl structuré pour l'entraînement
 
 ---
-## 🆕 À venir : Traduction du Cyberpunk (#64)
-- Corpus source : Traductions CC BY-NC-SA (Doctorow, Watts, etc.)
-- Volume estimé : ~2M tokens
-- Défi majeur : Gestion de la terminologie SF/Technologique (nécessite un glossaire en amont).
+
+## 8. Pour la Passe Cyberpunk (#64)
+
+**Corpus source :** Traductions CC BY-NC-SA (Doctorow, Watts, etc.)
+**Volume estimé :** ~2M tokens
+**Méthode retenue :** NLLB sur CSV plat (cette documentation)
+**Défi majeur :** Terminologie SF/Technologique — nécessite un glossaire en amont ou une passe de post-traitement spécifique.
