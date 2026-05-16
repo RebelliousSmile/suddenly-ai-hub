@@ -72,6 +72,7 @@ class HealthResponse(BaseModel):
     vllm_reachable: bool
     models_loaded: int
     s3_reachable: Optional[bool] = None
+    s3_error: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

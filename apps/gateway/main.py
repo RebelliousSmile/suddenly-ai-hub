@@ -104,6 +104,7 @@ async def health():
         pass
 
     s3_ok = None
+    s3_error = None
     if cfg.s3_endpoint:
         s3_ok = False
         try:
@@ -120,8 +121,10 @@ async def health():
             )
             s3.list_objects_v2(Bucket=cfg.s3_bucket, MaxKeys=1)
             s3_ok = True
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging
+            logging.getLogger("gateway.health").warning("S3 healthcheck failed: %s", exc)
+            s3_error = str(exc)
 
     if vllm_ok and (s3_ok is None or s3_ok):
         status = "ok"
@@ -138,6 +141,7 @@ async def health():
         vllm_reachable=vllm_ok,
         models_loaded=len(cfg.models) if vllm_ok else 0,
         s3_reachable=s3_ok,
+        s3_error=s3_error,
     )
 
 
