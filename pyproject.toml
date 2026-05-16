@@ -35,13 +35,18 @@ scraper = [
     "beautifulsoup4==4.12.2",
 ]
 
+playground = [
+    "gradio>=4.40,<5.0",
+    "httpx>=0.27,<1.0",
+]
+
 dev = [
     "pytest>=7.0.0",
 ]
 
 [tool.setuptools.packages.find]
 where = [".", "apps"]
-include = ["pipelines*", "gateway*"]
+include = ["pipelines*", "gateway*", "playground*"]
 exclude = ["tests*", "venv*", "data*", "logs*", "aidd_docs*"]
 
 [tool.pytest.ini_options]
