@@ -1,6 +1,6 @@
 ---
 name: vcs
-description: Version control system guidelines for suddenly-ai-hub
+description: Version control system guidelines for suddenly-muses
 ---
 
 # Versioning Control System (VCS) Guidelines
@@ -8,7 +8,7 @@ description: Version control system guidelines for suddenly-ai-hub
 - Main Branch: `main`
 - Platform: GitHub
 - Owner: `RebelliousSmile`
-- Repo: `RebelliousSmile/suddenly-ai-hub`
+- Repo: `RebelliousSmile/suddenly-muses`
 - CLI: `gh`
 - MCP: `mcp__github__*`
 - Ticketing Tool: N/A (GitHub Issues used for roadmap phases)

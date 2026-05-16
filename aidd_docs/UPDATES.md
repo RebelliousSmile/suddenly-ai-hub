@@ -50,7 +50,7 @@ aidd-custom --version
 
 ```bash
 # Aller dans le projet
-cd /home/user/suddenly-ai-hub
+cd /home/user/suddenly-muses
 
 # Configurer l'overlay
 aidd-custom setup --repo RebelliousSmile/aidd-overlay
@@ -258,7 +258,7 @@ aidd-overlay/
 npm install -g aidd-custom
 
 # 2. Configurer l'overlay
-cd /home/user/suddenly-ai-hub
+cd /home/user/suddenly-muses
 aidd-custom setup --repo RebelliousSmile/aidd-overlay
 
 # 3. Installer pour Copilot (recommandé)

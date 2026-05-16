@@ -18,7 +18,7 @@ from getpass import getpass
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement
-load_dotenv('/home/user/suddenly-ai-hub/.env')
+load_dotenv('/home/user/suddenly-muses/.env')
 
 class JdRollScraper:
     """Scraper pour jdRoll avec authentification"""
@@ -123,7 +123,7 @@ class JdRollScraper:
         print("🔐 Chargement des cookies...")
         
         if cookies_file is None:
-            cookies_file = "/home/user/suddenly-ai-hub/jdroll_cookies.json"
+            cookies_file = "/home/user/suddenly-muses/jdroll_cookies.json"
         
         if not os.path.exists(cookies_file):
             print(f"⚠️ Fichier de cookies non trouvé: {cookies_file}")
@@ -154,7 +154,7 @@ class JdRollScraper:
     def save_cookies(self, cookies_file: str = None):
         """Sauvegarder les cookies"""
         if cookies_file is None:
-            cookies_file = "/home/user/suddenly-ai-hub/jdroll_cookies.json"
+            cookies_file = "/home/user/suddenly-muses/jdroll_cookies.json"
         
         cookies_dict = {}
         for cookie in self.session.cookies:

@@ -11,7 +11,7 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$SCRIPT_DIR"
 
-echo "🚀 Initialisation de suddenly-ai-hub avec AIDD..."
+echo "🚀 Initialisation de suddenly-muses avec AIDD..."
 echo "============================================================"
 
 # 1. Créer la structure aidd_docs
@@ -141,7 +141,7 @@ if [ ! -f "$PROJECT_ROOT/aidd_docs/changelog/CHANGELOG.md" ]; then
 
 ---
 
-[Unreleased]: https://github.com/RebelliousSmile/suddenly-ai-hub/compare/main...HEAD
+[Unreleased]: https://github.com/RebelliousSmile/suddenly-muses/compare/main...HEAD
 EOF
 fi
 

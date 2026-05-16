@@ -12,7 +12,7 @@
 
 ## Contexte
 
-Le repo `suddenly-ai-hub` contient actuellement:
+Le repo `suddenly-muses` contient actuellement:
 - `README.md` — 2 axes (Feature × Style), single adapter, pas de stacking
 - `scripts/list_models.py` — Registry single adapter
 - `scripts/infer.py` — Charge **un seul** PeftModel

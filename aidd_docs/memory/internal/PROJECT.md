@@ -12,5 +12,5 @@ Créer un modèle capable de générer du contenu JDR cohérent et immersif en f
 - ⏸️  Phase 3: En attente de données
 
 ## 🔗 Liens
-- [GitHub](https://github.com/RebelliousSmile/suddenly-ai-hub)
+- [GitHub](https://github.com/RebelliousSmile/suddenly-muses)
 - [Documentation](./aidd_docs/)

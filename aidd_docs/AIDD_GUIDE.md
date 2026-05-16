@@ -29,7 +29,7 @@ aidd-custom --version
 
 ```bash
 # Aller dans le projet
-cd /home/user/suddenly-ai-hub
+cd /home/user/suddenly-muses
 
 # Configurer le framework (pointe vers l'overlay)
 aidd-custom setup --repo RebelliousSmile/aidd-overlay
@@ -220,7 +220,7 @@ aidd-custom sync
 
 ```bash
 # Aller dans le projet
-cd /home/user/suddenly-ai-hub
+cd /home/user/suddenly-muses
 
 # Installer le CLI
 npm install -g aidd-custom

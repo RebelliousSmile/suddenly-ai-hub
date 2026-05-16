@@ -4,7 +4,7 @@ date: 2026-05-13
 author: RebelliousSmile
 session_ids: [session1, session2]
 status: draft
-project: suddenly-ai-hub
+project: suddenly-muses
 ---
 
 # 📚 Lessons Learned - Sessions 1-2 et Planning Phases 3-7

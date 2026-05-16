@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # setup-python-env.sh
-# Script de mise en place de l'environnement Python pour suddenly-ai-hub
+# Script de mise en place de l'environnement Python pour suddenly-muses
 # Correspond à l'issue #44 : Étape 1 : Préparer l'environnement Python
 #
 # Usage: bash setup-python-env.sh [--verbose] [--skip-venv] [--skip-git]
 #
 # Ce script :
 #   - Vérifie Python 3.10+
-#   - Crée un venv dans ~/projects/suddenly-ai-hub/
+#   - Crée un venv dans ~/projects/suddenly-muses/
 #   - Installe les dépendances du projet
 #   - Clone le repo si nécessaire
 #   - Configure la clé API Together.ai
@@ -39,7 +39,7 @@ LOG_FILE="${LOG_FILE:-/tmp/suddenly-setup-$(date +%Y%m%d-%H%M%S).log}"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "============================================================"
-echo "  Setup Environment for suddenly-ai-hub"
+echo "  Setup Environment for suddenly-muses"
 echo "  Started: $(date)"
 echo "  Log: $LOG_FILE"
 echo "============================================================"
@@ -100,10 +100,10 @@ echo ""
 # ---------------------------
 # ÉTAPE 3: Clone du repo
 # ---------------------------
-echo "📍 ÉTAPE 3: Repo suddenly-ai-hub"
+echo "📍 ÉTAPE 3: Repo suddenly-muses"
 echo "------------------------------------"
 
-PROJECT_DIR="$HOME/projects/suddenly-ai-hub"
+PROJECT_DIR="$HOME/projects/suddenly-muses"
 
 if [ "$SKIP_GIT" = true ]; then
     echo "⏭️  Skip (option --skip-git)"
@@ -122,7 +122,7 @@ elif [ -d "$PROJECT_DIR/.git" ]; then
 else
     echo "   Clone du repo dans $PROJECT_DIR..."
     mkdir -p "$HOME/projects"
-    git clone https://github.com/RebelliousSmile/suddenly-ai-hub.git "$PROJECT_DIR"
+    git clone https://github.com/RebelliousSmile/suddenly-muses.git "$PROJECT_DIR"
     cd "$PROJECT_DIR"
     echo "✅ Repo cloné OK"
 fi

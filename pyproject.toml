@@ -1,5 +1,5 @@
 [project]
-name = "suddenly-ai-hub"
+name = "suddenly-muses"
 version = "0.1.0"
 description = "LoRA adapters and gateway for Suddenly's French roleplay models."
 requires-python = ">=3.10"

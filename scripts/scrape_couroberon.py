@@ -14,7 +14,7 @@ from typing import List, Dict
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement
-load_dotenv('/home/user/suddenly-ai-hub/.env')
+load_dotenv('/home/user/suddenly-muses/.env')
 
 class LaCourOberonScraper:
     """Scraper pour La Cour d'Obéron avec authentification"""
@@ -117,7 +117,7 @@ class LaCourOberonScraper:
             cookies_dict[cookie.name] = cookie.value
         
         # Créer le fichier de cookies
-        cookies_file = "/home/user/suddenly-ai-hub/cookies.json"
+        cookies_file = "/home/user/suddenly-muses/cookies.json"
         with open(cookies_file, "w") as f:
             json.dump(cookies_dict, f)
         
@@ -127,7 +127,7 @@ class LaCourOberonScraper:
         """Charger les cookies depuis le fichier"""
         import os
         
-        cookies_file = "/home/user/suddenly-ai-hub/cookies.json"
+        cookies_file = "/home/user/suddenly-muses/cookies.json"
         
         if os.path.exists(cookies_file):
             with open(cookies_file, "r") as f:

@@ -205,7 +205,7 @@ Each output is scored on:
 ### Tests
 
 ```bash
-python -m pytest tests/test_suddenly_ai_hub.py -v
+python -m pytest tests/test_suddenly_muses.py -v
 ```
 
 Validates data integrity, script structure, stacking configuration, and README content.
@@ -216,4 +216,4 @@ MIT — use for anything, commercial projects welcome.
 
 ## Contact
 
-[RebelliousSmile](https://github.com/RebelliousSmile) — [GitHub](https://github.com/RebelliousSmile/suddenly-ai-hub)
+[RebelliousSmile](https://github.com/RebelliousSmile) — [GitHub](https://github.com/RebelliousSmile/suddenly-muses)

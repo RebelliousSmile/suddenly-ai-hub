@@ -6,7 +6,7 @@ description: Project vision and domain documentation
 # PROJECT_BRIEF.md
 
 ## Executive Summary
-- **Project Name**: `suddenly-ai-hub`
+- **Project Name**: `suddenly-muses`
 - **Vision**: Communal AI inference hub for the Fediverse/ActivityPub ecosystem
 - **Mission**: Fine-tune and host LLMs specialized in RP writing assistance for Suddenly federated instances
 
@@ -29,7 +29,7 @@ description: Project vision and domain documentation
 | Term | Definition | Synonyms |
 |------|-----------|----------|
 | Instance | Fediverse server running Suddenly | — |
-| Hub | This centralized AI infrastructure | suddenly-ai-hub |
+| Hub | This centralized AI infrastructure | suddenly-muses |
 | Session | A RP roleplay session (source of training data) | — |
 | Corpus | Collection of anonymized sessions for fine-tuning | — |
 | Fine-tuning | Supervised training run to specialize the model | — |

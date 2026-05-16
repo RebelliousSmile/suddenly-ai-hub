@@ -27,7 +27,7 @@ Chaque feature correspond à un LoRA adapter spécifique.
 ## Structure du projet
 
 ```
-suddenly-ai-hub/
+suddenly-muses/
 ├── models/                    # LoRA adapters fine-tunés
 │   ├── suddenly-dialogue/     # #77
 │   ├── suddenly-action/       # #78

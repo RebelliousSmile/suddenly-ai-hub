@@ -6,7 +6,7 @@ description: Project structure documentation
 # Codebase Structure
 
 ```
-suddenly-ai-hub/
+suddenly-muses/
 ├── apps/
 │   └── gateway/          # FastAPI API Gateway (déployé sur Railway)
 │       ├── main.py           # uvicorn entry point (gateway.main:app dans le container)
@@ -47,4 +47,4 @@ suddenly-ai-hub/
 ## Data
 
 - `data/bench/` : corpus de benchmark CC, **in-repo** (petit volume, référencé par `pipelines/crawl_rpv/extract_cyberpunk_samples.py`).
-- Reste de `data/` : gitignored (datasets lourds, pas de backup distant — voir mémoire `project_suddenly_ai_hub.md`).
+- Reste de `data/` : gitignored (datasets lourds, pas de backup distant — voir mémoire `project_suddenly_muses.md`).
