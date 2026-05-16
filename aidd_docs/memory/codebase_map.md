@@ -7,13 +7,14 @@ description: Project structure documentation
 
 ```
 suddenly-ai-hub/
-├── gateway/              # FastAPI API Gateway (déployé sur Railway)
-│   ├── main.py           # uvicorn entry point (gateway.main:app)
-│   ├── adapter_router.py # routing LoRA adapters
-│   ├── auth.py           # HTTP signature auth
-│   ├── vllm_client.py    # client vers backend vLLM
-│   ├── requirements.txt  # deps Docker (utilisées par Railway)
-│   └── Dockerfile        # image Railway
+├── apps/
+│   └── gateway/          # FastAPI API Gateway (déployé sur Railway)
+│       ├── main.py           # uvicorn entry point (gateway.main:app dans le container)
+│       ├── adapter_router.py # routing LoRA adapters
+│       ├── auth.py           # HTTP signature auth
+│       ├── vllm_client.py    # client vers backend vLLM
+│       ├── requirements.txt  # deps Docker (utilisées par Railway)
+│       └── Dockerfile        # image Railway (root dir Railway = apps/gateway)
 ├── pipelines/            # Tout le code Python non-gateway
 │   ├── anonymization/    # ex-pipeline/ — anonymize, evaluate, format_corpus, generate_eval
 │   ├── crawl_rpv/        # ex-scripts/crawl_rpv/ — scraping + NLLB + scoring
@@ -34,12 +35,12 @@ suddenly-ai-hub/
 
 - Code dans `pipelines/anonymization/` → `from pipelines.anonymization.X import Y`
 - Code dans `pipelines/evaluation/` → `from pipelines.evaluation.X import Y`
-- Gateway autonome : `from gateway.X import Y`
-- Les tests utilisent `pythonpath = ["."]` (cf. `pyproject.toml [tool.pytest.ini_options]`).
+- Gateway : `from gateway.X import Y` (résolu via `apps/` dans pythonpath)
+- Les tests utilisent `pythonpath = [".", "apps"]` (cf. `pyproject.toml [tool.pytest.ini_options]`).
 
 ## Déploiement
 
-- **Gateway** : Railway, build Docker depuis `gateway/Dockerfile`, deps via `gateway/requirements.txt`.
+- **Gateway** : Railway, build Docker depuis `apps/gateway/Dockerfile` (Root Directory Railway = `apps/gateway`), deps via `apps/gateway/requirements.txt`.
 - **Training** : RunPod A100-40G, Axolotl, configs dans `pipelines/training/suddenly-{7b,13b}.yml`.
 - **Inference** : vLLM (backend), client dans `gateway/vllm_client.py`.
 
