@@ -7,47 +7,45 @@ description: Infrastructure and deployment documentation
 
 ## Infrastructure Costs
 
-| Component | Solution | Estimated Cost |
-|-----------|----------|----------------|
-| API Gateway | Hetzner VPS CX21 | ~5€/month |
-| Database | PostgreSQL on Supabase or VPS | 0-10€/month |
-| Storage | Backblaze B2 or Hetzner Object Storage | ~1€/month per 100GB |
-| Inference GPU | RunPod RTX 3090 (spot) | ~0.20$/h, ~50$/month moderate load |
-| Fine-tuning | Together.ai Fine-tuning API → Axolotl + RunPod | 50-200$/run |
-| **Total** | **Steady state** | **~80-150€/month** |
+| Composant | Hébergement | Coût |
+|-----------|-------------|------|
+| Gateway + PostgreSQL | Railway | ~$5/mois fixe |
+| Stockage corpus + modèles | Cloudflare R2 | 0€ (free tier 10GB) |
+| Inférence GPU | RunPod spot (RTX 3090 / A10) | $0.20/h, scale to zero |
+| Traitement data/fine-tuning | PC local (RTX 2080 Super) | 0€ |
+| **Total standby** | | **~$5/mois** |
+| **Total en charge modérée** | | **~$25-60/mois** |
 
 ## GPU Scaling
 
-- Low traffic: minimal instance RTX 3090 / A10 (~0.20$/h)
-- Peak: additional worker on demand via RunPod API
-- Saturated fallback: `retry-after` header + UI "unavailable" message
-
-## URLs
-
-- Production: `https://ai.suddenly.social`
-- Transparency page: `https://ai.suddenly.social/transparency`
+- **Standby** : pod éteint, 0$/h
+- **Cold start** : ~2-3 min pour loader base + adapters depuis R2
+- **Low traffic** : 1× RTX 3090 spot (~0.20$/h)
+- **Peak** : scale-up via RunPod API (worker supplémentaire)
+- **Saturated** : `retry-after` header + UI "Assistant indisponible, réessayez plus tard"
 
 ## Environments
 
-- Phase 0 (beta closed): RunPod
-- Phase 1+: production at `ai.suddenly.social`
+- **Dev** : Gateway sur Railway (preview deploy), GPU = PC local avec Ollama/vLLM
+- **Prod** : `https://ai.suddenly.social` sur Railway + RunPod spot
 
 ## Model Deployment Process
 
-1. Export corpus since last fine-tuning date
-2. Submit to Together.ai Fine-tuning API
-3. Evaluate on reserved test set
-4. If metrics OK → progressive rollout (10% → 50% → 100%)
-5. Archive previous model (rollback possible within 48h)
+1. Fine-tuning sur PC local (Axolotl + RTX 2080 Super)
+2. Export safetensors → upload Cloudflare R2
+3. RunPod pull base + adapters depuis R2
+4. Évaluer sur le set de test réservé
+5. Si métriques OK → rollout progressif (10% → 50% → 100%)
+6. Archive modèle précédent sur R2 (rollback possible dans 48h)
 
 ## Data Pipeline
 
-1. Session submitted
-2. Structural validation (format, language, minimum length)
-3. Anonymization (NER → generic tokens, FR/EN)
-4. Format as training examples (reports → prompt/completion pairs)
-5. Storage in corpus (PostgreSQL + S3-compatible)
-6. Marked "available for next fine-tuning"
+1. Session soumise (contribute endpoint)
+2. Validation structurelle (format, langue, longueur minimale)
+3. Anonymisation (NER → tokens génériques, FR/EN)
+4. Formatage en exemples d'entraînement (reports → paires prompt/completion)
+5. Stockage sur Cloudflare R2 (JSONL)
+6. Marqué "disponible pour le prochain fine-tuning"
 
 ## CI/CD Pipeline
 

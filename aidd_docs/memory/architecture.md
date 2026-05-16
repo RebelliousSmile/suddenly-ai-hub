@@ -96,6 +96,47 @@ learning_rate: 2e-4
 - Les tokens API sont stockés dans les secrets AIDD
 - Les modèles fine-tunés sont stockés dans `models/` (git-lfs)
 
+---
+
+## Infrastructure & hosting
+
+| Composant | Hébergement | Coût | Rôle |
+|-----------|-------------|------|------|
+| Gateway + PostgreSQL | Railway | ~$5/mois fixe | Auth ActivityPub, routing, comptes Muses |
+| Inférence GPU | RunPod spot (RTX 3090 / A10) | $0.20/h, scale to zero | vLLM multi-LoRA, stacking 2 axes |
+| Stockage corpus + modèles | Cloudflare R2 | 0€ (free tier 10GB) | S3-compatible, safetensors, JSONL |
+| Traitement (data prep, fine-tuning) | PC local Windows (RTX 2080 Super) | 0€ | Hors prod, processus batch uniquement |
+
+### Flux de fabrication
+
+```
+PC local: data prep → fine-tuning → export safetensors → upload R2
+                                                          │
+R2 ◄─────────────────────────────────────────────────────┘
+ │
+ ▼
+RunPod: pull base + adapters depuis R2 → vLLM prêt
+ │
+ ▼
+Railway Gateway → route vers RunPod → réponse aux instances Suddenly
+```
+
+### URLs
+
+- Production : `https://ai.suddenly.social`
+- Transparency page : `https://ai.suddenly.social/transparency`
+
+---
+
+## Sécurité
+
+- Les données RP sont anonymisées (noms remplacés par {{char}}/{{user}})
+- Les tokens API sont stockés dans les secrets Railway
+- Les modèles fine-tunés sont stockés sur R2 (privé, pas public)
+- Aucune dépendance envers un provider d'inférence commercial pour la prod
+
+---
+
 ## Évolutions futures
 
 - [ ] Support de Qwen3
