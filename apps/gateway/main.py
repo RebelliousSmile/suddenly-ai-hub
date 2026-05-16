@@ -113,9 +113,12 @@ async def health():
                 aws_access_key_id=cfg.s3_access_key,
                 aws_secret_access_key=cfg.s3_secret_key,
                 region_name=cfg.s3_region,
-                config=BotoConfig(signature_version="s3v4"),
+                config=BotoConfig(
+                    signature_version="s3v4",
+                    s3={"addressing_style": "path"},
+                ),
             )
-            s3.head_bucket(Bucket=cfg.s3_bucket)
+            s3.list_objects_v2(Bucket=cfg.s3_bucket, MaxKeys=1)
             s3_ok = True
         except Exception:
             pass
