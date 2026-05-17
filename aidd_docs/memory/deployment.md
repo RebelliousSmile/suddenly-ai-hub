@@ -28,7 +28,9 @@ description: Infrastructure et déploiement — pistes et contraintes
 - Sauvegardes : git suffit tant que la croissance reste modérée. À reconsidérer si on dépasse plusieurs dizaines de MB.
 - L'**index SQLite** et les **embeddings `.npy`** sont **reconstruits** depuis les JSONL — pas la source de vérité, donc gitignorés.
 
-## Stockage des données opérationnelles
+## Stockage des données opérationnelles (proposition pour le MVP)
+
+`learning-and-trust.md` ne fixe pas la techno de persistance. Proposition pour le MVP, à figer dans `infrastructure.md` à venir :
 
 - **Trust + profils de style** : SQLite local au service Muses, sauvegardé périodiquement.
 - **Event log** des signaux UI : append-only sur disque (rotation périodique), utilisé pour l'online learning et l'audit.

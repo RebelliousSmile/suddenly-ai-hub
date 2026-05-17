@@ -24,7 +24,7 @@ suddenly-muses/
 │   │   └── internal/       # Mémoire interne (templates, PROJECT.md, MANIFEST)
 │   └── ...
 ├── .claude/                # Conventions aidd-framework : agents, commands, rules, skills
-├── pyproject.toml          # Deps Python — extras `[pipelines, scraper, dev]` (extras `gateway` supprimé)
+├── pyproject.toml          # Deps Python — extras `[gateway, pipelines, scraper, playground, dev]` ; les extras `gateway` et `playground` survivent à l'ancienne stack et doivent être nettoyés (T03)
 ├── CLAUDE.md, AGENTS.md    # Context et règles agent
 ├── README.md               # À réécrire selon `philosophy.md`
 └── init.py, init.sh        # Bootstrap dev
@@ -58,7 +58,14 @@ suddenly-muses/
 - `data/bench/` : corpus de benchmark, **in-repo** (petit volume).
 - `data/renpy-corpus.jsonl` : extraits VN Ren'Py (~27 KB), in-repo pour le bootstrap.
 - `data/test-dataset-rp.jsonl` : dataset de test, in-repo.
-- Le reste de `data/` est gitignored — les futures tables peuplées iront probablement dans un répertoire dédié (à décider).
+- Le reste de `data/` est gitignored.
+
+**Question ouverte** : emplacement des tables peuplées. Deux options :
+
+1. Répertoire dédié versionné `tables/` à la racine (cohérent avec `data-format.md` qui parle de « JSONL versionné en git »).
+2. Sous-dossier `data/tables/` resté gitignored (moins de pollution diff, perd l'audit git).
+
+À trancher en M0 selon le volume attendu des premières tables.
 
 ## Déploiement
 

@@ -7,11 +7,11 @@ description: Plan technique d'implémentation — chemin critique et tableau de 
 
 > Roadmap actionnable pour passer de la théorie (les sept documents cités dans `architecture.md`) au service Muses fonctionnel. Format : graphe de dépendances + tableau plat des tâches.
 
-## Chemin critique
+## Graphe de dépendances
 
 ```mermaid
 ---
-title: Chemin critique des dépendances
+title: Graphe de dépendances entre tâches
 ---
 flowchart LR
     Cleanup["Cleanup code obsolete"]
@@ -66,9 +66,17 @@ flowchart LR
     StagesV2 --> Features
 ```
 
-Le chemin critique (le plus long) passe par : Cleanup → Schema → TableIO → Ingest → Anonym → Mining → Tables0 → Stage2C → PipeMVP → ApiMVP → AuthAP → Deploy0 → Client → Signals → (Trust + Online) → StagesV2.
+## Chemin critique
 
-Toute tâche hors de ce chemin peut être parallélisée si la dépendance immédiate est satisfaite.
+Le chemin le plus long du graphe ci-dessus :
+
+```
+Cleanup → Schema → TableIO → Ingest → Anonym → Mining → Tables0 → Stage2C
+        → PipeMVP → ApiMVP → AuthAP → Deploy0 → Client → Signals
+        → (Trust ‖ Online) → StagesV2
+```
+
+Toute tâche hors de ce chemin (par exemple `Stage1H`, `Stage3R`, `Stage4N`, `Profile`, `Analyse`) peut être parallélisée dès que sa dépendance immédiate est satisfaite.
 
 ## Milestones
 
@@ -88,8 +96,8 @@ Toute tâche hors de ce chemin peut être parallélisée si la dépendance immé
 | T01 | Supprimer les tests obsolètes (`test_gateway`, `test_auth`, `test_evaluate*`, `test_*provider*`, `test_train_*`, `test_suddenly_ai_hub`) | M0 | — | TODO |
 | T02 | Nettoyer `tests/` des imports vers modules supprimés | M0 | T01 | TODO |
 | T03 | Refondre `pyproject.toml` (drop extras `gateway`, dépendances LoRA-era) | M0 | T01 | TODO |
-| T04 | Renommer `PROJECT_INFO.json` champs LoRA et phases obsolètes ou supprimer | M0 | — | TODO |
-| T05 | Implémenter validateur de schéma row Pydantic (cf. `data-format.md`) | M0 | — | TODO |
+| T04 | Mettre à jour `PROJECT_INFO.json` (drop fine-tune fields, statut pre-mvp, doc entry points) | M0 | — | DONE |
+| T05 | Implémenter validateur de schéma row (Pydantic recommandé pour le typage, cf. `data-format.md`) | M0 | — | TODO |
 | T06 | Implémenter validateur de tags (set canonique de `axes-and-tags.md`) | M0 | T05 | TODO |
 | T07 | I/O tables : lecture / écriture JSONL append-only | M0 | T05 | TODO |
 | T08 | Construction index SQLite FTS5 depuis JSONL | M0 | T07 | TODO |
@@ -99,7 +107,7 @@ Toute tâche hors de ce chemin peut être parallélisée si la dépendance immé
 | T12 | Adapter `pipelines/crawl_rpv/` pour pipeline d'ingestion vers tables | M1 | T11 | TODO |
 | T13 | Extracteur d'entités (NER + clustering de variantes) | M1 | T11 | TODO |
 | T14 | Segmentation en beats (classifieur léger ou rules) | M1 | T11 | TODO |
-| T15 | Bootstrap initial : peupler 1 cellule prioritaire `(univers, situation, voix, ...)` avec ~100 rows par niveau | M1 | T12, T13, T14 | TODO |
+| T15 | Bootstrap initial : peupler 1 cellule prioritaire (5 axes : `univers`, `situation`, `rapport_initial`, `voix`, `emotion_dominante`) avec ~100 rows par niveau | M1 | T12, T13, T14 | TODO |
 | T16 | Étage 1 sélecteur : v0 par tag matching strict + fallback hiérarchique | M2 | T07 | TODO |
 | T17 | Étage 2 pondérateur : v0 par similarité cosinus sur embeddings pré-calculés | M2 | T09 | TODO |
 | T18 | Étage 3 recombinateur : règles d'assemblage + remplissage de slots typés | M2 | T07 | TODO |
@@ -120,15 +128,15 @@ Toute tâche hors de ce chemin peut être parallélisée si la dépendance immé
 | T33 | Mode challenge : malus profil dans étage 2 + MMR dans étage 4 | M3 | T32, T29 | TODO |
 | T34 | Anti-sleeper / anti-takeover / quality gating implémentés | M3 | T27, T28 | TODO |
 | T35 | Endpoint `/v1/admin/coverage` (carte de couverture pour admin Muses) | M3 | T07 | TODO |
-| T36 | Méta-suggestions batch nocturne | M3 | T32 | TODO |
+| T36 | Méta-suggestions batch nocturne | M3 | T26, T32 | TODO |
 | T37 | Déploiement public + monitoring (Prometheus / logs structurés) | M4 | T34 | TODO |
 | T38 | Mode dégradé côté MusesClient (UI grisée si service down) | M4 | T24 | TODO |
 | T39 | Spec opérationnelle de l'API → `infrastructure.md` | M4 | T37 | TODO |
 | T40 | Snapshots + rollback des poids ML | M4 | T29, T30, T31 | TODO |
-| T41 | Feature `suggest_action` (#78) | M5 | T20 | TODO |
-| T42 | Feature `suggest_description` (#79) | M5 | T20 | TODO |
-| T43 | Feature `suggest_thought` (#80) | M5 | T20 | TODO |
-| T44 | Feature `video_prompt` (#89) — pipeline sans étage 4 | M5 | T20 | TODO |
+| T41 | Feature `suggest_action` (#78) — requiert peuplement tables `beat` et `template` pour situations cibles | M5 | T20, mining ciblé | TODO |
+| T42 | Feature `suggest_description` (#79) — requiert peuplement tables `template` et `entity` (lieux/ambiances) | M5 | T20, mining ciblé | TODO |
+| T43 | Feature `suggest_thought` (#80) — requiert beats émotionnels et entités psychologiques | M5 | T20, mining ciblé | TODO |
+| T44 | Feature `video_prompt` (#89) — pipeline sans étage 4 ; requiert templates visuels | M5 | T20, mining ciblé | TODO |
 | T45 | Pipeline d'analyse : embedder + matcher + agrégateur | M5 | T09 | TODO |
 | T46 | Tables de patterns pour cohérence scène (#81) | M5 | T45 | TODO |
 | T47 | Feature `analyze_consistency_scene` (#81) | M5 | T45, T46 | TODO |

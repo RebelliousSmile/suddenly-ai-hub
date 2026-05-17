@@ -34,15 +34,15 @@ Identité complète et anti-features dans `philosophy.md`.
 - **Sécurité / fédération / trust** : `learning-and-trust.md` §§4-6 + `philosophy.md` §5.
 - **UI côté instance Suddenly** : `style-coaching.md` §3 (signaux) + `use-cases.md` §1-2.
 
-## Documents projetés (à écrire)
+## Documents satellites
 
-| Doc | Couvrira |
-|---|---|
-| `technical-plan.md` | Plan d'implémentation : chemin critique + tableau de tâches |
-| `analysis-pipeline.md` | Spec opérationnelle du pipeline d'analyse (projection inversée) |
-| `infrastructure.md` | HA, auth ActivityPub côté service, mode dégradé, déploiement |
-| `mining-pipeline.md` | Pipeline d'extraction des rows depuis le corpus bootstrap |
-| Refonte tarifaire | Économie d'unités d'usage (remplace la grille `use-cases.md` §1.2) |
+| Doc | Statut | Couvre / couvrira |
+|---|---|---|
+| `technical-plan.md` | écrit | Plan d'implémentation : chemin critique + tableau de tâches |
+| `analysis-pipeline.md` | projeté | Spec opérationnelle du pipeline d'analyse (projection inversée) |
+| `infrastructure.md` | projeté | HA, auth ActivityPub côté service, mode dégradé, déploiement |
+| `mining-pipeline.md` | projeté | Pipeline d'extraction des rows depuis le corpus bootstrap |
+| Refonte tarifaire | projeté | Économie d'unités d'usage (remplace la grille `use-cases.md` §1.2) |
 
 ## Hors périmètre de ce hub
 

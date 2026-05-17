@@ -50,7 +50,7 @@ Identité complète : `philosophy.md`. Architecture : `architecture-tables-ml.md
 - Pas un assistant généraliste (productivité bureautique, traduction inter-langues, code).
 - Pas un service à inférence payante par token.
 - Pas un système versionné. Pas de « v2 du modèle ».
-- Pas un client OpenAI-compatible (l'ancienne API REST OpenAI est abandonnée avec le pivot).
+- Pas une API OpenAI-compatible. L'ancienne couche réutilisait par convention le chemin `/v1/chat/completions` sans s'engager sur la compatibilité — le nouveau service expose une API REST propriétaire et n'imite plus la surface OpenAI.
 
 Cf. `philosophy.md` §8.
 

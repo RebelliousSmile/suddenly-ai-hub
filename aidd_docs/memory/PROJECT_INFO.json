@@ -36,6 +36,5 @@
       "Fine-tuning frameworks (Axolotl)",
       "Vector DBs (pgvector, Pinecone, etc.) — pas pour le MVP"
     ]
-  },
-  "deprecated_fields_note": "Les anciens champs (phases, api_keys, metrics, version 1.0.0) ont été remplacés. L'ancien tech_stack (Axolotl, LoRA, QLoRA, Together.ai, Fireworks.ai, vLLM) reflétait la stack pré-pivot abandonnée."
+  }
 }
