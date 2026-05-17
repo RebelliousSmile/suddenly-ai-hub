@@ -103,6 +103,72 @@ Cible : VM unique CPU-only, distribution Linux standard.
 
 À documenter en script `scripts/deploy/install_v0.sh` quand T37 est exécutée.
 
+## Déploiement Railway
+
+Cible alternative au déploiement bare-metal Hetzner — Railway gère build + run + TLS + scaling à un coût de ~5 USD/mois (Hobby plan), sans bare-metal à provisionner.
+
+La config build/deploy vit dans `railway.toml` à la racine. **Ce fichier prend toujours le dessus sur les réglages dashboard** — c'est la source de vérité versionnée.
+
+### Provisionnement (à faire une fois côté Railway dashboard)
+
+1. **Créer un projet** lié au repo GitHub (`RebelliousSmile/suddenly-muses`).
+2. **Provisionner un Volume** d'au moins 1 GB monté sur `/data`. Railway ne permet pas de déclarer les volumes dans `railway.toml`.
+3. **Configurer les variables d'environnement** (Variables tab) :
+
+   | Variable | Valeur Railway typique | Notes |
+   |---|---|---|
+   | `MUSES_TABLE_DIR` | `tables/bootstrap_cell_medfan_combat_hostile_solennel_colere` | In-image (versionné git) |
+   | `MUSES_FEEDBACK_DIR` | `/data/feedback` | Volume monté, persistant |
+   | `MUSES_SNAPSHOT_DIR` | `/data/snapshots` | Volume monté |
+   | `MUSES_ADMIN_TOKEN` | secret fort (`openssl rand -base64 32`) | **Obligatoire** — bind public sinon `ConfigError` |
+   | `MUSES_SIGNATURE_MODE` | `strict` | Production = vérification RSA-SHA256 réelle |
+   | `MUSES_ENCODER` | `sentence_transformer` | Modèle baké dans l'image au build |
+   | `MUSES_ENCODER_MODEL` | `paraphrase-multilingual-MiniLM-L12-v2` | Par défaut |
+   | `MUSES_BIND_HOST` | `0.0.0.0` | Railway expose `$PORT` |
+   | `MUSES_LOG_FORMAT` | `json` | Logs structurés pour ingestion |
+   | `MUSES_LOG_LEVEL` | `INFO` | |
+   | `MUSES_RATE_LIMIT_PER_MINUTE` | `60` | Single-worker, ajustable |
+   | `MUSES_SIGNATURE_MAX_AGE_SECONDS` | `300` | Anti-replay 5 min |
+
+   Railway fournit `PORT` automatiquement — `startCommand` du `railway.toml` l'utilise.
+
+4. **Public domain** : générer un nom Railway ou attacher un domaine personnalisé (TLS automatique).
+
+5. **Déclencher le premier deploy** depuis le dashboard ou push sur `main`.
+
+### Premier boot
+
+- Le service charge `MUSES_TABLE_DIR` (in-image, versionné). 3 tables peuplées par le bootstrap script committed dans `tables/bootstrap_cell_*/`.
+- `MUSES_FEEDBACK_DIR=/data/feedback` est créé automatiquement par les stores au premier signal.
+- L'event log + trust + style profile + online learner s'initialisent vides.
+- Snapshots déclenchés manuellement via `railway run python scripts/snapshot_feedback.py` ou via cron-style scheduler externe.
+
+### Mise à jour des tables
+
+Les tables sont **in-image** (versionnées git). Toute évolution (curation, mining, nouvelle cellule) demande :
+1. Modifier les JSONL dans `tables/...` localement
+2. Commit + push sur `main`
+3. Railway redéploie automatiquement
+4. Les nouvelles tables sont chargées au prochain start
+
+C'est acceptable au volume MVP. À volume élevé, il faudra migrer vers une source externe (S3 / R2 / volume Railway dédié sync via job).
+
+### Limites Railway à acter
+
+- **Free trial** : ~5 USD de crédit puis pause. **Hobby plan** : ~5 USD/mois fixe, suffisant pour le MVP. **Pro plan** ajoute concurrence et SLA.
+- **Build time** : ~10 min sur Hobby. Notre build (~3 min Nixpacks + ~2 min bake du modèle) passe largement.
+- **RAM** : 512 MB par défaut Hobby — sentence-transformer + Python ≈ 350 MB, marge serrée mais OK.
+- **Single replica** : on assume le SPOF (D15). Toute mise à `numReplicas > 1` exige de migrer les stores SQLite vers une DB partagée.
+- **Sinistre volume** : si le volume Railway est perdu, on perd `feedback/` entier (trust, profils, event log). Les snapshots restaurent un état antérieur mais doivent eux-mêmes être exfiltrés hors Railway pour vraie résilience. À traiter quand le service quitte le pré-MVP.
+
+### Reproductibilité sur d'autres PaaS
+
+Le `Procfile` n'est pas fourni mais le `startCommand` est trivialement transposable :
+
+- **Fly.io** : `fly.toml` avec `[processes] app = "uvicorn ..."` et un volume monté.
+- **Render** : `render.yaml` avec `services` (équivalent direct, mêmes env vars).
+- **Heroku-likes** : `Procfile` avec `web: uvicorn muses.api.entrypoint:app --host 0.0.0.0 --port $PORT`.
+
 ## Capacity planning indicatif
 
 | Mesure | M2 | M3 | M4 nominal |

@@ -4,6 +4,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added (ops Railway, post-merge sur main)
+
+- `railway.toml` à la racine : config build (Nixpacks + bake du modèle sentence-transformer pendant le build) et deploy (startCommand uvicorn sur `$PORT`, healthcheck `/v1/health` à 90s, restart `ON_FAILURE` 3 retries, single replica).
+- `aidd_docs/memory/infrastructure.md` § Déploiement Railway : procédure dashboard (volume sur `/data`, env vars complètes), premier boot, mise à jour des tables, limites Railway, reproductibilité sur Fly/Render/Heroku-likes.
+- Closes #73.
+
 ### Added (pré-MVP, branche `claude/ml-table-selection-algorithm-WdSdd`)
 
 - Service Muses complet : schémas Pydantic des rows, I/O JSONL append-only, index SQLite FTS5, cache embeddings `.npy`, pipeline d'ingestion avec validation et stub signature.

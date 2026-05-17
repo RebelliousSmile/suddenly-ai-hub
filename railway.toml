@@ -1,0 +1,49 @@
+# Configuration Railway pour le service Muses.
+#
+# Ce fichier prend toujours le dessus sur les réglages du dashboard.
+# Référence : https://docs.railway.com/reference/config-as-code
+#
+# Pré-requis côté dashboard (NON gérés par railway.toml) :
+#   - Volume mount sur /data (au moins 1 GB)
+#   - Variables d'environnement listées dans .env.example, notamment :
+#       MUSES_TABLE_DIR=tables/bootstrap_cell_medfan_combat_hostile_solennel_colere
+#       MUSES_FEEDBACK_DIR=/data/feedback
+#       MUSES_SNAPSHOT_DIR=/data/snapshots
+#       MUSES_ADMIN_TOKEN=<token-fort>
+#       MUSES_SIGNATURE_MODE=strict
+#       MUSES_ENCODER=sentence_transformer
+#       MUSES_LOG_FORMAT=json
+#       MUSES_BIND_HOST=0.0.0.0
+#       MUSES_RATE_LIMIT_PER_MINUTE=60
+#
+# Section détaillée : aidd_docs/memory/infrastructure.md § Déploiement Railway.
+
+[build]
+builder = "NIXPACKS"
+
+# Installe les extras nécessaires et bake le modèle sentence-transformer dans
+# l'image pour éviter le téléchargement (~120 MB) à chaque cold start.
+buildCommand = """
+pip install -e .[api,embeddings] && \
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+"""
+
+[deploy]
+# Bind sur 0.0.0.0:$PORT — $PORT est fourni par Railway automatiquement.
+startCommand = "uvicorn muses.api.entrypoint:app --host 0.0.0.0 --port $PORT"
+
+# Healthcheck sans auth — vérifié toutes les N secondes par Railway.
+healthcheckPath = "/v1/health"
+# 90 s pour absorber le premier chargement du modèle sentence-transformer
+# (même baké, l'import initial prend ~10-30 s sur CPU faible).
+healthcheckTimeout = 90
+
+# Restart sur failure uniquement (pas en cas d'arrêt propre).
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# SPOF assumé (DECISIONS D15) — single replica par défaut. À ne pas
+# augmenter sans avoir d'abord traité la concurrence multi-worker des
+# stores SQLite (WAL est activé mais les écritures série sont préférées
+# tant que le throughput le permet).
+numReplicas = 1
