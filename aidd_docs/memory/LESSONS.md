@@ -77,7 +77,7 @@ Plusieurs cycles de critique structurée (« challenge ta rédaction → corrige
 
 Les exemples utilisaient parfois `axe / valeur` (FR) et parfois `axis / value` (EN) pour la même chose. Conséquence : grep manqués, doutes à la lecture.
 
-**Leçon** : trancher tôt sur la langue des identifiants. Pour Muses : identifiants en anglais quand ils sortent dans une API/CLI/code, français pour le contenu narratif et la doc utilisateur. Pas de mix dans le même registre.
+**Leçon** : trancher tôt sur la langue par registre et s'y tenir. Le canon Muses (cf. `external/axes-and-tags.md`) utilise du français snake_case ASCII pour les valeurs métier (`medieval_fantastique`, `narquois`, `combat`, `colere`…) et de l'anglais pour la terminologie technique d'API et de schéma (`level`, `tags`, `signature`, `suggest`, `analyze`). Le risque attaqué par cette leçon n'est pas le choix lui-même mais le **mélange** dans un même registre — ce qui produit `axe` en français à côté de `axis` en anglais pour désigner la même chose.
 
 ## L12. Garder l'historique avec un bandeau d'obsolescence
 

@@ -11,15 +11,15 @@ Décisions structurantes prises lors du pivot LoRA → tables+ML (mai 2026). Cha
 
 - **Décidé** : abandonner LoRA stacking, fine-tune sur Qwen2.5-7B/13B, et toute inférence LLM générative en production.
 - **Raisons** : volume de corpus insuffisant (jamais 500 sessions/genre atteintes) ; dépendance GPU non tenable pour un service mutualisé gratuit ; mismatch entre le modèle d'apport continu user (row par row) et l'exigence batch du fine-tune.
-- **Écarté** : continuer à attendre le corpus, basculer sur un modèle plus petit, accepter une qualité dégradée.
+- **Écarté** : continuer à attendre le corpus dans l'espoir d'atteindre le seuil ; basculer sur un modèle plus petit (gain qualité douteux, problème GPU inchangé) ; abandonner le projet.
 - **Conséquence** : pivot complet vers tables + ML léger. Suppression de la stack gateway Railway, RunPod GPU, Cloudflare R2, Together.ai, Fireworks.ai.
-- **Cf.** `architecture-tables-ml.md` § Contexte du pivot ; `philosophy.md` §3.
+- **Cf.** `architecture-tables-ml.md` § Contexte du pivot ; `philosophy.md` §3 ; `LESSONS.md` L05 (mismatch granularité user vs batch).
 
 ## D02. Architecture tables curées + ML léger
 
 - **Décidé** : composer les sorties par tirages dans des tables curées, pondérées par un pipeline ML léger CPU-only.
 - **Raisons** : la curation explicite garantit la qualité au volume disponible ; le ML léger reste tractable sans GPU ; le résultat est traçable jusqu'à la row tirée.
-- **Écarté** : RAG sur un LLM commercial (perd la souveraineté et le contrôle des coûts), Markov chains naïves (pas de contexte), templating pur sans ML (pas d'adaptation au contexte).
+- **Écarté** : templating pur déterministe (pas d'adaptation contextuelle), retrieval-augmented LLM hosté côté Muses (réintroduit la dépendance GPU et la génération autoregressive), Markov chains pures sur le corpus (pas de pondération contextuelle).
 - **Cf.** `architecture-tables-ml.md` § Principes directeurs.
 
 ## D03. Pipeline à 4 étages
@@ -42,7 +42,7 @@ Décisions structurantes prises lors du pivot LoRA → tables+ML (mai 2026). Cha
 - **Décidé** : `univers`, `situation`, `rapport_initial`, `voix`, `emotion_dominante` — cinq axes indépendants, valeurs atomiques.
 - **Raisons** : `rapport_initial` (hostile/neutre/amical) change radicalement le ton d'une même situation (combat hostile vs combat amical) ; `emotion_dominante` détermine le lexique activé ; uniformité de schéma quand tous les axes sont atomiques (trust, profil, pondération indexent tous sur `(axe, valeur)`).
 - **Écarté** : 3 axes (le triplet initial univers/situation/voix qui occultait rapport et émotion) ; 3 axes avec tuples (situation = (type, rapport), voix = (style, emotion) — non-uniforme dans les schémas) ; tags libres non canonisés (rend l'apprentissage instable).
-- **Cf.** `philosophy.md` § Conventions ; `external/axes-and-tags.md`.
+- **Cf.** `philosophy.md` § Conventions ; `external/axes-and-tags.md` ; `LESSONS.md` L02 (insuffisance des 3 axes initiaux).
 
 ## D06. Ekman 6 pour `emotion_dominante`
 
@@ -72,7 +72,7 @@ Décisions structurantes prises lors du pivot LoRA → tables+ML (mai 2026). Cha
 - **Décidé** : chaque user porte un vecteur `trust[axis][value] = (α, β, last_update)` indexé sur les 5 axes canoniques.
 - **Raisons** : la distribution Beta distingue naturellement `95% sur 1000 contribs` (haute confiance) de `95% sur 5 contribs` (faible) ; supporte la décroissance temporelle ; tractable à stocker (deux floats par cellule) ; littérature P2P éprouvée (Jøsang).
 - **Écarté** : trust scalaire global (perd la dimension contextuelle), moyenne mobile simple (perd la confiance), EigenTrust avec propagation (over-engineering pour un service mutualisé unique).
-- **Cf.** `learning-and-trust.md` §4.
+- **Cf.** `learning-and-trust.md` §4 ; `LESSONS.md` L06 (supériorité de Beta sur moyenne mobile).
 
 ## D10. Cinq signaux UI, pas deux
 
@@ -80,7 +80,7 @@ Décisions structurantes prises lors du pivot LoRA → tables+ML (mai 2026). Cha
 - **Raisons** : sans `reject_challenge_appreciated` (« bonne idée, pas pour cette scène »), le ranker apprend à éviter les challenges (taux d'accept plus bas) et le mode challenge collapse mathématiquement en quelques semaines.
 - **Écarté** : 2 signaux (accept/reject) ; 3 signaux (accept/edit/reject) sans la distinction d'appréciation du challenge.
 - **Conséquence côté instance Suddenly** : deux boutons de rejet visibles dans l'UI, pas un seul.
-- **Cf.** `style-coaching.md` §3.
+- **Cf.** `style-coaching.md` §3 ; `LESSONS.md` L03 (mécanique du collapse en mode confort).
 
 ## D11. Modes confort et challenge dual constitutifs
 
@@ -106,9 +106,9 @@ Décisions structurantes prises lors du pivot LoRA → tables+ML (mai 2026). Cha
 
 ## D14. Conservation de `traductions.md` lors de la purge externe
 
-- **Décidé** : garder `external/traductions.md` malgré son origine LoRA-era, sur instruction du user.
-- **Raisons** : la méthodologie de traduction de gros volumes a une valeur indépendante du pipeline LoRA originel, potentiellement réutilisable pour un futur tagging multilingue ou translation de corpus.
-- **Cf.** session conversationnelle du 2026-05-17 ; absent de la liste de purge initiale.
+- **Décidé** : garder `external/traductions.md` malgré son origine LoRA-era.
+- **Raisons** : la méthodologie de traduction de gros volumes a une valeur indépendante du pipeline LoRA originel, potentiellement réutilisable pour un futur tagging multilingue ou la traduction de corpus.
+- **Cf.** : commit de purge de la mémoire externe (`8b41c80`) qui conserve explicitement ce fichier alors que onze autres LoRA-era sont supprimés. Décision tracée dans le diff du commit lui-même.
 
 ## D15. SPOF du service Muses assumé pour le MVP
 
