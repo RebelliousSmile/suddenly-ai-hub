@@ -74,7 +74,7 @@ Unité lexicale typée (geste, émotion, lieu, objet, nom propre, trait…).
 }
 ```
 
-`type` est typé (geste, emotion, lieu, objet, nom_personne, nom_lieu, trait, gestation…). La liste fermée des `type` est dans `axes-and-tags.md` (à venir).
+`type` est typé (geste, emotion, lieu, objet, nom_personne, nom_lieu, trait…). Une liste fermée des `type` pourra être ajoutée à `axes-and-tags.md` si nécessaire — pour l'instant ouverte par défaut.
 
 ### `level: template`
 
@@ -184,14 +184,14 @@ Avant qu'une row soit acceptée dans une table :
 1. Schéma : champs requis présents, types corrects, `level` cohérent avec `content`.
 2. Signature ActivityPub vérifiée contre la clé publique de l'instance source (sauf `bootstrap`, `mined`).
 3. Anonymisation : `content` ne contient pas d'informations personnelles identifiables résiduelles (run du pipeline `pipelines/anonymization/`).
-4. Tags : valeurs des cinq axes appartiennent au set canonique de `axes-and-tags.md` (à venir).
+4. Tags : valeurs des cinq axes appartiennent au set canonique de `axes-and-tags.md`.
 5. Trust : seuil minimum atteint pour `user_id`, sauf si `source` dispense.
 
 Les rows rejetées sont logguées avec motif. Pas d'erreur silencieuse.
 
 ## Hors périmètre de ce document
 
-- Taxonomie détaillée des valeurs par axe — futur `axes-and-tags.md`.
+- Taxonomie détaillée des valeurs par axe — voir `axes-and-tags.md`.
 - Modèle d'embedding précis — futur `infrastructure.md`.
 - Algorithme exact de validation d'anonymisation — `pipelines/anonymization/`.
 - Format des **patterns** pour le pipeline d'analyse (tables-patterns pour features #81-#84) — futur `analysis-pipeline.md`.

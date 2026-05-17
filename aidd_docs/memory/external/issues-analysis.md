@@ -29,7 +29,7 @@
 | # | Issue | Résultat | Biblio |
 |---|-------|----------|--------|
 | #29 | [SPIKE] Archi LoRA 2 axes + pre-merge | Architecture LoRA validée à l'époque — depuis abandonnée | obsolète, voir `architecture-tables-ml.md` |
-| #33 | [SPIKE] Taxonomie genres/situations | Taxonomie 2 axes validée à l'époque — depuis étendue à 5 axes canoniques | voir `taxonomy.md` (ou son remplaçant `axes-and-tags.md`) |
+| #33 | [SPIKE] Taxonomie genres/situations | Taxonomie 2 axes validée à l'époque — depuis étendue à 5 axes canoniques | voir `axes-and-tags.md` |
 
 ### Issues fermées en attente (production/features)
 
@@ -60,7 +60,7 @@ Ces issues définissent des features futures à lancer **après** que le pipelin
 | Fichier | Contenu | Statut courant |
 |---------|---------|----------------|
 | `lora-strategy.md` | Architecture LoRA 2 axes, fusion offline, fallback hierarchy, seuils | Supprimé — remplacé par `architecture-tables-ml.md` |
-| `taxonomy.md` | 14 genres + 6 situations, mécanisme de tagging | Encore présent ; à transformer en `axes-and-tags.md` (5 axes) |
+| `taxonomy.md` | 14 genres + 6 situations, mécanisme de tagging | Renommé en `axes-and-tags.md`, étendu à 5 axes canoniques |
 | `benchmark-fireworks-vs-together.md` | Comparatif prix/inférence/serverless | Toujours dans `memory/`, mais sans pertinence opérationnelle depuis le pivot |
 | `sources-litteraires.md` | Guide juridique & sources légales FR | Jamais créé |
 
