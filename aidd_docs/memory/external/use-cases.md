@@ -79,13 +79,13 @@
 
 ---
 
-### 1.6 Opt-in contribution des rows par session (#87) — réécrit
+### 1.6 Opt-in contribution des rows par session (#87)
 
 - **Qui** : Joueur utilisateur
 - **Pourquoi** : Permettre que les rows candidates dérivées de sa session (éditions sur les suggestions, contributions explicites) alimentent le pool partagé du service Muses
 - **Critères** :
   - Case opt-in à la publication de session, modifiable a posteriori
-  - Soumission asynchrone des rows candidates (mécanisme `accept_edited` cf. `style-coaching.md` §3, et `derived_from_edit` cf. `data-format.md` § source)
+  - Soumission asynchrone des rows candidates (mécanisme `accept_edited` cf. `style-coaching.md` §3 ; la row produite porte `source: derived_from_edit` au sens de `data-format.md` § Schéma commun à toutes les rows)
   - Compte de rows contribuées visible dans le profil
   - Récompense : bonus d'unités d'usage pour la première contribution acceptée (montant dans la refonte tarifaire)
 - **Données transmises au service Muses** :
@@ -184,7 +184,7 @@
   - Résumé de l'arc narratif de chaque personnage
   - Incohérences détectées avec référence au report concerné
   - Suggestions de liens claim/adopt/fork pertinents entre PNJ (renvoi vers #84)
-- **Tables de patterns** : arcs narratifs canoniques par genre / situation, archétypes de personnages
+- **Tables de patterns** : arcs narratifs canoniques par `univers / situation`, archétypes de personnages
 - **Mécanisme** : matching séquentiel de beats + scoring d'arc
 - **Coût** : voir refonte tarifaire
 
@@ -223,7 +223,7 @@
 
 ## 4. Infrastructure et intégration
 
-### 4.1 MusesClient — abstraction côté instance Suddenly (#76) — réécrit
+### 4.1 MusesClient — abstraction côté instance Suddenly (#76)
 
 - **Qui** : Développeur (couche applicative côté instance Suddenly)
 - **Pourquoi** : Centraliser tous les appels au service Muses partagé, découpler le code de l'instance de l'infrastructure Muses
@@ -260,7 +260,7 @@
 
 ---
 
-### 4.2 Routage feature → étages du pipeline côté service Muses (#85) — réécrit
+### 4.2 Routage feature → étages du pipeline côté service Muses (#85)
 
 - **Qui** : Service Muses (interne)
 - **Pourquoi** : Router chaque feature vers les étages et niveaux de tables pertinents

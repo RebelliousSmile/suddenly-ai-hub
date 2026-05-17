@@ -33,7 +33,7 @@ Chaque dimension porte une **décroissance temporelle** (demi-vie ~3 mois propos
 
 ### Granularité contextuelle
 
-Le profil est sous-indexé par `(axe, valeur)` au même niveau que le trust. Un auteur peut avoir un profil dense en `combat`+`medieval-fantastique` et quasi-vide en `romance`+`cyberpunk` — les deux situations sont traitées différemment par le système.
+Le profil est sous-indexé par `(axe, valeur)` au même niveau que le trust. Un auteur peut avoir un profil dense en `combat`+`medieval_fantastique` et quasi-vide en `romance`+`cyberpunk` — les deux situations sont traitées différemment par le système.
 
 ## 2. Deux modes opératoires
 

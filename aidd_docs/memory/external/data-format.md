@@ -6,7 +6,7 @@
 
 - **1 fichier JSONL par table** — une row par ligne, JSON unique par ligne.
 - Versionnés en git (diff-friendly, audit trivial).
-- Nommage : `tables/<niveau>/<slot>__<tags>.jsonl` (ex : `tables/fragments/dialogue__combat__hostile__narquois.jsonl`).
+- Nommage : `tables/<niveau>/<slot>__<axes-saillants>.jsonl`. Les axes inclus dans le nom de fichier sont ceux qui distinguent le mieux la table dans son niveau — typiquement 2 à 4 axes, pas les cinq (le nom resterait peu lisible). Les cinq axes complets vivent dans le champ `tags` de chaque row, pas dans le nom de fichier. Exemple : `tables/fragments/dialogue__combat__hostile__narquois.jsonl` (axes saillants : situation + rapport_initial + voix ; univers et emotion_dominante restent variables ligne par ligne).
 - Un index SQLite avec FTS5 sur les colonnes de tags accélère les requêtes — reconstruit depuis les JSONL.
 - Embeddings pré-calculés des rows : fichiers `.npy` adjacents à chaque JSONL (`<table>.embeddings.npy`).
 
@@ -37,7 +37,7 @@ Champs communs aux quatre niveaux de granularité (entités, templates, beats, f
 ```json
 {
   "tags": {
-    "univers": ["medieval-fantastique"],
+    "univers": ["medieval_fantastique"],
     "situation": ["combat"],
     "rapport_initial": ["hostile", "neutre"],
     "voix": ["narquois"],
@@ -132,7 +132,7 @@ Sortie complète prête à insérer.
 }
 ```
 
-`char_pov` : indique si le fragment est neutre (`neutral`), à la première personne du POV joueur (`pov-player`), ou à la troisième (`third-person`).
+`char_pov` : indique si le fragment est neutre (`neutral`), à la première personne du POV joueur (`pov_player`), ou à la troisième (`third_person`).
 `beat_played` : référence au beat narratif que ce fragment incarne (optionnel, sert au matching à l'étage 3).
 
 ## Exemple minimal d'un fichier table
@@ -140,8 +140,8 @@ Sortie complète prête à insérer.
 `tables/fragments/dialogue__combat__hostile__narquois.jsonl` :
 
 ```json
-{"id":"f47a...","level":"fragment","tags":{"univers":["medieval-fantastique"],"situation":["combat"],"rapport_initial":["hostile"],"voix":["narquois"],"emotion_dominante":["colere"]},"content":{"text":"« Voilà tout ce que tu as ? »","char_pov":"neutral","beat_played":"provocation"},"user_id":"https://exemple.tld/users/alice","instance_id":"exemple.tld","created_at":"2026-05-17T14:23:00Z","source":"contribution_explicit","signature":"keyId=\"...\",..."}
-{"id":"f48b...","level":"fragment","tags":{"univers":["medieval-fantastique"],"situation":["combat"],"rapport_initial":["hostile"],"voix":["narquois"],"emotion_dominante":["peur"]},"content":{"text":"« Tu vas le regretter, crois-moi », murmure-t-il, la voix plus rauque qu'il ne l'aurait voulu.","char_pov":"third-person","beat_played":"menace-feinte"},"user_id":null,"instance_id":null,"created_at":"2026-05-10T00:00:00Z","source":"bootstrap","signature":null}
+{"id":"f47a...","level":"fragment","tags":{"univers":["medieval_fantastique"],"situation":["combat"],"rapport_initial":["hostile"],"voix":["narquois"],"emotion_dominante":["colere"]},"content":{"text":"« Voilà tout ce que tu as ? »","char_pov":"neutral","beat_played":"provocation"},"user_id":"https://exemple.tld/users/alice","instance_id":"exemple.tld","created_at":"2026-05-17T14:23:00Z","source":"contribution_explicit","signature":"keyId=\"...\",..."}
+{"id":"f48b...","level":"fragment","tags":{"univers":["medieval_fantastique"],"situation":["combat"],"rapport_initial":["hostile"],"voix":["narquois"],"emotion_dominante":["peur"]},"content":{"text":"« Tu vas le regretter, crois-moi », murmure-t-il, la voix plus rauque qu'il ne l'aurait voulu.","char_pov":"third_person","beat_played":"menace_feinte"},"user_id":null,"instance_id":null,"created_at":"2026-05-10T00:00:00Z","source":"bootstrap","signature":null}
 ```
 
 ## Index SQLite
