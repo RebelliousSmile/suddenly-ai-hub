@@ -64,6 +64,15 @@ def _ingest_all(name: str, row_dicts: list[dict], cell_dir: Path) -> tuple[int, 
     return success, failed
 
 
+def _wipe_cell_dir() -> None:
+    """Reset complet de la cellule cible — bootstrap est idempotent."""
+    if not CELL_DIR.exists():
+        return
+    for child in CELL_DIR.iterdir():
+        if child.is_file():
+            child.unlink()
+
+
 def main() -> int:
     print(f"Bootstrap initial cell from {SOURCE_JSONL}")
     print(f"  → cell dir: {CELL_DIR}")
@@ -72,6 +81,7 @@ def main() -> int:
         print(f"  ERROR: source missing: {SOURCE_JSONL}")
         return 1
 
+    _wipe_cell_dir()
     totals = {}
 
     # FRAGMENTS — extraits du corpus RP
