@@ -1,0 +1,196 @@
+---
+name: architecture-tables-ml
+description: Architecture du pivot vers algorithme de tirage sur tables aléatoires assisté par ML
+---
+
+# Architecture — Tables aléatoires + ML
+
+## Contexte du pivot
+
+L'approche initiale (LLM fine-tuné + LoRA stacking sur trois axes — `univers`, `situation`, `voix`) est abandonnée. La canonisation actuelle élargit à cinq axes atomiques (cf. `philosophy.md` § Conventions) ; les deux axes ajoutés (`rapport_initial`, `emotion_dominante`) étaient implicites dans l'ancienne approche, ils sont désormais explicites.
+
+**Causes** :
+
+- Volume de corpus insuffisant pour atteindre une qualité acceptable par fine-tune (seuil 500 sessions/genre jamais atteint).
+- Dépendance GPU/inférence non tenable économiquement.
+
+**Nouvelle mécanique** : un algorithme de choix tire dans des tables curées (au sens JdR), et un pipeline ML rend ces tirages contextuels au lieu d'uniformes. Le périmètre fonctionnel défini dans `external/use-cases.md` reste intact (features #77–#89) ; seul le moyen change.
+
+## Principes directeurs
+
+1. **Aucune génération de tokens** — toute sortie est composée à partir de lignes de tables existantes.
+2. **Tirage non-uniforme** — chaque tirage est pondéré par le contexte via un modèle ML léger.
+3. **Explicabilité** — chaque sortie est traçable jusqu'aux lignes tirées et aux scores des étages.
+4. **CPU-only** — classifieurs, embeddings, rerankers de petite taille (distillation, sentence-transformers).
+5. **Asymétrie génération / analyse** — génération = tirage *depuis* une table ; analyse = projection *sur* une table de patterns.
+
+## Les 4 niveaux de granularité de tables
+
+| Niveau                  | Contenu                                  | Exemples                                                 | Usage                                                |
+| ----------------------- | ---------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| **Entités atomiques**   | unités lexicales typées                  | gestes, émotions, lieux, objets, noms, traits            | remplissage de slots, briques pour niveaux supérieurs |
+| **Templates à trous**   | squelettes paramétrés                    | « {char} {geste} en {emotion}, {action_suite} »          | structure de phrase ; slots typés tirent dans les entités |
+| **Beats narratifs**     | unités de niveau scène                   | « hésitation », « rupture de ton », « révélation »        | décident QUOI dire avant de décider COMMENT          |
+| **Fragments narratifs** | sorties complètes prêtes à l'emploi      | répliques / phrases curées depuis corpus                 | échantillonnés directement si beat + contexte alignés |
+
+Une **table** = ensemble de lignes typées au même niveau, partageant un slot d'usage (ex: « gestes de combat médiéval », « beats de romance »).
+
+Chaque table porte des **tags** sur les cinq axes canoniques (`univers`, `situation`, `rapport_initial`, `voix`, `emotion_dominante` — cf. `philosophy.md` § Conventions). Le sélecteur (étage 1) filtre par tags avant tirage — pas d'explosion combinatoire de jeux de tables.
+
+## Pipeline de génération — 4 étages
+
+```mermaid
+---
+title: Pipeline de génération table-based
+---
+flowchart TD
+    Context["Contexte: perso, scène, derniers reports, feature, tags axiaux"]
+    Selector["Étage 1 — Sélecteur"]
+    Weighter["Étage 2 — Pondérateur"]
+    Recombiner["Étage 3 — Recombinateur"]
+    Filter["Étage 4 — Filtreur"]
+    Output["Sortie retenue + alternatives"]
+    TablePool["Pool de tables curées et extraites du corpus"]
+
+    Context --> Selector
+    Selector -- "shortlist de tables" --> Weighter
+    Weighter -- "tables avec distribution apprise" --> Recombiner
+    Recombiner -- "N candidats" --> Filter
+    Filter --> Output
+    TablePool -.-> Selector
+    TablePool -.-> Weighter
+```
+
+### Étage 1 — Sélecteur
+
+- **Rôle** : choisir le sous-ensemble de tables pertinentes pour la feature et le contexte.
+- **Entrée** : embedding du contexte + tags axiaux + feature demandée.
+- **Modèle** : classifieur multi-label léger (logistic regression ou petit MLP sur embeddings).
+- **Sortie** : shortlist de N tables avec score de pertinence (typiquement N = 3 à 8).
+
+### Étage 2 — Pondérateur
+
+- **Rôle** : pour chaque table shortlistée, transformer la distribution uniforme en distribution apprise (les lignes les plus pertinentes au contexte ont une probabilité plus haute).
+- **Modèle** : reranker cross-encoder léger OU similarité d'embeddings contexte ↔ ligne, normalisée en softmax.
+- **Sortie** : pour chaque table, vecteur de probabilités sur ses lignes.
+
+### Étage 3 — Recombinateur
+
+- **Rôle** : tirer K échantillons par étage de granularité (beat → template → slots remplis depuis entités) et les assembler en N candidats de sortie textuelle.
+- **Modèle** : aucun. Règles d'assemblage déterministes + remplissage de slots typés. Les variantes d'accord (genre, nombre, temps, ponctuation) sont **pré-stockées comme rows distinctes** dans les tables, sélectionnées par contexte aux étages 1/2. Pas de génération séquentielle.
+- **Sortie** : N candidats (typiquement N = 5 à 10).
+
+Cette contrainte stricte sur l'étage 3 est ce qui rend tenable la promesse « zéro génération autoregressive » de `philosophy.md` §7. Si un cas d'usage requiert un assemblage que les règles ne couvrent pas, la résolution est d'**ajouter des rows à la table**, pas d'introduire un modèle génératif.
+
+### Étage 4 — Filtreur
+
+- **Rôle** : scoring best-of-N. Évaluer cohérence de chaque candidat avec le contexte (incluant les cinq tags axiaux) et avec le profil de style du récepteur.
+- **Modèle** : cross-encoder (contexte ↔ candidat) entraîné sur l'historique accept/reject utilisateur.
+- **Sortie** : 1 candidat retenu, top-2 et top-3 gardés pour variations / fallback UI.
+- **Exception** : la feature `export prompt vidéo` (#89) court-circuite cet étage (canevas fixe d'assemblage, pas de best-of-N). Cf. mapping ci-dessous.
+
+## Mapping feature → niveaux exploités
+
+| Feature                              | Niveaux dominants                            | Étages actifs                                                 |
+| ------------------------------------ | -------------------------------------------- | ------------------------------------------------------------- |
+| Suggestion dialogue (#77)            | fragments + entités                          | tous (emphase fragments)                                      |
+| Suggestion action (#78)              | beats + templates + entités                  | tous (recombinateur central)                                  |
+| Suggestion description (#79)         | templates + entités (lieux/ambiances)        | tous                                                          |
+| Suggestion pensée intérieure (#80)   | beats + templates + entités                  | tous                                                          |
+| Export prompt vidéo (#89)            | templates visuels + entités                  | sélecteur + pondérateur + recombinateur (canevas fixe, pas de filtre best-of-N) |
+
+Les features d'analyse (#81–#84) ont leur propre mapping dans la section suivante. Les neuf features de `use-cases.md` sont couvertes au total par les deux tables (cinq ici, quatre ci-dessous).
+
+## Pipeline d'analyse — projection inversée
+
+Pour les features d'analyse, les tables deviennent des **catalogues de patterns**. Le contenu utilisateur est projeté dessus pour produire un rapport, au lieu de tirer pour produire du texte.
+
+```mermaid
+---
+title: Pipeline d'analyse par projection
+---
+flowchart TD
+    Content["Contenu utilisateur: scène ou session"]
+    Embedder["Embedder"]
+    PatternTables["Tables de patterns: incohérences, archétypes, arcs canoniques"]
+    Matcher["Matcher / Classifieur"]
+    Aggregator["Agrégateur de signaux"]
+    Report["Rapport: scores + lignes matchées + suggestions"]
+
+    Content --> Embedder
+    Embedder --> Matcher
+    PatternTables -.-> Matcher
+    Matcher --> Aggregator
+    Aggregator --> Report
+```
+
+| Feature                          | Tables de patterns                                      | Mécanisme                                                  |
+| -------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| Cohérence scène (#81)            | types d'incohérence (caractère/ton), beats canoniques   | classification multi-label par fragment de scène           |
+| Cohérence session (#82)          | arcs narratifs canoniques, archétypes personnage        | matching séquentiel de beats + scoring d'arc               |
+| Résumé de session (#83)          | templates de résumé tagués `univers / situation`        | extraction de beats par projection + remplissage du template |
+| Suggestions liens fédérés (#84)  | embeddings des personnages publics de l'instance        | similarité d'embeddings + seuil                            |
+
+Le pipeline d'analyse est volontairement spécifié à un niveau d'abstraction supérieur à celui du pipeline de génération. Le matcher (classifieur multi-label ou similarité avec seuil), l'agrégateur (somme pondérée, vote majoritaire, fonctions par feature) et le format des rapports restent à figer dans un document dédié (`analysis-pipeline.md` à venir). Le MVP cible le pipeline de génération en premier.
+
+## Carte de couverture contextuelle
+
+Artefact structurel maintenu par le service Muses : hypercube indexé par `(univers × situation × rapport_initial × voix × emotion_dominante)` qui agrège, par cellule contextuelle :
+
+- nombre de rows par niveau (entités, templates, beats, fragments),
+- nombre d'auteurs distincts trusted ayant contribué dans cette cellule,
+- date de la dernière contribution.
+
+L'espace est plus grand qu'avec 3 axes (~10× selon les cardinalités), donc plus de cellules vides — c'est attendu et c'est précisément ce qui rend le diagnostic et le fallback utiles. La représentation reste sparse : on ne stocke que les cellules effectivement peuplées.
+
+Usage :
+
+- **Diagnostic** — repérer les zones creuses et prioriser le mining bootstrap ou la sollicitation de contributions.
+- **Fallback hiérarchique** — quand la cellule cible est sous-peuplée, l'étage 1 (sélecteur) peut tomber gracieusement sur une cellule voisine, en relâchant un axe à la fois dans cet ordre du plus local au plus fondamental : `emotion_dominante → voix → rapport_initial → situation → univers`. Le relâchement s'arrête dès qu'une cellule atteint un seuil de peuplement suffisant.
+- **Décision MVP** — sélection des cellules à servir en priorité v1.
+
+La carte est référencée dans `learning-and-trust.md` §6 comme garde-fou anti-cold-start.
+
+## Provenance des tables
+
+Trois voies d'alimentation à combiner :
+
+1. **Mining corpus → clustering → tables candidates**
+   - S'appuie sur les pipelines `pipelines/anonymization/` et `pipelines/crawl_rpv/` (présents dans le repo, hérités de l'ancienne stack LoRA — leur sortie servait au format Axolotl, à réadapter pour produire des rows de tables au format JSONL).
+   - Extraction NER, segmentation en beats, dédup + clustering sémantique des fragments.
+   - Génère des tables candidates à fort volume mais bruitées.
+2. **Curation manuelle**
+   - Validation / nettoyage / ajout d'entrées.
+   - Versionnée en git, format JSONL ou YAML diff-friendly.
+3. **Boucle de rétroaction utilisateur**
+   - Accept → renforce la combinaison (ligne tirée, contexte d'appel).
+   - Reject ou édition → signal négatif ; édition capturée comme candidat fragment.
+   - Alimente le ré-entraînement des étages 1, 2, 4.
+
+## Format de stockage (proposition)
+
+- 1 fichier JSONL par table, versionné en git.
+- Index SQLite avec FTS5 et colonnes de tags pour query rapide.
+- Embeddings pré-calculés des lignes en `.npy` à côté de chaque JSONL.
+- Pas de DB serveur pour le MVP — tout sur disque, déployable en read-only.
+
+## Hors périmètre de ce document
+
+- Choix précis des modèles ML (à figer en POC).
+- Schéma détaillé des tables (champ par champ).
+- Pipeline de fabrication des tables depuis le corpus existant.
+- Refonte de la grille tarifaire de `use-cases.md` §1.2 (l'inférence quasi gratuite invalide la grille actuelle). Cf. `philosophy.md` § Conventions sur le renommage de la monnaie en « unité d'usage ».
+- Réécriture de la doc périmée (`README.md`, `architecture.md`, `project_brief.md`, `codebase_map.md`).
+- **Infrastructure du service** — résilience, haute disponibilité, plan de continuité. Le service Muses étant unique (cf. `philosophy.md` §2), c'est un single point of failure pour les features IA de toutes les instances. À traiter dans un `infrastructure.md` dédié (HA actif/passif ? réplication géo ? cache local par instance ?).
+- **Authentification des instances** — chaque requête entrante doit être signée par une instance authentifiée (signature HTTP ActivityPub). Le principe est hérité de l'ancien `project_brief.md` mais ce dernier est obsolète sur l'archi ; la spec opérationnelle reste à formaliser dans le doc infrastructure à venir.
+- **Mode dégradé** — quand Muses est indisponible côté instance Suddenly : comportement attendu spécifié dans `use-cases.md` #4.3 (boutons IA masqués ou messagés, pas de débit). Implémentation côté instance, pas côté Muses.
+
+Chacun de ces points fera l'objet d'un document dédié.
+
+## Questions ouvertes à acter
+
+1. **Période transition** — les anciens documents (`README.md`, `architecture.md`, etc.) restent-ils actifs en lecture publique pendant la transition, ou sont-ils marqués obsolètes immédiatement ?
+2. **Cible MVP** — bien que le périmètre vise toutes les features, sur laquelle valider le pipeline end-to-end en premier ? (proposition par défaut : `suggestion de dialogue` #77, niveau fragments + entités, le plus simple.)
+3. **Seuil d'activation du filtre** — un best-of-N nécessite N candidats minimum ; pour les features où la base de tables est encore petite, fallback à top-1 du recombinateur ?
+
+Choix précédemment ouverts et désormais actés : tagging axial plutôt que jeux de tables séparés (cf. niveaux de granularité §3) ; cinq axes canoniques atomiques `univers / situation / rapport_initial / voix / emotion_dominante` (cf. `philosophy.md` § Conventions).

@@ -1,0 +1,106 @@
+---
+name: philosophy
+description: Identité et principes directeurs du projet Muses — ce qu'il est, ce qu'il n'est pas, et pourquoi
+---
+
+# Philosophie — Muses
+
+> Muses est une couche d'assistance créative pour le Fediverse Suddenly. Une muse au sens classique : elle provoque, elle ne sert pas.
+
+Ce document fixe l'identité du projet. Les choix d'architecture, de modèle de données et d'implémentation découlent de ces principes — non l'inverse. En cas de conflit entre une décision technique et un principe ici, le principe l'emporte (ou il faut explicitement actualiser ce document).
+
+## Conventions
+
+- **« Muses »** dans tous les documents de ce dossier désigne le **projet et le service**. La grille monétaire qui porte le même nom dans `use-cases.md` §1.2 est un artefact de l'ancienne architecture LoRA, et doit être renommée lors de la réécriture de `use-cases.md`. Provisoirement, cette monnaie est référencée comme **« unité d'usage »** dans les futurs documents tarifaires.
+- **Axes contextuels canoniques** : cinq axes atomiques indépendants. Toute référence à un autre set d'axes (`genre` dans `use-cases.md`, le triplet `univers / situation / voix` des anciens commits) est obsolète. Définition détaillée des valeurs : à formaliser dans un futur `axes-and-tags.md`.
+  1. `univers` — genre / lore (`medieval-fantastique`, `cyberpunk`, `steampunk`, `horreur-gothique`…).
+  2. `situation` — type de scène (`combat`, `romance`, `intrigue`, `politique`, `quotidien`…).
+  3. `rapport_initial` — relation entre protagonistes au début de la scène (`hostile`, `neutre`, `amical`). Conditionne radicalement le ton — un combat amical (sparring) et un combat hostile n'ont rien à voir.
+  4. `voix` — style narratif du MJ (`solennel`, `narquois`, `theatral`, `neutre`, `lyrique`…).
+  5. `emotion_dominante` — émotion principale de la scène, taxonomie **Ekman 6** : `colere`, `degout`, `peur`, `joie`, `tristesse`, `surprise`. Conditionne le lexique activé.
+- **« Trust »** et non « réputation » comme terme principal pour le crédit accordé à un contributeur. Le terme technique `Beta reputation` (Jøsang) reste utilisé quand il désigne la primitive statistique.
+
+## 1. Une muse, pas un serviteur
+
+L'objectif n'est pas de remplacer l'auteur, ni d'écrire à sa place. Muses **interroge** le style de l'auteur et le **pousse hors de ses habitudes** quand il le souhaite.
+
+Deux modes coexistent :
+
+- **Confort** — les suggestions s'alignent au style établi de l'auteur, pour fluidifier la rédaction.
+- **Challenge** — les suggestions s'écartent volontairement des habitudes, pour ouvrir des chemins inexplorés.
+
+Ce mode dual est constitutif du produit, pas une option. Sans le mode challenge, Muses deviendrait un amplificateur d'habitudes et appauvrirait progressivement la production des auteurs.
+
+## 2. Une couche, pas une instance
+
+Muses n'est pas une instance Suddenly de plus. C'est un **service unique, mutualisé** entre toutes les instances Suddenly du Fediverse, qui s'y connectent via ActivityPub.
+
+Conséquences :
+
+- Données et apprentissages **partagés** entre instances : une bonne contribution d'une instance bénéficie aux auteurs d'une autre.
+- Modération **commune** : un système de trust contextuel arbitre la qualité des contributions, modulé par la réputation de chaque instance source.
+- Auteurialité **individuelle** : chaque contribution reste attribuée à son auteur (signature ActivityPub).
+
+## 3. Continu, pas batch
+
+Muses ne se ré-entraîne pas. Il n'y a pas de « version 2.0 » du modèle.
+
+- Les tables s'enrichissent **ligne par ligne** au fil des contributions.
+- Les composants ML se mettent à jour **incrémentalement** sur chaque signal (accept / reject / édition).
+- Le corpus VN / romans / forums sert uniquement à **amorcer la pompe** au démarrage. Une fois le régime nominal atteint, les contributions joueurs deviennent la source dominante.
+
+Cette propriété disqualifie les LoRA et le fine-tuning batché, et motive le choix d'une architecture tables + petits modèles ML.
+
+## 4. Boucle bidirectionnelle
+
+Muses apprend des contributeurs. Mais il fait aussi **apprendre** les contributeurs.
+
+- Le système peut surfacer des observations sur le style de chaque auteur (« tu surutilises tel beat », « tu n'as jamais exploré tel champ lexical »).
+- Le mode challenge confronte volontairement l'auteur à des choix qu'il n'aurait pas faits seul.
+- L'objectif co-construit : faire évoluer collectivement la qualité du corpus *et* la qualité d'écriture des contributeurs.
+
+## 5. Décentralisé et responsabilisé
+
+Les contributions sont ouvertes à tous les joueurs des instances Suddenly connectées. Mais cette ouverture est **pondérée**, pas naïve.
+
+- **Trust contextuel par auteur** sur chaque axe canonique (cf. § Conventions) — un auteur peut être fiable sur certains contextes et neutre ailleurs.
+- **Réputation d'instance** comme multiplicateur global — une instance bien modérée renforce ses auteurs, une instance lax dilue les leurs.
+- **Visibilité réservée aux administrateurs** — les auteurs ne voient pas leur trust score, pour éviter le gaming.
+
+L'objectif : faire en sorte qu'un raid de contributions toxiques soit dilué par la masse des contributions de qualité, sans nécessiter une modération réactive 24/7.
+
+## 6. Lisible et traçable
+
+Aucune génération boîte-noire. Chaque sortie de Muses est **traçable** jusqu'aux lignes de table tirées et aux scores qui les ont sélectionnées.
+
+- Les tables sont curées explicitement, en JSONL versionné en git.
+- Les choix des étages ML sont inspectables (tirage dans table X, ligne Y, scoré Z par contexte W).
+- Un auteur peut comprendre **pourquoi** Muses lui a proposé telle suggestion — et la contester.
+
+Cette propriété distingue Muses des LLM commerciaux opaques. Elle découle du choix tables + ML léger, pas d'une couche d'explicabilité ajoutée a posteriori.
+
+## 7. Frugal
+
+Pas de GPU, pas d'inférence LLM en production. Tous les composants ML tournent sur CPU : classifieurs légers, embeddings, rerankers.
+
+**Aucun composant ne génère de texte token par token.** Les étages ML produisent des scores, des classifications, des vecteurs. Le texte sortant est toujours une recomposition de lignes curées des tables (sélection, remplissage de slots typés, assemblage par règles d'accord). Les modèles d'embedding tokenisent leur entrée en interne, mais leur sortie est un vecteur de dimension fixe — coût par texte borné, pas linéaire à la longueur de sortie.
+
+Ce choix n'est pas une contrainte budgétaire : c'est une condition de **viabilité économique** pour un service partagé et gratuit pour les instances Suddenly. Et une condition d'**indépendance technologique** vis-à-vis des providers d'inférence commerciaux.
+
+## 8. Ce que Muses n'est pas
+
+- Pas un LLM, pas un chatbot.
+- Pas un substitut à l'auteur : il propose, l'auteur arbitre.
+- Pas un assistant généraliste : son terrain est la rédaction de fiction narrative et dialoguée (les features de `use-cases.md`). Pas la productivité bureautique, pas la traduction entre langues humaines, pas le code. La transformation d'une scène vers un prompt vidéo (feature #89) reste sur le terrain narratif.
+- Pas un système versionné. Pas de « v2 du modèle ». C'est un service continu.
+- Pas de génération autoregressive. Le coût d'inférence est borné par un nombre fixe de forward passes (embeddings, classifieurs, scoreurs), indépendant de la longueur de la sortie.
+
+---
+
+## Documents techniques liés
+
+- `architecture-tables-ml.md` — pipeline 4-étages tables + ML, et asymétrie génération / analyse.
+- `learning-and-trust.md` — bootstrap → continu, online learning des étages ML, trust contextuel, réputation d'instance.
+- `style-coaching.md` — profil de style auteur, modes confort / challenge, méta-suggestions sur le style.
+
+Documents techniques projetés (non encore écrits) : `axes-and-tags.md` (taxonomie détaillée des valeurs sur les cinq axes), `analysis-pipeline.md` (spec opérationnelle de la projection inversée), `infrastructure.md` (HA, auth, mode dégradé), refonte tarifaire.
