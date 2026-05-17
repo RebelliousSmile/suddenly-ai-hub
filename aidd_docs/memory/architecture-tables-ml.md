@@ -35,7 +35,7 @@ L'approche initiale (LLM fine-tuné + LoRA stacking sur 3 axes — univers, situ
 
 Une **table** = ensemble de lignes typées au même niveau, partageant un slot d'usage (ex: « gestes de combat médiéval », « beats de romance »).
 
-Chaque table porte des **tags** sur les 3 axes existants (univers, situation, voix). Le sélecteur (étage 1) filtre par tags avant tirage — pas d'explosion combinatoire de jeux de tables.
+Chaque table porte des **tags** sur les cinq axes canoniques (`univers`, `situation`, `rapport_initial`, `voix`, `emotion_dominante` — cf. `philosophy.md` § Conventions). Le sélecteur (étage 1) filtre par tags avant tirage — pas d'explosion combinatoire de jeux de tables.
 
 ## Pipeline de génération — 4 étages
 
@@ -134,16 +134,18 @@ Le pipeline d'analyse est volontairement spécifié à un niveau d'abstraction s
 
 ## Carte de couverture contextuelle
 
-Artefact structurel maintenu par le service Muses : tableau indexé par `(univers × situation × voix)` qui agrège, par cellule contextuelle :
+Artefact structurel maintenu par le service Muses : hypercube indexé par `(univers × situation × rapport_initial × voix × emotion_dominante)` qui agrège, par cellule contextuelle :
 
 - nombre de rows par niveau (entités, templates, beats, fragments),
 - nombre d'auteurs distincts trusted ayant contribué dans cette cellule,
 - date de la dernière contribution.
 
+L'espace est plus grand qu'avec 3 axes (~10× selon les cardinalités), donc plus de cellules vides — c'est attendu et c'est précisément ce qui rend le diagnostic et le fallback utiles. La représentation reste sparse : on ne stocke que les cellules effectivement peuplées.
+
 Usage :
 
 - **Diagnostic** — repérer les zones creuses et prioriser le mining bootstrap ou la sollicitation de contributions.
-- **Fallback hiérarchique** — quand la cellule cible est sous-peuplée, l'étage 1 (sélecteur) peut tomber gracieusement sur une cellule voisine (un axe relâché à la fois : voix → situation → univers).
+- **Fallback hiérarchique** — quand la cellule cible est sous-peuplée, l'étage 1 (sélecteur) peut tomber gracieusement sur une cellule voisine, en relâchant un axe à la fois dans cet ordre du plus local au plus fondamental : `emotion_dominante → voix → rapport_initial → situation → univers`. Le relâchement s'arrête dès qu'une cellule atteint un seuil de peuplement suffisant.
 - **Décision MVP** — sélection des cellules à servir en priorité v1.
 
 La carte est référencée dans `learning-and-trust.md` §6 comme garde-fou anti-cold-start.
@@ -190,4 +192,4 @@ Chacun de ces points fera l'objet d'un document dédié.
 2. **Cible MVP** — bien que le périmètre vise toutes les features, sur laquelle valider le pipeline end-to-end en premier ? (proposition par défaut : `suggestion de dialogue` #77, niveau fragments + entités, le plus simple.)
 3. **Seuil d'activation du filtre** — un best-of-N nécessite N candidats minimum ; pour les features où la base de tables est encore petite, fallback à top-1 du recombinateur ?
 
-Choix précédemment ouverts et désormais actés : tagging axial plutôt que jeux de tables séparés (cf. niveaux de granularité §3) ; axes canoniques `univers / situation / voix` (cf. `philosophy.md` § Conventions).
+Choix précédemment ouverts et désormais actés : tagging axial plutôt que jeux de tables séparés (cf. niveaux de granularité §3) ; cinq axes canoniques atomiques `univers / situation / rapport_initial / voix / emotion_dominante` (cf. `philosophy.md` § Conventions).

@@ -167,7 +167,7 @@ Détection d'**anomalie comportementale** sur les contribs : embedding moyen des
 
 ### Anti-cold-start sur zones rares
 
-Maintenir une **carte de couverture** sur l'espace `(univers × situation × voix)`. Les cellules sous-peuplées (peu de rows, peu d'auteurs trusted) sont marquées et priorisées pour le mining bootstrap futur. L'étage 1 peut tomber gracieusement sur des tables voisines (fallback hiérarchique sur axes).
+Maintenir une **carte de couverture** sur l'hypercube canonique `(univers × situation × rapport_initial × voix × emotion_dominante)` — définie dans `architecture-tables-ml.md` § Carte de couverture contextuelle. Les cellules sous-peuplées sont marquées et priorisées pour le mining bootstrap futur. L'étage 1 peut tomber gracieusement sur des tables voisines (fallback hiérarchique sur axes, ordre `emotion_dominante → voix → rapport_initial → situation → univers`).
 
 ## 7. Quality gating
 

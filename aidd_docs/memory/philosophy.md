@@ -12,7 +12,12 @@ Ce document fixe l'identité du projet. Les choix d'architecture, de modèle de 
 ## Conventions
 
 - **« Muses »** dans tous les documents de ce dossier désigne le **projet et le service**. La grille monétaire qui porte le même nom dans `use-cases.md` §1.2 est un artefact de l'ancienne architecture LoRA, et doit être renommée lors de la réécriture de `use-cases.md`. Provisoirement, cette monnaie est référencée comme **« unité d'usage »** dans les futurs documents tarifaires.
-- **Axes contextuels canoniques** : `univers`, `situation`, `voix` (3 axes). Toute référence à un autre set d'axes (`genre` dans `use-cases.md`, par exemple) est obsolète. Définition détaillée des valeurs : à formaliser dans un futur `axes-and-tags.md`.
+- **Axes contextuels canoniques** : cinq axes atomiques indépendants. Toute référence à un autre set d'axes (`genre` dans `use-cases.md`, le triplet `univers / situation / voix` des anciens commits) est obsolète. Définition détaillée des valeurs : à formaliser dans un futur `axes-and-tags.md`.
+  1. `univers` — genre / lore (`medieval-fantastique`, `cyberpunk`, `steampunk`, `horreur-gothique`…).
+  2. `situation` — type de scène (`combat`, `romance`, `intrigue`, `politique`, `quotidien`…).
+  3. `rapport_initial` — relation entre protagonistes au début de la scène (`hostile`, `neutre`, `amical`). Conditionne radicalement le ton — un combat amical (sparring) et un combat hostile n'ont rien à voir.
+  4. `voix` — style narratif du MJ (`solennel`, `narquois`, `theatral`, `neutre`, `lyrique`…).
+  5. `emotion_dominante` — émotion principale de la scène, taxonomie **Ekman 6** : `colere`, `degout`, `peur`, `joie`, `tristesse`, `surprise`. Conditionne le lexique activé.
 - **« Trust »** et non « réputation » comme terme principal pour le crédit accordé à un contributeur. Le terme technique `Beta reputation` (Jøsang) reste utilisé quand il désigne la primitive statistique.
 
 ## 1. Une muse, pas un serviteur
@@ -58,7 +63,7 @@ Muses apprend des contributeurs. Mais il fait aussi **apprendre** les contribute
 
 Les contributions sont ouvertes à tous les joueurs des instances Suddenly connectées. Mais cette ouverture est **pondérée**, pas naïve.
 
-- **Trust contextuel par auteur** sur chaque axe (univers, situation, voix) — un auteur peut être fiable sur certains contextes et neutre ailleurs.
+- **Trust contextuel par auteur** sur chaque axe canonique (cf. § Conventions) — un auteur peut être fiable sur certains contextes et neutre ailleurs.
 - **Réputation d'instance** comme multiplicateur global — une instance bien modérée renforce ses auteurs, une instance lax dilue les leurs.
 - **Visibilité réservée aux administrateurs** — les auteurs ne voient pas leur trust score, pour éviter le gaming.
 
