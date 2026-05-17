@@ -2,6 +2,8 @@
 
 **2026-05-15** — Dernière mise à jour — **20 issues fermées, 6 ouvertes**
 
+> **Statut : snapshot pré-pivot.** Ce document reflète l'état du projet à la mi-mai 2026, avant l'abandon de l'approche LoRA / fine-tune (cf. `philosophy.md` § Contexte du pivot dans `architecture-tables-ml.md`). Conservé comme trace historique. Pour l'état courant, voir les issues GitHub et les quatre documents théoriques (`philosophy.md`, `architecture-tables-ml.md`, `style-coaching.md`, `learning-and-trust.md`).
+
 ---
 
 ## ✅ Toutes les issues sont fermées ou mises en attente
@@ -26,8 +28,8 @@
 
 | # | Issue | Résultat | Biblio |
 |---|-------|----------|--------|
-| #29 | [SPIKE] Archi LoRA 2 axes + pre-merge | Architecture validée et documentée | `lora-strategy.md` |
-| #33 | [SPIKE] Taxonomie genres/situations | Taxonomie validée et documentée | `taxonomy.md` |
+| #29 | [SPIKE] Archi LoRA 2 axes + pre-merge | Architecture LoRA validée à l'époque — depuis abandonnée | obsolète, voir `architecture-tables-ml.md` |
+| #33 | [SPIKE] Taxonomie genres/situations | Taxonomie 2 axes validée à l'époque — depuis étendue à 5 axes canoniques | voir `taxonomy.md` (ou son remplaçant `axes-and-tags.md`) |
 
 ### Issues fermées en attente (production/features)
 
@@ -53,14 +55,14 @@ Ces issues définissent des features futures à lancer **après** que le pipelin
 
 ---
 
-## 📚 Documentation créée (aidd_docs/memory/external/)
+## 📚 Documentation créée (snapshot)
 
-| Fichier | Contenu |
-|---------|---------|
-| `lora-strategy.md` | Architecture LoRA 2 axes, fusion offline, fallback hierarchy, seuils |
-| `taxonomy.md` | 14 genres + 6 situations, mécanisme de tagging |
-| `benchmark-fireworks-vs-together.md` | Comparatif prix/inférence/serverless, recommandation hybride |
-| `sources-litteraires.md` | Guide juridique & sources légales FR (DP vie+70, Wikisource, Gallica) |
+| Fichier | Contenu | Statut courant |
+|---------|---------|----------------|
+| `lora-strategy.md` | Architecture LoRA 2 axes, fusion offline, fallback hierarchy, seuils | Supprimé — remplacé par `architecture-tables-ml.md` |
+| `taxonomy.md` | 14 genres + 6 situations, mécanisme de tagging | Encore présent ; à transformer en `axes-and-tags.md` (5 axes) |
+| `benchmark-fireworks-vs-together.md` | Comparatif prix/inférence/serverless | Toujours dans `memory/`, mais sans pertinence opérationnelle depuis le pivot |
+| `sources-litteraires.md` | Guide juridique & sources légales FR | Jamais créé |
 
 ---
 
@@ -97,10 +99,10 @@ Ces issues définissent des features futures à lancer **après** que le pipelin
 - GPU disponibles : ❌ (Together/Fireworks épuisés)
 - Solution envisagée : RunPod A100-40G
 
-### LoRA (en attente de modèle de base FT)
-- Architecture : ✅ documentée (`lora-strategy.md`)
-- Taxonomie : ✅ documentée (`taxonomy.md`)
-- Entraînement : ⏸️ en attente modèle de base
+### LoRA (entièrement annulé suite au pivot)
+- Architecture LoRA : ❌ abandonnée — voir `architecture-tables-ml.md` pour la nouvelle archi tables + ML
+- Taxonomie 2 axes : étendue à 5 axes canoniques dans `philosophy.md` § Conventions
+- Entraînement : ❌ ne s'applique plus, plus de fine-tune batch
 
 ### Production/Features (hors chemin critique)
 - Toutes les features (hub beta, discovery, rollout, etc.) en attente du modèle FT opérationnel
