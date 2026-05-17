@@ -80,14 +80,16 @@ Toute tâche hors de ce chemin (par exemple `Stage1H`, `Stage3R`, `Stage4N`, `Pr
 
 ## Milestones
 
-| Milestone | Objet | Sortie observable |
-|-----------|-------|-------------------|
-| **M0** | Fondations | code obsolète purgé, schéma rows opérationnel, I/O tables fonctionnelle |
-| **M1** | Bootstrap corpus | premières tables peuplées depuis sources publiques, anonymisation et mining adaptés |
-| **M2** | MVP une feature | API `suggest_dialogue` end-to-end depuis une instance Suddenly mockée, pipeline 4 étages dans leurs versions minimales |
-| **M3** | Boucle de feedback | 5 signaux UI captés, trust contextuel calculé, online learning sur étages 1/2/4, profil de style |
-| **M4** | Production | déploiement public, auth ActivityPub réelle, monitoring, mode dégradé côté instance |
-| **M5** | Extension | autres features de génération (action, description, pensée), pipeline d'analyse, features hybrides (résumé, liens, prompt vidéo) |
+| Milestone | Issue GitHub | Objet | Sortie observable |
+|-----------|--------------|-------|-------------------|
+| **M0** | [#67](https://github.com/RebelliousSmile/suddenly-muses/issues/67) | Fondations | code obsolète purgé, schéma rows opérationnel, I/O tables fonctionnelle |
+| **M1** | [#68](https://github.com/RebelliousSmile/suddenly-muses/issues/68) | Bootstrap corpus | premières tables peuplées depuis sources publiques, anonymisation et mining adaptés |
+| **M2** | [#69](https://github.com/RebelliousSmile/suddenly-muses/issues/69) | MVP une feature | API `suggest_dialogue` end-to-end depuis une instance Suddenly mockée, pipeline 4 étages dans leurs versions minimales |
+| **M3** | [#70](https://github.com/RebelliousSmile/suddenly-muses/issues/70) | Boucle de feedback | 5 signaux UI captés, trust contextuel calculé, online learning sur étages 1/2/4, profil de style |
+| **M4** | [#71](https://github.com/RebelliousSmile/suddenly-muses/issues/71) | Production | déploiement public, auth ActivityPub réelle, monitoring, mode dégradé côté instance |
+| **M5** | [#72](https://github.com/RebelliousSmile/suddenly-muses/issues/72) | Extension | autres features de génération (action, description, pensée), pipeline d'analyse, features hybrides (résumé, liens, prompt vidéo) |
+
+Le suivi de progression se fait dans les issues GitHub (checkboxes par tâche). Ce document reste la source de vérité pour le contenu et les dépendances.
 
 ## Tableau plat des tâches
 
