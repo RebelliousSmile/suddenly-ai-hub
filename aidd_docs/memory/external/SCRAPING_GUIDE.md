@@ -1,7 +1,9 @@
 # Guide de Scraping - La Cour d'Obéron
 
-## 🎯 Objectif
-Scrapper les archives publiques de La Cour d'Obéron pour entraîner des LoRAs RP.
+> **Note** : la cible La Cour d'Obéron a été mise de côté par décision éthique en 2026-05-15 (cf. `issues-analysis.md` #47). Ce document reste comme méthodologie de référence pour un scraping légitime d'archives publiques avec authentification — réutilisable pour d'autres sources sous accord explicite. La finalité a changé : alimenter le mining vers les tables de Muses (cf. `corpus-public.md`), pas le fine-tune d'un modèle LoRA.
+
+## Objectif
+Méthodologie pour scraper les archives publiques d'un forum RP sous authentification, anonymiser les contenus, et produire un JSONL exploitable par le pipeline de mining.
 
 ## 📋 Prérequis
 
@@ -109,7 +111,7 @@ Les données sont sauvegardées au format **JSONL**:
 - **Cause:** Comptes sans droits de lecture
 - **Solution:** Vérifie que ton compte a accès aux archives publiques
 
-## 📈 Étapes suivantes
+## Étapes suivantes
 
 Après le scraping:
 
@@ -118,14 +120,9 @@ Après le scraping:
    head -n 5 data/couroberon_*.jsonl
    ```
 
-2. **Nettoyer et structurer**
-   - Voir `clean_dataset.py` (à créer)
+2. **Anonymiser** : pipeline `pipelines/anonymization/` (noms propres → placeholders typés).
 
-3. **Convertir en format Axolotl**
-   - Voir `convert_to_axolotl.py` (à créer)
-
-4. **Fine-tuning**
-   - Utiliser Fireworks.ai ou Together.ai
+3. **Miner vers les tables Muses** : extraction des entités, templates, beats, fragments, et tagging axial. Cf. `corpus-public.md` § Du corpus brut aux rows de tables. Le futur `mining-pipeline.md` formalisera les étapes opérationnelles.
 
 ## ⚠️ Avertissements
 

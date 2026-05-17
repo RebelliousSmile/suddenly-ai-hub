@@ -1,14 +1,16 @@
-# Corpus RP public — Sourcing et fine-tuning initial
+# Corpus RP public — Sourcing pour le bootstrap des tables
 
-**Issue** : #12 | **Date** : 2026-05-01
+**Issue** : #12 | **Date initiale** : 2026-05-01 | **Rewrite** : 2026-05-17 (post-pivot)
 
 ---
 
 ## Contexte
 
-Ce document décrit les sources de corpus RP public disponibles en français, leur licence, et les commandes pour préparer les données et lancer le fine-tuning `suddenly-7b` et `suddenly-13b`.
+Ce document inventorie les sources de corpus RP / narratif francophones publiquement disponibles, leurs licences, et les commandes de téléchargement.
 
-Il s'agit du fine-tuning initial (Phase 0) — avant que des données réelles de sessions Suddenly soient disponibles. L'objectif est d'inculquer au modèle le registre narratif et le rythme du RP FR, pas d'apprendre des comportements Suddenly spécifiques.
+Ces corpus servent au **bootstrap** du service Muses : extraction d'entités, templates, beats et fragments candidats pour amorcer les tables (cf. `philosophy.md` §3 « Continu, pas batch » et `architecture-tables-ml.md` § Provenance des tables → 1. Mining).
+
+> **Note** : avant le pivot, ce document décrivait le sourcing pour le fine-tune `suddenly-7b` et `suddenly-13b`. Cette finalité est abandonnée. Les sources elles-mêmes restent pertinentes mais leur exploitation passe désormais par le pipeline de mining vers les tables, pas par Axolotl ou un fine-tune.
 
 ---
 
@@ -16,15 +18,14 @@ Il s'agit du fine-tuning initial (Phase 0) — avant que des données réelles d
 
 ### 1. OPUS / OpenSubtitles FR (CC BY 4.0)
 
-**URL** : https://opus.nlpl.eu/OpenSubtitles/corpus/version/OpenSubtitles  
-**Licence** : Creative Commons Attribution 4.0  
-**Volume** : ~2,7 M paires de phrases en FR  
-**Format** : TMX ou TSV (source/cible alignés)  
-**Intérêt** : dialogues FR naturels (films, séries), registre varié  
-**Limite** : peu de narration RP ; nécessite filtrage des échanges trop courts
+**URL** : https://opus.nlpl.eu/OpenSubtitles/corpus/version/OpenSubtitles
+**Licence** : Creative Commons Attribution 4.0
+**Volume** : ~2,7 M paires de phrases en FR
+**Format** : TMX ou TSV (source/cible alignés)
+**Intérêt pour Muses** : dialogues FR naturels en variété de registres — bon vivier pour les rows de niveau `fragment` et pour extraire des entités lexicales conversationnelles. Tagging à inférer (univers / situation / rapport_initial / voix / emotion_dominante).
+**Limite** : peu de narration RP au sens strict, beaucoup d'échanges courts à filtrer.
 
 ```bash
-# Télécharger le sous-corpus FR (fichier TSV)
 wget "https://object.pouta.csc.fi/OPUS-OpenSubtitles/v2018/mono/fr.txt.gz" \
     -O data/raw/opensubtitles-fr.txt.gz
 gunzip data/raw/opensubtitles-fr.txt.gz
@@ -32,159 +33,68 @@ gunzip data/raw/opensubtitles-fr.txt.gz
 
 ### 2. Project Gutenberg — Fiction française (domaine public)
 
-**URL** : https://www.gutenberg.org/browse/languages/fr  
-**Licence** : domaine public (œuvres antérieures à 1928)  
-**Format** : TXT brut  
-**Intérêt** : prose narrative française de qualité, registre littéraire  
+**URL** : https://www.gutenberg.org/browse/languages/fr
+**Licence** : domaine public (œuvres antérieures à la limite légale de protection)
+**Format** : TXT brut
+**Intérêt pour Muses** : prose narrative française de qualité, registre littéraire. Source riche pour les niveaux `template` (squelettes descriptifs), `fragment` (extraits courts de description ou de dialogue) et `entity` (lexique d'objets, lieux, gestes, émotions). À tagger sur les axes `univers` (historique, fantastique, contemporain selon l'œuvre), `voix` (lyrique, solennel typiquement).
 **Exemples** :
 - *Les Trois Mousquetaires* — Dumas (ID 13951)
 - *Vingt mille lieues sous les mers* — Verne (ID 5097)
 - *Le Comte de Monte-Cristo* — Dumas (ID 17989)
 
 ```bash
-# Exemple : télécharger un roman
 wget "https://www.gutenberg.org/files/13951/13951-0.txt" \
     -O data/raw/gutenberg-trois-mousquetaires.txt
-
-# Convertir en sessions narratives
-python pipeline/format_corpus.py \
-    --input data/raw/gutenberg-trois-mousquetaires.txt \
-    --format narrative \
-    --output data/corpus-gutenberg.jsonl
 ```
 
-### 3. HuggingFace — `jpacifico/French-Alpaca-dataset-Instruct-110K`
+### 3. Visual Novels Ren'Py (sources GitHub publiques)
 
-**URL** : https://huggingface.co/datasets/jpacifico/French-Alpaca-dataset-Instruct-110K  
-**Licence** : Apache 2.0  
-**Volume** : 110 k exemples instruction/réponse en FR  
-**Format** : Parquet / JSONL  
-**Intérêt** : paires instruction/réponse FR, couvre le registre narratif  
-**Limite** : pas spécifique RP ; à filtrer sur les instructions narratives
+Cf. `corpus/renpy-methodology.md` pour la méthodologie de collecte. Volume estimé ~2M tokens.
+Intérêt particulier pour les rows de niveau `fragment` de dialogue et `template` de description courte, avec un tagging d'univers souvent explicite (cyberpunk, fantastique, romance contemporaine).
 
-```bash
-pip install datasets
-python - <<'EOF'
-from datasets import load_dataset
-ds = load_dataset("jpacifico/French-Alpaca-dataset-Instruct-110K", split="train")
-ds.to_json("data/raw/french-alpaca.jsonl", force_ascii=False)
-EOF
+### 4. HuggingFace — `jpacifico/French-Alpaca-dataset-Instruct-110K`
 
-# Normaliser vers le format d'entraînement
-python pipeline/format_corpus.py \
-    --input data/raw/french-alpaca.jsonl \
-    --format jsonl \
-    --output data/corpus-alpaca.jsonl
-```
+**URL** : https://huggingface.co/datasets/jpacifico/French-Alpaca-dataset-Instruct-110K
+**Licence** : Apache 2.0
+**Volume** : 110 k exemples instruction/réponse en FR
+**Intérêt pour Muses** : paires instruction/réponse FR. Utile principalement pour extraire des `fragment` cohérents en français standard. Faible spécificité RP — filtrer fortement.
 
-### 4. Forums JDR FR (scraping manuel — vérifier CGU)
+### 5. Forums JDR FR (manuel, sous CGU)
 
-**Sites** : [scenariotheque.org](https://scenariotheque.org), [lapartiedejdr.fr](https://lapartiedejdr.fr), [irtuel.fr](https://www.irtuel.fr)  
-**Licence** : variable selon le site — vérifier les CGU avant usage  
-**Format** : HTML → texte après extraction  
-**Intérêt** : contenu RP FR authentique, personnages et univers variés  
-**Prérequis** : contacter les administrateurs pour accord d'utilisation
+**Sites historiquement identifiés** : [scenariotheque.org](https://scenariotheque.org), [lapartiedejdr.fr](https://lapartiedejdr.fr), [irtuel.fr](https://www.irtuel.fr)
+**Licence** : variable — vérifier les CGU et obtenir un accord explicite avant collecte.
+**Note** : la décision éthique prise lors de la session 2026-05-15 (cf. `issues-analysis.md`) exclut le scraping des forums RP privés. Cette source n'est utilisable qu'avec accord explicite des administrateurs.
 
 ---
 
-## Filtrage recommandé
+## Filtrage recommandé avant mining
 
-Avant fine-tuning, appliquer les filtres suivants :
-
-| Critère | Règle |
-|---|---|
-| Langue | Français uniquement (détecter avec langdetect) |
-| Longueur | ≥ 200 tokens par session (~150 mots) |
-| Alternance | Rôles user/assistant strictement alternés |
-| Contenu | Exclure URLs, balises HTML résiduelles, textes tronqués |
-| Déduplications | Supprimer les sessions quasi-identiques (MinHash ou hash exact) |
+| Critère       | Règle                                                           |
+| ------------- | --------------------------------------------------------------- |
+| Langue        | Français uniquement (détection via `langdetect` ou similaire)   |
+| Longueur      | Filtrer les fragments < 30 caractères (non exploitables)        |
+| Contenu       | Exclure URLs résiduelles, balises HTML, ponctuation aberrante   |
+| Déduplication | Supprimer les quasi-doublons (MinHash ou hash exact)            |
+| Anonymisation | Pipeline `pipelines/anonymization/` sur tous les noms propres   |
 
 ---
 
-## Pipeline de préparation
+## Du corpus brut aux rows de tables
 
-```bash
-# 1. Convertir les sources brutes
-python pipeline/format_corpus.py \
-    --input data/raw/ \
-    --format dialogue \
-    --glob "*.txt" \
-    --output data/corpus-dialogue.jsonl
+Le mining se déroule en plusieurs étapes (à formaliser dans un futur `mining-pipeline.md`) :
 
-# 2. Anonymiser les noms propres (issue #10)
-python -c "
-import json, sys
-from pipelines.anonymization.anonymize import anonymize_session
+1. **Ingestion** : conversion vers texte brut UTF-8, segmentation en passages courts (phrase, paragraphe court, échange).
+2. **Anonymisation** : remplacement des noms propres par des placeholders typés (`{char.name}`, `{place.name}`).
+3. **Classification axiale** : tagger chaque passage sur les cinq axes canoniques (cf. `axes-and-tags.md`) — classifieur léger entraîné sur des exemples canoniques, ou tagging manuel pour les sources peu volumineuses.
+4. **Extraction par niveau** :
+   - **Entités** : NER (gestes, émotions, lieux, objets, traits) + clustering pour identifier les variantes (`serre les poings` / `serrent les poings`).
+   - **Templates** : généralisation de phrases via remplacement de tokens spécifiques par des slots typés.
+   - **Beats** : segmentation thématique d'une scène + classification du beat (hésitation, révélation, rebondissement…).
+   - **Fragments** : extraction directe de répliques ou de phrases courtes prêtes à insérer.
+5. **Validation à l'ingestion** : cf. `data-format.md` § Validation à l'ingestion.
+6. **Insertion** : avec `source: bootstrap` (ou `source: mined` selon la voie d'extraction) — cf. `data-format.md` § schéma commun.
 
-with open('data/corpus-dialogue.jsonl') as fin, \
-     open('data/corpus-rp-general.jsonl', 'w') as fout:
-    for line in fin:
-        obj = json.loads(line)
-        obj['messages'] = anonymize_session(obj['messages'])
-        fout.write(json.dumps(obj, ensure_ascii=False) + '\n')
-"
-
-# 3. Valider avec Axolotl (nécessite Axolotl installé)
-axolotl preprocess training/suddenly-7b.yml --debug
-```
-
----
-
-## Lancement du fine-tuning
-
-### Prérequis RunPod
-
-- Template : `axolotl-runpod` (Axolotl + vLLM pré-installés)
-- GPU : A100-40G (40 GB VRAM)
-- Volume : Network Volume monté sur `/workspace`
-- Secrets : `HF_TOKEN`, optionnellement `WANDB_API_KEY` et `S3_BUCKET`
-
-### Étapes
-
-```bash
-# 1. Cloner le repo sur le pod
-git clone https://github.com/RebelliousSmile/suddenly-ai-hub /workspace/suddenly-ai-hub
-cd /workspace/suddenly-ai-hub
-
-# 2. Copier le corpus préparé
-# (upload via RunPod File Browser ou aws s3 cp)
-cp data/corpus-rp-general.jsonl training/data/corpus-rp-general.jsonl
-
-# 3. Fine-tuning suddenly-7b
-./training/scripts/runpod_train.sh training/suddenly-7b.yml
-
-# 4. Fine-tuning suddenly-13b
-./training/scripts/runpod_train.sh training/suddenly-13b.yml
-```
-
-### Validation manuelle des sorties
-
-Après entraînement, générer quelques exemples de prompts RP et évaluer manuellement :
-
-```bash
-# Avec vLLM (si pré-installé dans l'image RunPod)
-python -c "
-from vllm import LLM, SamplingParams
-
-llm = LLM('./outputs/suddenly-7b')
-params = SamplingParams(temperature=0.8, max_tokens=300)
-
-prompts = [
-    '[INST] Tu entres dans une taverne médiévale animée. Décris la scène. [/INST]',
-    '[INST] Un elfe mystérieux te remet une carte au trésor. Que se passe-t-il ? [/INST]',
-]
-outputs = llm.generate(prompts, params)
-for o in outputs:
-    print(o.outputs[0].text)
-    print('---')
-"
-```
-
-**Critères d'évaluation** :
-- Le modèle répond en français
-- Le registre est narratif et immersif (pas conversationnel générique)
-- Les personnages sont cohérents sur plusieurs tours
-- Pas de répétitions excessives ni de troncatures brutales
+Les pipelines Python existants `pipelines/anonymization/` et `pipelines/crawl_rpv/` ont été conçus pour le pipeline LoRA et nécessitent adaptation pour produire des rows au format `data-format.md` plutôt que des conversations JSONL Axolotl.
 
 ---
 
@@ -192,5 +102,6 @@ for o in outputs:
 
 - [OPUS corpus](https://opus.nlpl.eu)
 - [Project Gutenberg FR](https://www.gutenberg.org/browse/languages/fr)
-- [Axolotl — runpod_train.sh](../training/scripts/runpod_train.sh)
-- [Format d'entraînement](data-format.md)
+- `corpus/renpy-methodology.md` — collecte des VN Ren'Py
+- `data-format.md` — format des rows produites
+- `axes-and-tags.md` — taxonomie de tagging
