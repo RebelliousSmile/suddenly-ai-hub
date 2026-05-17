@@ -11,9 +11,9 @@ from muses.schemas.tags import AxialTags
 
 
 class SuggestRequest(BaseModel):
-    """Requête de suggestion. Contexte minimal pour la feature dialogue."""
+    """Requête de suggestion. Contexte minimal pour les features de génération."""
 
-    feature: str = Field(..., description="Nom de la feature, ex: dialogue")
+    feature: str = Field(..., description="Nom de la feature, ex: dialogue, action, description, thought, video_prompt")
     context_text: str = Field(
         ...,
         description="Texte du contexte (derniers reports, fiche perso compilée, etc.)",
@@ -24,6 +24,11 @@ class SuggestRequest(BaseModel):
     )
     n_candidates: int = Field(5, ge=1, le=20)
     top_n: int = Field(3, ge=1, le=10)
+    mode: str = Field("confort", pattern="^(confort|challenge)$")
+    user_id: str | None = Field(
+        None,
+        description="ID auteur pour mode challenge (obligatoire si mode=challenge)",
+    )
 
 
 class SuggestionItem(BaseModel):

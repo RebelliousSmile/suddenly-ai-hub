@@ -17,6 +17,12 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from muses.analysis.coherence import (
+    analyze_scene_coherence,
+    analyze_session_coherence,
+)
+from muses.analysis.federated_links import find_federated_links
+from muses.analysis.summary import generate_session_summary
 from muses.api.admin import create_admin_router
 from muses.api.auth import ParsedSignature, require_signature_stub
 from muses.api.schemas import SuggestRequest, SuggestResponse, SuggestionItem
@@ -41,6 +47,20 @@ class FeedbackSignalRequest(BaseModel):
     contributor_instance_id: str | None = None
     context_tags: dict[str, list[str]] = Field(default_factory=dict)
     edited_text: str | None = None
+
+
+class SceneCoherenceRequest(BaseModel):
+    scene_fragments: list[str]
+
+
+class SessionCoherenceRequest(BaseModel):
+    scenes: list[list[str]]
+
+
+class FederatedLinksRequest(BaseModel):
+    session_characters: dict[str, str]
+    public_characters: dict[str, str]
+    threshold: float = Field(0.3, ge=0.0, le=1.0)
 
 
 def create_app(
@@ -84,21 +104,21 @@ def create_app(
             "feedback_enabled": event_log is not None,
         }
 
-    @app.post("/v1/suggest/dialogue", response_model=SuggestResponse)
-    def suggest_dialogue(
-        req: SuggestRequest,
-        sig: ParsedSignature = Depends(require_signature_stub),
-    ) -> SuggestResponse:
-        if req.feature != "dialogue":
+    GENERATION_FEATURES = {"dialogue", "action", "description", "thought", "video_prompt"}
+
+    def _serve_generation(req: SuggestRequest, expected: str) -> SuggestResponse:
+        if req.feature != expected:
             raise HTTPException(
                 status_code=400,
-                detail=f"This endpoint serves only feature='dialogue', got {req.feature!r}",
+                detail=f"This endpoint serves only feature={expected!r}, got {req.feature!r}",
             )
         result = orchestrator.generate(
             context_text=req.context_text,
             context_tags=req.context_tags,
             n_candidates=req.n_candidates,
             top_n=req.top_n,
+            mode=req.mode,
+            user_id=req.user_id,
         )
         return SuggestResponse(
             suggestions=[
@@ -113,6 +133,44 @@ def create_app(
             selected_table_count=len(result.selected_tables),
             weighted_count=result.weighted_count,
         )
+
+    @app.post("/v1/suggest/dialogue", response_model=SuggestResponse)
+    def suggest_dialogue(
+        req: SuggestRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> SuggestResponse:
+        return _serve_generation(req, "dialogue")
+
+    @app.post("/v1/suggest/action", response_model=SuggestResponse)
+    def suggest_action(
+        req: SuggestRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> SuggestResponse:
+        return _serve_generation(req, "action")
+
+    @app.post("/v1/suggest/description", response_model=SuggestResponse)
+    def suggest_description(
+        req: SuggestRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> SuggestResponse:
+        return _serve_generation(req, "description")
+
+    @app.post("/v1/suggest/thought", response_model=SuggestResponse)
+    def suggest_thought(
+        req: SuggestRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> SuggestResponse:
+        return _serve_generation(req, "thought")
+
+    @app.post("/v1/suggest/video_prompt", response_model=SuggestResponse)
+    def suggest_video_prompt(
+        req: SuggestRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> SuggestResponse:
+        # T44 — pas de filtre best-of-N pour cette feature (cf. use-cases.md §4.4)
+        # Pour MVP M5, on garde le même pipeline ; la spécialisation
+        # canvas-fixe vient avec la curation dédiée des templates visuels.
+        return _serve_generation(req, "video_prompt")
 
     @app.post("/v1/feedback/signal")
     def feedback_signal(
@@ -150,6 +208,60 @@ def create_app(
             )
 
         return {"recorded": True, "signal": signal.signal}
+
+    # --- Endpoints d'analyse (M5/T47-T50) -----------------------------------
+
+    @app.post("/v1/analyze/consistency_scene")
+    def analyze_consistency_scene_endpoint(
+        req: SceneCoherenceRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> dict:
+        issues = analyze_scene_coherence(req.scene_fragments)
+        return {
+            "n_issues": len(issues),
+            "issues": [
+                {"severity": i.severity, "fragment_index": i.fragment_index,
+                 "description": i.description}
+                for i in issues
+            ],
+        }
+
+    @app.post("/v1/analyze/consistency_session")
+    def analyze_consistency_session_endpoint(
+        req: SessionCoherenceRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> dict:
+        return analyze_session_coherence(req.scenes)
+
+    @app.post("/v1/analyze/summary")
+    def analyze_summary_endpoint(
+        req: SessionCoherenceRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> dict:
+        return {"summary": generate_session_summary(req.scenes)}
+
+    @app.post("/v1/analyze/federated_links")
+    def analyze_federated_links_endpoint(
+        req: FederatedLinksRequest,
+        sig: ParsedSignature = Depends(require_signature_stub),
+    ) -> dict:
+        suggestions = find_federated_links(
+            req.session_characters,
+            req.public_characters,
+            encoder=encoder,
+            threshold=req.threshold,
+        )
+        return {
+            "suggestions": [
+                {
+                    "session_character": s.session_character,
+                    "public_character_id": s.public_character_id,
+                    "similarity": s.similarity,
+                    "confidence": s.confidence,
+                }
+                for s in suggestions
+            ],
+        }
 
     if tables:
         app.include_router(create_admin_router(tables=tables, admin_token=admin_token))
