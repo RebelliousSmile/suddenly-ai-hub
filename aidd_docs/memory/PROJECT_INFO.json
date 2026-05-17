@@ -1,78 +1,40 @@
 {
-  "project_name": "Suddenly AI Hub",
-  "description": "Fine-tuning LLM pour JDR français",
-  "version": "1.0.0",
+  "project_name": "Suddenly Muses",
+  "description": "Service mutualisé d'assistance créative pour les instances Suddenly du Fediverse, basé sur des tirages dans des tables curées et un pipeline ML léger CPU-only",
+  "version": "0.0.0-pre-mvp",
   "start_date": "2026-05-13",
+  "pivot_date": "2026-05-17",
   "author": "RebelliousSmile",
   "license": "MIT",
   "workflow": "AIDD",
-  "phases": {
-    "session1": {
-      "status": "completed",
-      "description": "Exploration jdRoll"
-    },
-    "session2": {
-      "status": "pending",
-      "description": "Scraping 20 campagnes"
-    },
-    "phase3": {
-      "status": "planned",
-      "description": "Fine-tuning Qwen2.5-7B"
-    },
-    "phase4": {
-      "status": "planned",
-      "description": "Amélioration continue"
-    },
-    "phase5": {
-      "status": "planned",
-      "description": "Scaling 100+ campagnes"
-    },
-    "phase6": {
-      "status": "planned",
-      "description": "Production & Haute disponibilité"
-    },
-    "phase7": {
-      "status": "planned",
-      "description": "Communauté & Open source"
-    }
+  "status": "pre-mvp",
+  "doc_entry_points": {
+    "identity": "aidd_docs/memory/philosophy.md",
+    "architecture_hub": "aidd_docs/memory/architecture.md",
+    "technical_plan": "aidd_docs/memory/technical-plan.md"
   },
   "tech_stack": {
-    "scraping": [
-      "Python",
-      "requests",
-      "beautifulsoup4"
+    "language": [
+      "Python 3.11+"
     ],
-    "training": [
-      "Axolotl",
-      "PyTorch",
-      "LoRA",
-      "QLoRA"
+    "tables_storage": [
+      "JSONL versionné git",
+      "SQLite FTS5",
+      "NumPy npy"
     ],
-    "inference": [
-      "Together.ai",
-      "Fireworks.ai",
-      "vLLM"
+    "ml_components": [
+      "sentence-transformers (embeddings, CPU)",
+      "cross-encoder léger (reranker, CPU)",
+      "classifieurs scikit-learn ou MLP léger"
     ],
-    "storage": [
-      "Hugging Face",
-      "GitHub"
+    "auth": [
+      "ActivityPub HTTP signatures"
     ],
-    "workflow": [
-      "AIDD",
-      "GitHub CLI",
-      "Git"
+    "no_dependencies_on": [
+      "GPU inference",
+      "Commercial LLM providers (OpenAI, Anthropic, Together, Fireworks)",
+      "Fine-tuning frameworks (Axolotl)",
+      "Vector DBs (pgvector, Pinecone, etc.) — pas pour le MVP"
     ]
-  },
-  "api_keys": {
-    "together_ai": "configured",
-    "fireworks_ai": "configured",
-    "github": "configured",
-    "hugging_face": "configured"
-  },
-  "metrics": {
-    "total_scripts": 13,
-    "total_plans": 7,
-    "total_reviews": 7,
-    "average_review_score": 9.5
   }
 }

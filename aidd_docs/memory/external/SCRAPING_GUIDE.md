@@ -1,9 +1,11 @@
 # Guide de Scraping - La Cour d'Obéron
 
-## 🎯 Objectif
-Scrapper les archives publiques de La Cour d'Obéron pour entraîner des LoRAs RP.
+> **Note** : la cible La Cour d'Obéron a été mise de côté par décision éthique en 2026-05-15 (cf. `issues-analysis.md` #47). Ce document reste comme méthodologie de référence pour un scraping légitime d'archives publiques avec authentification — réutilisable pour d'autres sources sous accord explicite. La finalité a changé : alimenter le mining vers les tables de Muses (cf. `corpus-public.md`), pas le fine-tune d'un modèle LoRA.
 
-## 📋 Prérequis
+## Objectif
+Méthodologie pour scraper les archives publiques d'un forum RP sous authentification, anonymiser les contenus, et produire un JSONL exploitable par le pipeline de mining.
+
+## Prérequis
 
 ### 1. Créer un compte
 - Va sur: https://couroberon.com/Salons/ucp.php?mode=register
@@ -12,7 +14,7 @@ Scrapper les archives publiques de La Cour d'Obéron pour entraîner des LoRAs R
 
 ### 2. Installer les dépendances
 ```bash
-cd /home/user/suddenly-ai-hub
+cd /home/user/suddenly-muses
 source venv/bin/activate
 pip install requests python-dotenv
 ```
@@ -41,12 +43,12 @@ python scrape_couroberon.py
 
 ### 4. Lancer le scraping
 ```bash
-cd /home/user/suddenly-ai-hub
+cd /home/user/suddenly-muses
 source venv/bin/activate
 python scrape_couroberon.py
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 Le script utilise ces paramètres par défaut:
 - **Max forums:** 3
@@ -61,9 +63,9 @@ scraper.scrape_all(
 )
 ```
 
-## 📊 Format des données
+## Format des données scrapées
 
-Les données sont sauvegardées au format **JSONL**:
+Les données brutes sont sauvegardées au format **JSONL** (avant anonymisation et avant le mining vers les tables Muses) :
 ```json
 {
   "topic_id": "12345",
@@ -82,15 +84,17 @@ Les données sont sauvegardées au format **JSONL**:
 }
 ```
 
-## 🛡️ Bonnes pratiques
+Ce format est **intermédiaire**. La conversion en rows de tables (format défini par `data-format.md`) se fait dans une étape ultérieure de mining.
+
+## Bonnes pratiques
 
 1. **Respect des délais:** 3 secondes entre chaque requête
 2. **Limitation:** Commence petit (3 forums, 50 topics)
-3. **Anonymisation:** Les noms d'utilisateurs sont remplacés par `Author_X`
-4. **Respect des CGU:** Utilise uniquement pour l'entraînement personnel
-5. **Vérification:** Vérifie les données avant de les utiliser
+3. **Anonymisation au scraping** : les noms d'utilisateurs sont remplacés par `Author_X` à la collecte. L'anonymisation finale (incluant les noms propres dans le contenu) est traitée par `pipelines/anonymization/` au mining.
+4. **Respect des CGU:** Utilise uniquement après accord explicite des administrateurs du site cible, jamais pour des forums fermés.
+5. **Vérification:** Vérifie les données avant de les passer au mining.
 
-## 🔧 Dépannage
+## Dépannage
 
 ### Erreur 503
 - **Cause:** Protection Cloudflare
@@ -109,7 +113,7 @@ Les données sont sauvegardées au format **JSONL**:
 - **Cause:** Comptes sans droits de lecture
 - **Solution:** Vérifie que ton compte a accès aux archives publiques
 
-## 📈 Étapes suivantes
+## Étapes suivantes
 
 Après le scraping:
 
@@ -118,29 +122,17 @@ Après le scraping:
    head -n 5 data/couroberon_*.jsonl
    ```
 
-2. **Nettoyer et structurer**
-   - Voir `clean_dataset.py` (à créer)
+2. **Anonymiser** : pipeline `pipelines/anonymization/` (noms propres → placeholders typés).
 
-3. **Convertir en format Axolotl**
-   - Voir `convert_to_axolotl.py` (à créer)
+3. **Miner vers les tables Muses** : extraction des entités, templates, beats, fragments, et tagging axial. Cf. `corpus-public.md` § Du corpus brut aux rows de tables. Le futur `mining-pipeline.md` formalisera les étapes opérationnelles.
 
-4. **Fine-tuning**
-   - Utiliser Fireworks.ai ou Together.ai
-
-## ⚠️ Avertissements
+## Avertissements
 
 - Ne scrappe pas trop rapidement (risque de ban)
 - Respecte les conditions d'utilisation du site
-- Utilise uniquement pour l'entraînement personnel (non commercial)
-- Anonymise toujours les données personnelles
-
-## 📞 Support
-
-Pour les problèmes:
-- Vérifie le fichier `logs/scraping.log`
-- Consulte ce README
-- Contacte l'équipe (si open source)
+- Le contenu collecté alimente le pool de rows du service Muses partagé — il doit donc être obtenu sous une licence ou un accord compatible avec un usage par une couche tierce. Pas de scraping de forums RP privés (décision éthique, cf. `issues-analysis.md`).
+- Anonymise toujours les données personnelles avant insertion dans les tables.
 
 ---
 
-**Dernière mise à jour:** 2026-05-13
+**Dernière mise à jour:** 2026-05-17 (rewrite post-pivot)

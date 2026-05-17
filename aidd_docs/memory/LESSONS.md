@@ -1,13 +1,86 @@
-# 📚 Leçons Apprises
-
-## [Date] - [Sujet]
-### Ce qui a bien fonctionné
-- ...
-
-### Ce qui a mal fonctionné
-- ...
-
-### Améliorations futures
-- ...
-
 ---
+name: lessons
+description: Leçons apprises lors du pivot LoRA → tables+ML
+---
+
+# Leçons
+
+Observations méthodologiques et techniques tirées du travail de pivot (mai 2026). Cf. `DECISIONS.md` pour les décisions actées, `lessons_sessions_1-2.md` pour les leçons des sessions pré-pivot.
+
+## L01. Distinguer `world model` (RL) de `online preference learning`
+
+Quand un user décrit l'envie d'« un système qui s'améliore avec l'usage », il faut désambiguïser :
+
+- **World model au sens RL** (Ha & Schmidhuber, DreamerV3) : modèle latent appris de la dynamique d'un environnement, support à la planification par rollouts imaginés. Concept précis, pas applicable à la narration en stack mature.
+- **Online preference learning** : boucle de feedback qui met à jour un ranker à partir de signaux user. Largement maîtrisé (RRPO, DPO-lite, Constitutional AI). C'est ce qui répond à « les dialogues s'améliorent avec l'usage ».
+
+Confondre les deux conduit à promettre un objet de recherche (world model narratif) alors qu'on construit un objet d'ingénierie (boucle feedback sur retrieval). La doc doit nommer correctement.
+
+## L02. Trois axes contextuels étaient insuffisants
+
+La canon initiale (`univers`, `situation`, `voix`) loupait deux dimensions qui changent radicalement les sorties :
+
+- `rapport_initial` (hostile / neutre / amical) — un combat amical et un combat hostile partagent `situation: combat` mais n'ont rien à voir.
+- `emotion_dominante` — conditionne le lexique activé indépendamment du style narratif.
+
+**Leçon** : les axes dimensionnels qu'on intuite comme « implicites » dans le contexte doivent être promus en axes canoniques **explicites** dès qu'ils déterminent significativement la sortie. Sinon le ML n'a pas le signal pour les traiter.
+
+## L03. Cinq signaux UI au lieu de deux
+
+`accept` / `reject` seuls font collapser le mode challenge en quelques semaines : les challenges ont un taux d'accept structurellement plus bas, donc le ranker apprend à les éviter. C'est mécanique.
+
+**Leçon** : quand un signal a une sémantique ambiguë (un reject = « pas pertinent » OU « bonne idée pas maintenant »), la désambiguïsation doit être un **élément d'UI explicite**, pas un post-traitement statistique. Le `reject_challenge_appreciated` est devenu indispensable.
+
+## L04. L'étage 3 doit rester strictement non-génératif
+
+Toute tentation de mettre « juste un petit modèle » à l'étage 3 (glue génératrice, mini-transformer pour les transitions) casse le contrat « zéro génération autoregressive » de `philosophy.md` §7. Conséquences en cascade : dépendance LLM réintroduite, traçabilité perdue, coût d'inférence redevient linéaire à la longueur.
+
+**Leçon** : quand un contrat structurel est revendiqué dans la philosophie, les étages techniques doivent être conçus pour le rendre tenable **par construction**. Si un cas d'usage exige un assemblage non couvert, on ajoute des rows à la table — pas un modèle.
+
+## L05. Apport continu user et fine-tune batch sont incompatibles
+
+C'est la racine du pivot. Le fine-tune (LoRA ou complet) exige une fenêtre minimale de données pour produire un nouveau modèle, et chaque cycle est discret. L'apport user est continu et granulaire (une row, un accept, une édition).
+
+**Leçon** : avant de choisir une architecture, vérifier que sa **granularité d'update** matche la granularité du flux de données. Un mismatch fondamental impose un pivot, pas juste un ajustement.
+
+## L06. Beta reputation est strictement supérieur à une moyenne mobile
+
+Une moyenne mobile à 95% peut signifier 95% sur 5 contribs (faible confiance) ou 95% sur 1000 (haute). Confondre les deux ouvre la porte aux sleeper attacks et aux raids massifs.
+
+**Leçon** : pour tout score qui sert à pondérer du contenu d'autrui, utiliser une primitive qui sépare **valeur** et **confiance** — typiquement Beta reputation (Jøsang). Coût : deux floats au lieu d'un. Bénéfice : robustesse contre les attaques classiques.
+
+## L07. Cohérence d'identifiants demande grep systématique
+
+Malgré la canonisation explicite (ASCII snake_case sans accent), `medieval-fantastique` et `pov-player` ont continué à leaker dans les exemples des docs. Détectés par grep ciblé en pass de critique, pas à la lecture.
+
+**Leçon** : poser une convention de nommage est nécessaire mais pas suffisant. Il faut **un grep automatisé** des occurrences interdites au moment de chaque revue. Idéalement un check CI le ferait.
+
+## L08. Cohérence cross-doc demande plusieurs passes
+
+Quand le canon évolue (passage de 3 à 5 axes, par exemple), les références dans les autres docs ne suivent pas automatiquement. Plusieurs passes de critique ont été nécessaires pour rattraper les contradictions (références à `genre` au lieu de `univers`, sections renumérotées, etc.).
+
+**Leçon** : à chaque évolution structurante d'un doc canonique, **dérouler immédiatement** la critique pass sur les docs qui le référencent. Plus on attend, plus les contradictions s'accumulent.
+
+## L09. Documenter les anti-features cadre les discussions
+
+`philosophy.md` §8 « Ce que Muses n'est pas » a sauvé plusieurs discussions ambiguës (« pourquoi pas un LLM », « pourquoi pas une API OpenAI-compatible »). Cadrer ce que le projet n'est pas est aussi instructif que le cadrer par ce qu'il est.
+
+**Leçon** : pour un projet exposé à de nombreuses sollicitations d'extension, formaliser les anti-features réduit les débats à chaque demande nouvelle.
+
+## L10. Le rituel `0 deal breakers / 0 suggestions` produit des docs robustes
+
+Plusieurs cycles de critique structurée (« challenge ta rédaction → corrige tout ») ont systématiquement révélé des problèmes invisibles à la première écriture : contradictions cross-doc, références cassées, identifiants inconsistants, formules sans définition.
+
+**Leçon** : faire du rituel de critique un livrable explicite (pas un implicite) permet de tendre vers zéro defect documentaire. Chaque passe découvre des choses que la précédente avait laissé passer — viser zéro en une seule passe n'est pas réaliste, viser zéro après deux ou trois passes l'est.
+
+## L11. Mélanger français et anglais dans le code crée du bruit
+
+Les exemples utilisaient parfois `axe / valeur` (FR) et parfois `axis / value` (EN) pour la même chose. Conséquence : grep manqués, doutes à la lecture.
+
+**Leçon** : trancher tôt sur la langue par registre et s'y tenir. Le canon Muses (cf. `external/axes-and-tags.md`) utilise du français snake_case ASCII pour les valeurs métier (`medieval_fantastique`, `narquois`, `combat`, `colere`…) et de l'anglais pour la terminologie technique d'API et de schéma (`level`, `tags`, `signature`, `suggest`, `analyze`). Le risque attaqué par cette leçon n'est pas le choix lui-même mais le **mélange** dans un même registre — ce qui produit `axe` en français à côté de `axis` en anglais pour désigner la même chose.
+
+## L12. Garder l'historique avec un bandeau d'obsolescence
+
+`issues-analysis.md` était un snapshot pré-pivot ; le supprimer aurait perdu le contexte historique, le garder tel quel aurait induit en erreur. La solution : bandeau d'obsolescence en tête + correction des références les plus cassantes + reste du contenu préservé comme trace.
+
+**Leçon** : pour les snapshots historiques, ni purge ni laisser-faire — un bandeau explicite qui dit « ceci est un instantané daté, voir XYZ pour l'état courant » préserve l'archéologie sans coût pédagogique.

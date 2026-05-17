@@ -1,96 +1,64 @@
 ---
 name: project-brief
-description: Project vision and domain documentation
+description: Vision et domaine du projet Muses
 ---
 
-# PROJECT_BRIEF.md
+# Project brief — Muses
 
-## Executive Summary
-- **Project Name**: `suddenly-muses`
-- **Vision**: Communal AI inference hub for the Fediverse/ActivityPub ecosystem
-- **Mission**: Fine-tune and host LLMs specialized in RP writing assistance for Suddenly federated instances
+## Vision
 
-### Full Description
-- Centralized ML infrastructure fed by federated data from participating Suddenly instances
-- No dependency on commercial inference providers
-- API REST propriétaire consommée par les instances Suddenly (pas de contrainte OpenAI SDK)
-- ActivityPub-based auth with opt-in session contribution for corpus building
+**Muses** est une couche d'assistance créative mutualisée entre les instances Suddenly du Fediverse. Une muse au sens classique : elle provoque l'auteur, elle ne le remplace pas.
 
-## Context
+Identité complète : `philosophy.md`. Architecture : `architecture-tables-ml.md`. Plan d'implémentation : `technical-plan.md`.
 
-### Core Domain
-- Federated roleplay writing platform (Suddenly) powered by specialized LLMs
-- Hub handles fine-tuning, hosting, and inference — instances handle social and data
-- Corpus built from opt-in user session contributions, anonymized before use
-- Models never shared with commercial third parties; corpus stays private
+## Domaine
 
-### Ubiquitous Language
+- Joueurs de RP de l'écosystème **Suddenly** (Fediverse / ActivityPub) qui écrivent des sessions narratives.
+- Le service Muses leur fournit des **suggestions** (dialogue, action, description, pensée intérieure) et des **analyses** (cohérence de scène, de session, résumé, suggestions de liens fédérés, export prompt vidéo) — cf. `external/use-cases.md`.
+- Les contributions des joueurs alimentent en retour les tables du service, qui s'enrichissent **row par row** (pas par batches).
 
-| Term | Definition | Synonyms |
-|------|-----------|----------|
-| Instance | Fediverse server running Suddenly | — |
-| Hub | This centralized AI infrastructure | suddenly-muses |
-| Session | A RP roleplay session (source of training data) | — |
-| Corpus | Collection of anonymized sessions for fine-tuning | — |
-| Fine-tuning | Supervised training run to specialize the model | — |
-| Contribution | Opt-in submission of a session to the corpus | — |
-| Feature | AI capability exposed by the API | — |
-| Inference | Generating text from the fine-tuned model | — |
-| Gateway | FastAPI API entry point | — |
+## Langage ubiquitaire
 
-## Features & Use-cases
+| Terme | Définition |
+|---|---|
+| **Instance** | Serveur Fediverse exécutant Suddenly |
+| **Muses (service)** | Le service unique mutualisé décrit par les docs de ce repo |
+| **Muses (monnaie)** | Ancienne grille tarifaire, à renommer en « unité d'usage » lors de la refonte |
+| **Row** | Une ligne d'une table de Muses, à l'un des quatre niveaux de granularité |
+| **Table** | Ensemble de rows au même niveau, partageant un slot d'usage et un tagging axial |
+| **Axe canonique** | Un des cinq axes contextuels (`univers`, `situation`, `rapport_initial`, `voix`, `emotion_dominante`) |
+| **Étage** | Une des quatre couches du pipeline de génération (sélecteur / pondérateur / recombinateur / filtreur) |
+| **Beat narratif** | Unité de niveau scène (hésitation, révélation, rupture de ton…) |
+| **Fragment** | Sortie de texte complète prête à insérer |
+| **Trust** | Crédit contextuel accordé à un contributeur (Beta reputation par axe) |
+| **Carte de couverture** | Hypercube `univers × situation × rapport_initial × voix × emotion_dominante` indexant le peuplement des tables |
+| **Mode confort / challenge** | Deux modes de service : conforter le style de l'auteur ou le pousser hors de ses habitudes |
+| **Signal UI** | Un des cinq retours utilisateur (`accept`, `accept_edited`, `reject_off`, `reject_challenge_appreciated`, `ignore`) |
 
-### API Endpoints
-- `POST /v1/chat/completions` — inférence (convention de chemin, pas contrainte OpenAI)
-- `GET /v1/models` — list available models + adapters actifs
-- `GET /v1/health` — service health check
-- `POST /v1/contribute` — opt-in session contribution (push)
-- `GET /v1/stats` — usage and corpus stats
+## Contraintes structurelles
 
-### Model Routing — deux dimensions complémentaires
+- **Pas de génération autoregressive.** Les sorties sont composées par sélection et assemblage de lignes pré-écrites. Détail : `philosophy.md` §7 et `architecture-tables-ml.md` § Étage 3.
+- **CPU-only en production.** Pas de GPU, pas d'inférence LLM commerciale.
+- **Continu, pas batch.** Pas de re-training planifié, pas de versions de modèle. Les tables et les composants ML évoluent ligne par ligne et signal par signal.
+- **Service unique mutualisé.** Une seule instance Muses pour toutes les instances Suddenly — SPOF assumé pour le MVP, à traiter dans `infrastructure.md`.
+- **Auth ActivityPub.** Toutes les requêtes entrantes sont signées par une instance authentifiée ; pas de clé API en clair.
+- **Décentralisation pondérée.** Contributions ouvertes mais filtrées par trust contextuel et réputation d'instance. Détail : `learning-and-trust.md` §§4-6.
 
-**Par feature** (taille/contexte requis) :
-- `suggest_short` → suddenly-7b-q4 (2k ctx)
-- `suggest_dialogue`, `suggest_action`, `suggest_desc` → suddenly-7b (4k ctx)
-- `suggest_thought`, `analyze_scene` → suddenly-7b (8k ctx)
-- `analyze_session`, `generate_summary` → suddenly-13b (16k ctx)
-- `suggest_links` → suddenly-13b (32k ctx)
+## Non-objectifs
 
-**Par spécialisation** (LoRA adapter sélectionné via `genre` + `situation`) :
-- `genre` : paramètre API côté client — correspond à l'**axe univers** GROG (medieval-fantastique, scifi, contemporain…)
-- `situation` : paramètre API côté client — correspond à l'**axe situation** (combat, romance, enquête…)
-- Les deux dimensions se combinent : feature choisit le modèle de base, LoRA spécialise le style
+- Pas un LLM, pas un chatbot, pas un substitut à l'auteur.
+- Pas un assistant généraliste (productivité bureautique, traduction inter-langues, code).
+- Pas un service à inférence payante par token.
+- Pas un système versionné. Pas de « v2 du modèle ».
+- Pas une API OpenAI-compatible. L'ancienne couche réutilisait par convention le chemin `/v1/chat/completions` sans s'engager sur la compatibilité — le nouveau service expose une API REST propriétaire et n'imite plus la surface OpenAI.
 
-### Auth & Governance
-- ActivityPub auth via instance public keys — no secrets stored
-- Admins choose which features to activate per instance
-- Users choose if their sessions contribute to corpus
-- Instances can stop contributing without losing inference access
-- Public transparency page at `https://ai.suddenly.social/transparency`
+Cf. `philosophy.md` §8.
 
-## Roadmap
+## État du projet
 
-### Phase 0 — Foundations (BLOCKS everything)
-- Anonymization pipeline
-- First fine-tune on public RP corpus
-- ActivityPub auth implementation
-- Deploy on RunPod
+Pré-MVP. Théorie posée dans sept documents (cf. `architecture.md`). Code historique partiellement présent (`pipelines/anonymization`, `pipelines/crawl_rpv`, `apps/playground`) mais hérité de l'ancienne stack LoRA — adaptation et purge à conduire selon `technical-plan.md` M0-M1.
 
-### Phase 1 — Beta ouverte
-- Open opt-in contribution
-- 500-session threshold for first real fine-tune (base model, corpus total)
-- Together.ai Fine-tuning API (transitoire — migration vers Axolotl auto-hébergé en Phase 2)
-- Public transparency page
+## Sources et liens
 
-### Phase 2 — Stabilisation
-- Automated fine-tuning pipeline (1k–10k sessions)
-- Canary deployment: 10% → 50% → 100%
-- Auto GPU scaling via RunPod API
-
-### Phase 3 — Maturité
-- LoRA adapters axe univers GROG (legrog.org/themes) — seuil 500 sessions/genre
-- LoRA adapters axe situation (romance, combat, enquête, diplomatie, exploration, introspection) — seuil 500 sessions/situation
-- Pre-merge offline des deux axes dès que les deux adapters individuels existent
-- Fallback : situation > univers > base
-- Export GGUF pour inférence locale optionnelle
-- Multilingual support (FR/EN)
+- Issues GitHub des features fonctionnelles : [Suddenly #72-#89](https://github.com/RebelliousSmile/suddenly/issues?q=is%3Aissue+label%3Aai)
+- Repo : [RebelliousSmile/suddenly-muses](https://github.com/RebelliousSmile/suddenly-muses)

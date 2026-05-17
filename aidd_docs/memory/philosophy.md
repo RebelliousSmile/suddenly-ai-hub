@@ -12,8 +12,8 @@ Ce document fixe l'identité du projet. Les choix d'architecture, de modèle de 
 ## Conventions
 
 - **« Muses »** dans tous les documents de ce dossier désigne le **projet et le service**. La grille monétaire qui porte le même nom dans `use-cases.md` §1.2 est un artefact de l'ancienne architecture LoRA, et doit être renommée lors de la réécriture de `use-cases.md`. Provisoirement, cette monnaie est référencée comme **« unité d'usage »** dans les futurs documents tarifaires.
-- **Axes contextuels canoniques** : cinq axes atomiques indépendants. Toute référence à un autre set d'axes (`genre` dans `use-cases.md`, le triplet `univers / situation / voix` des anciens commits) est obsolète. Définition détaillée des valeurs : à formaliser dans un futur `axes-and-tags.md`.
-  1. `univers` — genre / lore (`medieval-fantastique`, `cyberpunk`, `steampunk`, `horreur-gothique`…).
+- **Axes contextuels canoniques** : cinq axes atomiques indépendants. Toute référence à un autre set d'axes (`genre` dans `use-cases.md`, le triplet `univers / situation / voix` des anciens commits) est obsolète. Définition détaillée des valeurs autorisées : `aidd_docs/memory/external/axes-and-tags.md`.
+  1. `univers` — genre / lore (`medieval_fantastique`, `cyberpunk`, `steampunk`, `horreur_gothique`…).
   2. `situation` — type de scène (`combat`, `romance`, `intrigue`, `politique`, `quotidien`…).
   3. `rapport_initial` — relation entre protagonistes au début de la scène (`hostile`, `neutre`, `amical`). Conditionne radicalement le ton — un combat amical (sparring) et un combat hostile n'ont rien à voir.
   4. `voix` — style narratif du MJ (`solennel`, `narquois`, `theatral`, `neutre`, `lyrique`…).
@@ -103,4 +103,6 @@ Ce choix n'est pas une contrainte budgétaire : c'est une condition de **viabili
 - `learning-and-trust.md` — bootstrap → continu, online learning des étages ML, trust contextuel, réputation d'instance.
 - `style-coaching.md` — profil de style auteur, modes confort / challenge, méta-suggestions sur le style.
 
-Documents techniques projetés (non encore écrits) : `axes-and-tags.md` (taxonomie détaillée des valeurs sur les cinq axes), `analysis-pipeline.md` (spec opérationnelle de la projection inversée), `infrastructure.md` (HA, auth, mode dégradé), refonte tarifaire.
+Documents techniques projetés (non encore écrits) : `analysis-pipeline.md` (spec opérationnelle de la projection inversée), `infrastructure.md` (HA, auth, mode dégradé), refonte tarifaire de `use-cases.md` §1.2.
+
+Documents externes liés (dans `external/`) : `axes-and-tags.md` (taxonomie canonique des cinq axes), `data-format.md` (schéma JSONL des rows de tables).
