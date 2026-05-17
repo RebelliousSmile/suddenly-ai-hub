@@ -1,57 +1,64 @@
 ---
 name: deployment
-description: Infrastructure and deployment documentation
+description: Infrastructure et déploiement — pistes et contraintes
 ---
 
-# Deployment
+# Déploiement
 
-## Infrastructure Costs
+> Document de synthèse. La spec opérationnelle complète (HA, auth, mode dégradé, monitoring) ira dans `infrastructure.md` à venir (cf. `architecture-tables-ml.md` § Hors périmètre et `technical-plan.md` T39).
 
-| Composant | Hébergement | Coût |
-|-----------|-------------|------|
-| Gateway + PostgreSQL | Railway | ~$5/mois fixe |
-| Stockage corpus + modèles | Cloudflare R2 | 0€ (free tier 10GB) |
-| Inférence GPU | RunPod spot (RTX 3090 / A10) | $0.20/h, scale to zero |
-| Traitement data/fine-tuning | PC local (RTX 2080 Super) | 0€ |
-| **Total standby** | | **~$5/mois** |
-| **Total en charge modérée** | | **~$25-60/mois** |
+## Contraintes structurelles
 
-## GPU Scaling
+- **CPU-only** — aucun GPU en production (cf. `philosophy.md` §7). Les modèles ML (classifieurs, embeddings, rerankers) sont conçus pour tourner sur CPU.
+- **Service unique mutualisé** — une seule instance Muses pour toutes les instances Suddenly du Fediverse. Le SPOF est assumé pour le MVP, sa résilience est traitée plus tard.
+- **Tables sur disque** — pas de DB serveur pour le MVP (JSONL versionné en git + index SQLite + embeddings `.npy`, cf. `external/data-format.md`).
+- **Auth ActivityPub** — toutes les requêtes entrantes signées par une instance authentifiée.
 
-- **Standby** : pod éteint, 0$/h
-- **Cold start** : ~2-3 min pour loader base + adapters depuis R2
-- **Low traffic** : 1× RTX 3090 spot (~0.20$/h)
-- **Peak** : scale-up via RunPod API (worker supplémentaire)
-- **Saturated** : `retry-after` header + UI "Assistant indisponible, réessayez plus tard"
+## Hébergement envisagé (à figer plus tard)
 
-## Environments
+| Phase | Cible | Critère de choix |
+|---|---|---|
+| Dev / M2 | Local (poste développeur) ou VM CPU modeste (~$5/mois) | Itération rapide, pas de SLA |
+| Production / M4 | Single VM CPU avec disque suffisant pour les tables (Hetzner, OVH, ou équivalent EU pour la souveraineté des données) | Coût ≪ providers d'inférence commerciaux, scaling vertical suffisant pour les premières instances connectées |
+| Plus tard | À évaluer selon trafic réel | HA actif/passif éventuellement, à traiter dans `infrastructure.md` |
 
-- **Dev** : Gateway sur Railway (preview deploy), GPU = PC local avec Ollama/vLLM
-- **Prod** : `https://ai.suddenly.social` sur Railway + RunPod spot
+## Stockage des tables
 
-## Model Deployment Process
+- Fichiers JSONL versionnés en git dans le repo, ou dans un repo dédié séparé selon volume.
+- Sauvegardes : git suffit tant que la croissance reste modérée. À reconsidérer si on dépasse plusieurs dizaines de MB.
+- L'**index SQLite** et les **embeddings `.npy`** sont **reconstruits** depuis les JSONL — pas la source de vérité, donc gitignorés.
 
-1. Fine-tuning sur PC local (Axolotl + RTX 2080 Super)
-2. Export safetensors → upload Cloudflare R2
-3. RunPod pull base + adapters depuis R2
-4. Évaluer sur le set de test réservé
-5. Si métriques OK → rollout progressif (10% → 50% → 100%)
-6. Archive modèle précédent sur R2 (rollback possible dans 48h)
+## Stockage des données opérationnelles
 
-## Data Pipeline
+- **Trust + profils de style** : SQLite local au service Muses, sauvegardé périodiquement.
+- **Event log** des signaux UI : append-only sur disque (rotation périodique), utilisé pour l'online learning et l'audit.
+- **Snapshots des poids ML** : sur disque, horodatés, pour rollback (cf. `learning-and-trust.md` § Snapshots et rollback).
 
-1. Session soumise (contribute endpoint)
-2. Validation structurelle (format, langue, longueur minimale)
-3. Anonymisation (NER → tokens génériques, FR/EN)
-4. Formatage en exemples d'entraînement (reports → paires prompt/completion)
-5. Stockage sur Cloudflare R2 (JSONL)
-6. Marqué "disponible pour le prochain fine-tuning"
+## Ce qui a été retiré dans le pivot
 
-## CI/CD Pipeline
+- **Railway + PostgreSQL** (ancien gateway FastAPI) — supprimé.
+- **RunPod GPU spot** (entraînement et inférence vLLM) — supprimé.
+- **Cloudflare R2** (stockage modèles + corpus) — pas nécessaire pour le MVP, à reconsidérer si le volume de tables ou d'event logs justifie un object store séparé.
+- **Together.ai, Fireworks.ai** — plus aucune dépendance à des providers d'inférence commerciaux.
 
-N/A - not configured (Phase 0)
+## Flux de données (synthèse)
 
-## Rollback
+```
+Instance Suddenly --- (HTTP signé ActivityPub) ---> Service Muses
+                                                    |
+                                                    +-- Tables JSONL (lecture)
+                                                    +-- Index SQLite + embeddings npy
+                                                    +-- État online (trust, profils, signaux)
+                                                    |
+                                                    +-- Pipeline 4 étages → réponse
+                                                    |
+                                                    +-- (Si opt-in) ingestion row → tables
+                                                    +-- (Toujours) signal UI → online learning
+```
 
-- 48h window after each model deployment
-- Archive previous model kept for rollback
+## Hors périmètre de ce document
+
+- Spec opérationnelle de l'API (endpoints, schémas request/response, codes d'erreur) — `infrastructure.md` à venir.
+- Plan de continuité, RPO/RTO, HA actif/passif — `infrastructure.md`.
+- Coûts détaillés en production — à chiffrer après M4.
+- CI/CD — à mettre en place au moment du M2 / M4.
