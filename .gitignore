@@ -29,3 +29,10 @@ data/*
 # Pipelines cache
 .cache/
 pipelines/**/.cache/
+
+# Artefacts dérivés des tables — index SQLite et embeddings npy sont
+# reconstruits depuis les JSONL (cf. data-format.md). Seuls les JSONL
+# (source de vérité) sont versionnés.
+tables/**/*.sqlite
+tables/**/*.sqlite-journal
+tables/**/*.npy
