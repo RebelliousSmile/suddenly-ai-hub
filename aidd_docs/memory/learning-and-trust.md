@@ -88,12 +88,15 @@ trust[user_id][axis][value] = (alpha, beta, last_update_ts)
 
 ### Update
 
-- **Accept par un tiers** sur une row contribuée par l'auteur dans contexte `(axis, value)` : `α += w_accept`.
-- **Reject_off par un tiers** : `β += w_reject`.
+Symétrique avec la table à 5 signaux de `style-coaching.md` §3 (colonne *Update trust contributeur*) :
+
+- **Accept** par un tiers sur une row contribuée par l'auteur dans contexte `(axis, value)` : `α += w_accept`.
+- **Accept_edited** : `α += w_accept_edited` (atténué — le contenu de l'auteur était proche mais pas suffisant).
+- **Reject_off** : `β += w_reject`.
 - **Reject_challenge_appreciated** : neutre. Le challenge ne pénalise pas son auteur.
 - **Ignore** : `β += w_ignore` (faible).
 
-Les poids `w_*` sont calibrés tels que `w_accept ≈ 1`, `w_reject ≈ 1`, `w_ignore ≈ 0.2`. À ajuster sur données réelles.
+Les poids `w_*` sont calibrés tels que `w_accept ≈ 1`, `w_accept_edited ≈ 0.5`, `w_reject ≈ 1`, `w_ignore ≈ 0.2`. À ajuster sur données réelles.
 
 ### Query
 
