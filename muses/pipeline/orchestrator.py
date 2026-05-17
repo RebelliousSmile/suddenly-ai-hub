@@ -12,12 +12,22 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from typing import Literal
+
 from muses.pipeline.filter import NoOpFilter
 from muses.pipeline.recombiner import FragmentPassthroughRecombiner, RecombinedCandidate
 from muses.pipeline.selector import TableSelection, TagMatchingSelector
 from muses.pipeline.weighter import CosineWeighter, WeightedRow
 from muses.schemas.tags import AXIS_NAMES, AxialTags
 from muses.tables.embeddings import Encoder
+
+
+Mode = Literal["confort", "challenge"]
+
+
+# Multiplicateur appliqué aux rows familières en mode challenge (cf.
+# style-coaching.md §2 — "malus borné dans [0.3, 1.0]"). 0.5 = malus médian.
+CHALLENGE_FAMILIAR_MULTIPLIER = 0.5
 
 
 def _build_relaxed_tags(original: AxialTags, relaxed_axes: list[str]) -> AxialTags:
@@ -59,6 +69,7 @@ class Orchestrator:
         weighter: CosineWeighter | None = None,
         recombiner: FragmentPassthroughRecombiner | None = None,
         filter_stage: NoOpFilter | None = None,
+        style_store=None,  # StyleProfileStore | None — utilisé en mode challenge
     ):
         self.tables = [Path(p) for p in tables]
         self.encoder = encoder
@@ -66,6 +77,7 @@ class Orchestrator:
         self.weighter = weighter or CosineWeighter(encoder)
         self.recombiner = recombiner or FragmentPassthroughRecombiner()
         self.filter_stage = filter_stage or NoOpFilter()
+        self.style_store = style_store
 
     def generate(
         self,
@@ -74,8 +86,16 @@ class Orchestrator:
         context_tags: AxialTags,
         n_candidates: int = 5,
         top_n: int = 3,
+        mode: Mode = "confort",
+        user_id: str | None = None,
     ) -> GenerationResult:
-        """Pipeline complet : sélectionne, pondère, recombine, filtre."""
+        """Pipeline complet : sélectionne, pondère, recombine, filtre.
+
+        En mode "challenge" et si `user_id` et `style_store` sont fournis,
+        les rows familières au user (dans son top-20 d'observations) reçoivent
+        un malus multiplicatif après le pondérateur — réduction de pertinence
+        sans exclusion (cf. style-coaching.md §2).
+        """
         # Étage 1 — Sélecteur
         selections = self.selector.select(context_tags)
         if not selections:
@@ -96,6 +116,10 @@ class Orchestrator:
             context_tags=relaxed_tags,
         )
 
+        # Mode challenge : malus sur les rows familières du user (cf. T33)
+        if mode == "challenge" and user_id and self.style_store is not None:
+            weighted = self._apply_challenge_malus(weighted, user_id)
+
         # Étage 3 — Recombinateur
         recombined = self.recombiner.recombine(weighted, n_candidates=n_candidates)
 
@@ -115,3 +139,25 @@ class Orchestrator:
             relaxed_axes=relaxed_axes,
             weighted_count=len(weighted),
         )
+
+    def _apply_challenge_malus(
+        self,
+        weighted: list[WeightedRow],
+        user_id: str,
+    ) -> list[WeightedRow]:
+        """Réduit le score des rows familières et re-trie."""
+        familiar_ids = {
+            key for key, _ in self.style_store.top(user_id, "row", limit=20)
+        }
+        if not familiar_ids:
+            return weighted
+        adjusted = []
+        for w in weighted:
+            mult = CHALLENGE_FAMILIAR_MULTIPLIER if w.row.id in familiar_ids else 1.0
+            adjusted.append(WeightedRow(
+                row=w.row,
+                score=w.score * mult,
+                table_path=w.table_path,
+            ))
+        adjusted.sort(key=lambda x: x.score, reverse=True)
+        return adjusted
