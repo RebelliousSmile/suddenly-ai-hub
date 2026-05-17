@@ -1,169 +1,86 @@
-# 🚀 Installation Rapide - Suddenly AI Hub
+# Installation rapide — suddenly-muses
 
-> Guide d'installation en 5 minutes
+Bootstrap de l'environnement de développement pour le projet **suddenly-muses**, branché sur aidd-framework via `aidd-custom` et `aidd-overlay`.
 
-## ⏱️ Time to Hello World
+## Prérequis
 
-**~5 minutes** pour avoir tout configuré et prêt à l'emploi !
+- Python 3.11 ou supérieur (pour le service Muses et les pipelines de mining de corpus)
+- Node.js 18 ou supérieur, npm (pour la CLI `aidd-custom`)
+- Accès GitHub (cloner les overlays aidd)
+- Git
 
-## 📋 Prérequis
-
-- ✅ Python 3.11+ installé
-- ✅ Node.js 18+ installé
-- ✅ npm disponible
-- ✅ Accès GitHub (pour cloner les dépôts)
-
-## 🚀 Installation en 3 étapes
-
-### **Étape 1 : Installer le CLI AIDD**
+## Étape 1 — Installer la CLI aidd-custom
 
 ```bash
-# Aller dans suddenly-ai-hub
-cd /home/user/suddenly-ai-hub
-
-# Installer aidd-custom
+cd <repo-parent>
+git clone https://github.com/RebelliousSmile/aidd-custom.git
 cd aidd-custom
 npm install
 npm link
-
-# Vérifier
 aidd-custom --version
 ```
 
-### **Étape 2 : Configurer le framework**
+## Étape 2 — Appliquer l'overlay dans le projet
 
 ```bash
-# Retourner au projet
-cd /home/user/suddenly-ai-hub
-
-# Configurer l'overlay
+cd <repo-parent>/suddenly-muses
 aidd-custom setup --repo RebelliousSmile/aidd-overlay
-
-# Installer les configurations
 aidd-custom install
-
-# Vérifier
 aidd-custom doctor
 ```
 
-### **Étape 3 : Installer les compétences Hermes**
+`aidd-custom doctor` vérifie que les règles, agents, skills et commandes sont en place dans `.claude/` selon les conventions documentées dans `AIDD_INTEGRATION.md`.
+
+## Étape 3 — Environnement Python du projet
 
 ```bash
-# Les compétences sont dans ~/.hermes/plugins/hermes-vault/
-# Elles sont déjà liées vers ~/.hermes/skills/
-
-# Redémarrer Hermes Agent pour les scanner
-# (Fermer et rouvrir l'interface)
-
-# Vérifier les compétences
-hermes skills list
+cd <repo-parent>/suddenly-muses
+python -m venv venv
+source venv/bin/activate
+pip install -e .
 ```
 
-## ✅ Vérification
+Les dépendances sont déclarées dans `pyproject.toml` (extras `[pipelines, scraper, dev]`).
+
+## Vérification
 
 ```bash
-# 1. CLI AIDD
 aidd-custom --version
-
-# 2. Framework
 aidd-custom doctor
-
-# 3. Compétences
-hermes skills list | grep aidd
-
-# 4. Projet
-ls -la suddenly-ai-hub/
+python -c "import pipelines.anonymization; print('ok')"
 ```
 
-## 🔧 Dépannage
+## Variables d'environnement
 
-### **Problème : aidd-custom n'est pas trouvé**
+Le service Muses n'utilise pas d'API d'inférence commerciale (cf. `philosophy.md` §7). Aucune clé `TOGETHER_API_KEY`, `FIREWORKS_API_KEY`, `OPENAI_API_KEY`, etc. n'est requise.
+
+Variables à définir dans `.env` (selon usage) :
 
 ```bash
-# Ajouter au PATH
+GITHUB_TOKEN=...
+```
+
+D'autres variables (signature ActivityPub, accès au stockage des tables) seront définies dans `infrastructure.md` à venir.
+
+## Dépannage
+
+**`aidd-custom` non trouvé**
+
+```bash
 export PATH="$HOME/.npm-global/bin:$PATH"
-
-# Ou utiliser le chemin complet
-/home/user/suddenly-ai-hub/aidd-custom/dist/cli.js --help
 ```
 
-### **Problème : Compétences non détectées**
+ou utiliser le chemin complet binaire produit par `npm link`.
+
+**Permissions npm**
 
 ```bash
-# Redémarrer Hermes Agent
-# Fermer et rouvrir l'interface
-
-# Forcer le scan
-hermes skills reload  # Si disponible
-```
-
-### **Problème : Permissions npm**
-
-```bash
-# Si erreur d'installation npm
 sudo chown -R $(whoami) ~/.npm
 ```
 
-## 📚 Étapes suivantes
+## Prochaines étapes
 
-1. ✅ Installer les outils (cette page)
-2. 📖 Lire [README.md](./README.md)
-3. 🎯 Lire [aidd_docs/](./aidd_docs/)
-4. 🚀 Commencer Phase 3 (fine-tuning)
-
-## 🎯 Commandes utiles
-
-```bash
-# AIDD CLI
-aidd-custom setup --repo RebelliousSmile/aidd-overlay
-aidd-custom install
-aidd-custom doctor
-aidd-custom clean
-
-# Compétences Hermes
-hermes skills list
-hermes skills inspect <skill-name>
-hermes -s <skill-name> "commande"
-
-# Projet
-git status
-git pull origin main
-```
-
-## 📊 Statistiques d'installation
-
-| Élément | Statut | Détails |
-|---------|--------|---------|
-| **CLI AIDD** | ✅ | `aidd-custom` v1.0.0 |
-| **Framework** | ✅ | 112 fichiers installés |
-| **Compétences** | ✅ | 11 compétences custom |
-| **Documentation** | ✅ | 44 fichiers AIDD |
-
-## 🔐 Variables d'environnement
-
-Créer `.env` dans le projet :
-
-```bash
-# GitHub
-GITHUB_TOKEN=votre_token
-
-# Together.ai
-TOGETHER_API_KEY=votre_key
-
-# Fireworks.ai
-FIREWORKS_API_KEY=votre_key
-
-# Weights & Biases
-WANDB_API_KEY=votre_key
-```
-
-## 📞 Besoin d'aide ?
-
-- **Documentation complète** : [README.md](./README.md)
-- **Workflow AIDD** : [aidd_docs/WORKFLOW.md](./aidd_docs/WORKFLOW.md)
-- **Compétences** : [hermes-vault](https://github.com/RebelliousSmile/hermes-vault)
-- **GitHub** : [suddenly-ai-hub](https://github.com/RebelliousSmile/suddenly-ai-hub)
-
----
-
-**Installation terminée en ~5 minutes ! 🎉**
+1. Installation terminée (cette page).
+2. Lire `philosophy.md` pour comprendre l'identité du projet.
+3. Lire `architecture-tables-ml.md` pour le pipeline 4-étages.
+4. Lire `AIDD_INTEGRATION.md` pour les conventions aidd.
