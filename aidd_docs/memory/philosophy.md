@@ -9,6 +9,12 @@ description: Identité et principes directeurs du projet Muses — ce qu'il est,
 
 Ce document fixe l'identité du projet. Les choix d'architecture, de modèle de données et d'implémentation découlent de ces principes — non l'inverse. En cas de conflit entre une décision technique et un principe ici, le principe l'emporte (ou il faut explicitement actualiser ce document).
 
+## Conventions
+
+- **« Muses »** dans tous les documents de ce dossier désigne le **projet et le service**. La grille monétaire qui porte le même nom dans `use-cases.md` §1.2 est un artefact de l'ancienne architecture LoRA, et doit être renommée lors de la réécriture de `use-cases.md`. Provisoirement, cette monnaie est référencée comme **« unité d'usage »** dans les futurs documents tarifaires.
+- **Axes contextuels canoniques** : `univers`, `situation`, `voix` (3 axes). Toute référence à un autre set d'axes (`genre` dans `use-cases.md`, par exemple) est obsolète. Définition détaillée des valeurs : à formaliser dans un futur `axes-and-tags.md`.
+- **« Trust »** et non « réputation » comme terme principal pour le crédit accordé à un contributeur. Le terme technique `Beta reputation` (Jøsang) reste utilisé quand il désigne la primitive statistique.
+
 ## 1. Une muse, pas un serviteur
 
 L'objectif n'est pas de remplacer l'auteur, ni d'écrire à sa place. Muses **interroge** le style de l'auteur et le **pousse hors de ses habitudes** quand il le souhaite.
@@ -80,8 +86,7 @@ Ce choix n'est pas une contrainte budgétaire : c'est une condition de **viabili
 
 - Pas un LLM, pas un chatbot.
 - Pas un substitut à l'auteur : il propose, l'auteur arbitre.
-- Pas une instance Suddenly de plus.
-- Pas un assistant généraliste : son terrain est la rédaction de fiction narrative et dialoguée (les features de `use-cases.md`). Pas la productivité bureautique, pas la traduction, pas le code.
+- Pas un assistant généraliste : son terrain est la rédaction de fiction narrative et dialoguée (les features de `use-cases.md`). Pas la productivité bureautique, pas la traduction entre langues humaines, pas le code. La transformation d'une scène vers un prompt vidéo (feature #89) reste sur le terrain narratif.
 - Pas un système versionné. Pas de « v2 du modèle ». C'est un service continu.
 - Pas de génération autoregressive. Le coût d'inférence est borné par un nombre fixe de forward passes (embeddings, classifieurs, scoreurs), indépendant de la longueur de la sortie.
 

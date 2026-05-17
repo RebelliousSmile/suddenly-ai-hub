@@ -77,8 +77,10 @@ flowchart TD
 ### Étage 3 — Recombinateur
 
 - **Rôle** : tirer K échantillons par étage de granularité (beat → template → slots remplis depuis entités) et les assembler en N candidats de sortie textuelle.
-- **Modèle** : règles d'assemblage déterministes pour les cas simples, petit modèle séquentiel optionnel pour le sequencing complexe.
+- **Modèle** : aucun. Règles d'assemblage déterministes + remplissage de slots typés. Les variantes d'accord (genre, nombre, temps, ponctuation) sont **pré-stockées comme rows distinctes** dans les tables, sélectionnées par contexte aux étages 1/2. Pas de génération séquentielle.
 - **Sortie** : N candidats (typiquement N = 5 à 10).
+
+Cette contrainte stricte sur l'étage 3 est ce qui rend tenable la promesse « zéro génération autoregressive » de `philosophy.md` §7. Si un cas d'usage requiert un assemblage que les règles ne couvrent pas, la résolution est d'**ajouter des rows à la table**, pas d'introduire un modèle génératif.
 
 ### Étage 4 — Filtreur
 
@@ -95,6 +97,8 @@ flowchart TD
 | Suggestion description (#79)         | templates + entités (lieux/ambiances)        | tous                                                          |
 | Suggestion pensée intérieure (#80)   | beats + templates + entités                  | tous                                                          |
 | Export prompt vidéo (#89)            | templates visuels + entités                  | sélecteur + pondérateur + recombinateur (canevas fixe, pas de filtre best-of-N) |
+
+Les features d'analyse (#81–#84) ont leur propre mapping dans la section suivante. Les neuf features de `use-cases.md` sont couvertes au total par les deux tables (cinq ici, quatre ci-dessous).
 
 ## Pipeline d'analyse — projection inversée
 
@@ -126,6 +130,24 @@ flowchart TD
 | Résumé de session (#83)          | templates de résumé tagués genre/situation              | extraction de beats par projection + remplissage du template |
 | Suggestions liens fédérés (#84)  | embeddings des personnages publics de l'instance        | similarité d'embeddings + seuil                            |
 
+Le pipeline d'analyse est volontairement spécifié à un niveau d'abstraction supérieur à celui du pipeline de génération. Le matcher (classifieur multi-label ou similarité avec seuil), l'agrégateur (somme pondérée, vote majoritaire, fonctions par feature) et le format des rapports restent à figer dans un document dédié (`analysis-pipeline.md` à venir). Le MVP cible le pipeline de génération en premier.
+
+## Carte de couverture contextuelle
+
+Artefact structurel maintenu par le service Muses : tableau indexé par `(univers × situation × voix)` qui agrège, par cellule contextuelle :
+
+- nombre de rows par niveau (entités, templates, beats, fragments),
+- nombre d'auteurs distincts trusted ayant contribué dans cette cellule,
+- date de la dernière contribution.
+
+Usage :
+
+- **Diagnostic** — repérer les zones creuses et prioriser le mining bootstrap ou la sollicitation de contributions.
+- **Fallback hiérarchique** — quand la cellule cible est sous-peuplée, l'étage 1 (sélecteur) peut tomber gracieusement sur une cellule voisine (un axe relâché à la fois : voix → situation → univers).
+- **Décision MVP** — sélection des cellules à servir en priorité v1.
+
+La carte est référencée dans `learning-and-trust.md` §6 comme garde-fou anti-cold-start.
+
 ## Provenance des tables
 
 Trois voies d'alimentation à combiner :
@@ -154,14 +176,18 @@ Trois voies d'alimentation à combiner :
 - Choix précis des modèles ML (à figer en POC).
 - Schéma détaillé des tables (champ par champ).
 - Pipeline de fabrication des tables depuis le corpus existant.
-- Refonte de la grille tarifaire Muses (l'inférence quasi gratuite invalide la grille actuelle de `use-cases.md` §1.2).
+- Refonte de la grille tarifaire de `use-cases.md` §1.2 (l'inférence quasi gratuite invalide la grille actuelle). Cf. `philosophy.md` § Conventions sur le renommage de la monnaie en « unité d'usage ».
 - Réécriture de la doc périmée (`README.md`, `architecture.md`, `project_brief.md`, `codebase_map.md`).
+- **Infrastructure du service** — résilience, haute disponibilité, plan de continuité. Le service Muses étant unique (cf. `philosophy.md` §2), c'est un single point of failure pour les features IA de toutes les instances. À traiter dans un `infrastructure.md` dédié (HA actif/passif ? réplication géo ? cache local par instance ?).
+- **Authentification des instances** — chaque requête entrante doit être signée par une instance authentifiée (signature HTTP ActivityPub, déjà prévue par `project_brief.md`). Spec à formaliser dans le doc infrastructure.
+- **Mode dégradé** — quand Muses est indisponible côté instance Suddenly : comportement attendu spécifié dans `use-cases.md` #4.3 (boutons IA masqués ou messagés, pas de débit). Implémentation côté instance, pas côté Muses.
 
 Chacun de ces points fera l'objet d'un document dédié.
 
 ## Questions ouvertes à acter
 
-1. **Tagging vs jeux de tables séparés** — confirmer le choix de tags axiaux (univers/situation/voix) plutôt que des jeux distincts par combinaison.
-2. **Période transition** — les anciens documents (`README.md`, `architecture.md`, etc.) restent-ils actifs en lecture publique pendant la transition, ou sont-ils marqués obsolètes immédiatement ?
-3. **Cible MVP** — bien que le périmètre vise toutes les features, sur laquelle valider le pipeline end-to-end en premier ? (proposition par défaut : `suggestion de dialogue` #77, niveau fragments + entités, le plus simple.)
-4. **Seuil d'activation du filtre** — un best-of-N nécessite N candidats minimum ; pour les features où la base de tables est encore petite, fallback à top-1 du recombinateur ?
+1. **Période transition** — les anciens documents (`README.md`, `architecture.md`, etc.) restent-ils actifs en lecture publique pendant la transition, ou sont-ils marqués obsolètes immédiatement ?
+2. **Cible MVP** — bien que le périmètre vise toutes les features, sur laquelle valider le pipeline end-to-end en premier ? (proposition par défaut : `suggestion de dialogue` #77, niveau fragments + entités, le plus simple.)
+3. **Seuil d'activation du filtre** — un best-of-N nécessite N candidats minimum ; pour les features où la base de tables est encore petite, fallback à top-1 du recombinateur ?
+
+Choix précédemment ouverts et désormais actés : tagging axial plutôt que jeux de tables séparés (cf. niveaux de granularité §3) ; axes canoniques `univers / situation / voix` (cf. `philosophy.md` § Conventions).

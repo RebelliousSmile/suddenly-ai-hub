@@ -40,7 +40,7 @@ Chaque row de chaque table porte une provenance complète. Pas d'exception, y co
 | `user_id`          | string    | Acteur ActivityPub (URI), `null` pour `source: bootstrap`           |
 | `instance_id`      | string    | Domaine de l'instance source                                        |
 | `created_at`       | timestamp | Date d'ingestion côté Muses                                         |
-| `source`           | enum      | `bootstrap` \| `contribution_explicit` \| `derived_from_edit` \| `mined` |
+| `source`           | enum      | `bootstrap` \| `contribution_explicit` \| `derived_from_edit` \| `mined` (la valeur `derived_from_edit` est produite par le signal `accept_edited` décrit dans `style-coaching.md` §3) |
 | `signature`        | string    | Signature ActivityPub HTTP de la soumission (sauf `bootstrap` et `mined`) |
 | `quality_score`    | float     | Score courant calculé par le quality gating, mis à jour en continu  |
 | `created_for_axis` | dict      | Axes contextuels de la session d'origine (snapshot)                 |
@@ -179,6 +179,8 @@ quality_score[row] = f(
 )
 ```
 
+La fonction `f()` est délibérément laissée non spécifiée à ce stade — elle sera calibrée empiriquement en POC sur les premières données de production (forme candidate : moyenne pondérée des taux d'accept par contexte, pénalisée par le ratio d'éditions et amortie sur l'âge). Le doc sera figé une fois la calibration tenable.
+
 - **Archivage** des rows sous seuil après période d'observation (pas suppression — archivage permet audit et restauration).
 - **A/B online** : pour des contextes équivalents, deux rows candidates peuvent être servies en alternance pour mesurer leur performance comparée et accélérer la convergence.
 - **Promotion** : une row à très haut quality_score peut voir son embedding renforcé (poids accru à l'étage 2 indépendamment du trust auteur).
@@ -186,7 +188,11 @@ quality_score[row] = f(
 ## 8. Hors périmètre / questions ouvertes
 
 - **Politique de rétention RGPD** : conservation des rows après suppression de compte user. Probable anonymisation (drop du `user_id`, garde du `instance_id`), à confirmer juridiquement.
-- **Migration inter-instance** : un user qui change d'instance Suddenly garde-t-il son trust côté Muses ? Probablement oui via ActivityPub `Move`, mais la signature change — protocole à spécifier.
+- **Continuité d'identité d'un contributeur** — trois cas à traiter ensemble dans un futur protocole d'identité :
+  - migration inter-instance (un user change d'instance Suddenly, l'acteur ActivityPub change) ;
+  - rotation de clé ActivityPub d'un user (signature change, identité logique stable) ;
+  - takeover détecté (cf. §6) puis résolu — restauration partielle du trust ?
+  La piste par défaut est de s'appuyer sur l'activité ActivityPub `Move` *et* sur un mécanisme de claim signé par l'ancienne clé, mais le protocole reste à spécifier.
 - **Visibilité du trust par l'admin d'instance source** : l'admin Muses voit tout ; l'admin d'une instance voit-il les trusts de ses propres users ?
 - **Mécanisme de contestation** : un user qui pense subir un trust injustement bas peut-il déclencher une revue admin ?
 - **Politique de signal pour signal de modération externe** (block d'instance prononcé par une autre instance) — affecte-t-il `instance_weight` ?

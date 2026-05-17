@@ -71,15 +71,15 @@ Le malus de l'étage 2 reste **borné** : on diversifie l'éventail, on ne le re
 
 Sans désambiguïsation des signaux, le ranker (étage 4) apprend à éviter les challenges (taux d'accept plus bas) et le mode challenge meurt en quelques semaines. C'est mathématique.
 
-L'UI doit donc exposer **cinq** signaux distincts, pas deux :
+L'UI doit donc exposer **cinq** signaux distincts, pas deux. Chaque signal a **trois effets** simultanés et indépendants : sur le profil de style du user qui reçoit la suggestion, sur le ranker étage 4, et sur le trust du user qui a *contribué* la row à l'origine (cf. `learning-and-trust.md` §4). La table ci-dessous donne les trois colonnes ensemble pour éviter toute désynchronisation entre les deux docs.
 
-| Signal                          | Sémantique                                          | Update profil de style                                       | Update ranker étage 4                            |
-| ------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------ |
-| `accept`                        | Inséré tel quel                                     | +1 sur row, template, beat, n-grammes                        | +1 sur `(contexte, row)`                         |
-| `accept_edited`                 | Inséré avec édition                                 | +1 sur row brute ; édition capturée comme fragment candidat  | +1 atténué sur la row                            |
-| `reject_off`                    | « Pas pertinent ici »                               | rien                                                         | -1 sur `(contexte, row)`                         |
-| `reject_challenge_appreciated`  | « Bonne idée, pas pour cette scène »                | +1 *exploration* sur le beat/template du candidat            | **neutre** — pas de malus ranker                 |
-| `ignore`                        | Bouton non cliqué après N secondes                  | rien                                                         | -0.2 sur `(contexte, row)`                       |
+| Signal                          | Sémantique                                          | Update profil de style (récepteur)                           | Update ranker étage 4                            | Update trust contributeur (auteur de la row)            |
+| ------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------- |
+| `accept`                        | Inséré tel quel                                     | +1 sur row, template, beat, n-grammes                        | +1 sur `(contexte, row)`                         | `α += w_accept` sur `(axis, value)`                     |
+| `accept_edited`                 | Inséré avec édition                                 | +1 sur row brute ; édition capturée comme fragment candidat `source: derived_from_edit` (cf. `learning-and-trust.md` §2) | +1 atténué sur la row                            | `α += w_accept_edited` (atténué)                        |
+| `reject_off`                    | « Pas pertinent ici »                               | rien                                                         | -1 sur `(contexte, row)`                         | `β += w_reject` sur `(axis, value)`                     |
+| `reject_challenge_appreciated`  | « Bonne idée, pas pour cette scène »                | +1 *exploration* sur le beat/template du candidat            | **neutre** — pas de malus ranker                 | **neutre** — un challenge apprécié ne pénalise pas son auteur |
+| `ignore`                        | Bouton non cliqué après N secondes                  | rien                                                         | -0.2 sur `(contexte, row)`                       | `β += w_ignore` (faible)                                |
 
 Le signal `reject_challenge_appreciated` est l'élément crucial. Il décorrèle « la suggestion était pertinente comme exploration » de « je l'ai insérée ». Sans ce signal, le système collapse vers le mode confort en quelques semaines.
 
@@ -95,7 +95,7 @@ Trois familles :
 - **Suggestion d'exploration** — « Tu n'as jamais utilisé le champ lexical *organique* dans tes scènes cyberpunk. Tester ? »
 - **Anti-pattern détecté** — « Tes descriptions de combat font en moyenne 40 mots quand tes autres descriptions en font 120. Volontaire ? »
 
-Déclenchement : calcul périodique (batch nocturne) sur le profil de style. **Pas d'interruption dans le flux d'écriture.** Ces méta-suggestions ne consomment aucun Muses — décision à acter dans le document de tarification à venir.
+Déclenchement : calcul périodique (batch nocturne) sur le profil de style. **Pas d'interruption dans le flux d'écriture.** Les méta-suggestions ne consomment aucune unité d'usage — à acter dans le futur document de refonte tarifaire (cf. `philosophy.md` § Conventions).
 
 ## 5. Garde-fous
 
