@@ -3,6 +3,11 @@
 Voir external/use-cases.md §4.1. Pour le MVP M2, ne supporte que la méthode
 `suggest` sur la feature `dialogue`. `analyze` viendra avec le pipeline
 d'analyse en M5.
+
+T38 (M4) — mode dégradé : `MusesUnavailable` est levée quand le service
+n'est pas joignable. Les callers (UI instance Suddenly) sont censés
+attraper cette exception et griser leurs boutons IA en conséquence.
+Aucune unité d'usage n'est débitée sur une `MusesUnavailable`.
 """
 
 from __future__ import annotations
@@ -12,6 +17,15 @@ from dataclasses import dataclass
 import httpx
 
 from muses.schemas.tags import AxialTags
+
+
+class MusesUnavailable(RuntimeError):
+    """Le service Muses n'a pas répondu ou a renvoyé une erreur 5xx.
+
+    Le caller doit traiter ça comme un mode dégradé : pas de retry
+    automatique (déjà tenté en amont), pas de débit d'unité d'usage,
+    UI grisée avec message « Assistant indisponible ».
+    """
 
 
 @dataclass
@@ -91,6 +105,9 @@ class MusesClient:
 
         `signature` est le header HTTP Signature draft-cavage complet, déjà
         construit côté instance.
+
+        Lève `MusesUnavailable` si le service est down, timeout ou 5xx ;
+        les `HTTPStatusError` 4xx remontent inchangés (erreurs de la requête).
         """
         if feature != "dialogue":
             raise ValueError(f"Feature {feature!r} non supportée par cette version du client")
@@ -102,11 +119,19 @@ class MusesClient:
             "n_candidates": n_candidates,
             "top_n": top_n,
         }
-        resp = self._client.post(
-            "/v1/suggest/dialogue",
-            json=payload,
-            headers={"Signature": signature},
-        )
+        try:
+            resp = self._client.post(
+                "/v1/suggest/dialogue",
+                json=payload,
+                headers={"Signature": signature},
+            )
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as exc:
+            raise MusesUnavailable(f"Service Muses injoignable: {exc}") from exc
+
+        if 500 <= resp.status_code < 600:
+            raise MusesUnavailable(
+                f"Service Muses en erreur {resp.status_code}: {resp.text[:200]}"
+            )
         resp.raise_for_status()
         data = resp.json()
         return MusesSuggestResult(
