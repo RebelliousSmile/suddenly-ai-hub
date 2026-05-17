@@ -2,7 +2,11 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from pipelines.anonymization.anonymize import anonymize_session, _replace_persons, _detect_lang
+# Le module dépend de spacy via l'extra `pipelines`.
+# Skip propre quand l'extra n'est pas installé (CI sans pipelines).
+pytest.importorskip("spacy", reason="spacy non installé (extra `pipelines`)")
+
+from pipelines.anonymization.anonymize import anonymize_session, _replace_persons, _detect_lang  # noqa: E402
 
 
 def _make_ent(text: str, label: str, start_char: int, end_char: int) -> MagicMock:
