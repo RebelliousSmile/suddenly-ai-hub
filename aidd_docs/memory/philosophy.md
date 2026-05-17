@@ -99,6 +99,8 @@ Ce choix n'est pas une contrainte budgétaire : c'est une condition de **viabili
 
 ## Documents techniques liés
 
-- `architecture-tables-ml.md` — pipeline 4-étages tables + ML, et asymétrie génération / analyse (existe).
-- `learning-and-trust.md` — bootstrap → continu, online learning des étages ML, trust contextuel, réputation d'instance (à écrire).
-- `style-coaching.md` — profil de style auteur, modes confort / challenge, meta-suggestions sur le style (à écrire).
+- `architecture-tables-ml.md` — pipeline 4-étages tables + ML, et asymétrie génération / analyse.
+- `learning-and-trust.md` — bootstrap → continu, online learning des étages ML, trust contextuel, réputation d'instance.
+- `style-coaching.md` — profil de style auteur, modes confort / challenge, méta-suggestions sur le style.
+
+Documents techniques projetés (non encore écrits) : `axes-and-tags.md` (taxonomie détaillée des valeurs sur les cinq axes), `analysis-pipeline.md` (spec opérationnelle de la projection inversée), `infrastructure.md` (HA, auth, mode dégradé), refonte tarifaire.

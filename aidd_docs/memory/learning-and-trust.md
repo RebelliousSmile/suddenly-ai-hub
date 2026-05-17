@@ -28,7 +28,7 @@ Muses connaît deux régimes successifs, sans cut-off net entre les deux — dé
 
 ### Transition
 
-Le système ne « bascule » jamais formellement de bootstrap à nominal. La phase nominale grandit en parallèle ; les rows bootstrap restent en place tant qu'elles ne sont pas archivées par le quality gating (§5). À terme, la proportion de rows `source: bootstrap` décroît mécaniquement par dilution.
+Le système ne « bascule » jamais formellement de bootstrap à nominal. La phase nominale grandit en parallèle ; les rows bootstrap restent en place tant qu'elles ne sont pas archivées par le quality gating (§7). À terme, la proportion de rows `source: bootstrap` décroît mécaniquement par dilution.
 
 ## 2. Provenance — schéma de row obligatoire
 
@@ -80,7 +80,7 @@ Les poids des étages 1/2/4 sont snapshottés périodiquement avec horodatage. E
 
 ## 4. Trust contextuel par auteur
 
-Vecteur de Beta reputations indexé par `(axe, valeur)` — cf. message précédent dans la conversation et `philosophy.md` §5.
+Vecteur de Beta reputations indexé par `(axe, valeur)` sur les cinq axes canoniques (`philosophy.md` § Conventions). Principe d'application dans `philosophy.md` §5 (« Décentralisé et responsabilisé »).
 
 ```
 trust[user_id][axis][value] = (alpha, beta, last_update_ts)

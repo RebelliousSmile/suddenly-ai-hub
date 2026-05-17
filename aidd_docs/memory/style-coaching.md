@@ -18,7 +18,7 @@ Le profil de style est distinct du trust, sur un axe orthogonal.
 | Question répondue  | Cet auteur est-il fiable comme contributeur ?      | Cet auteur écrit dans quel style ?                             |
 | Sources            | Accept/reject **des autres** sur ses contribs      | Accept/édition **par lui** des suggestions reçues + contenu rédigé |
 | Forme              | Vecteur `(α, β)` par `(axe, valeur)`               | Histogrammes avec décroissance temporelle, à 4 niveaux         |
-| Usage downstream   | Pondère ses contribs entrantes (étage 2)           | Personnalise les sorties qu'on lui propose (étages 2/3/4)      |
+| Usage downstream   | Pondère ses contribs entrantes (étage 2)           | Personnalise les sorties qu'on lui propose (étages 1/2/3/4 en mode challenge, 2/3/4 en mode confort) |
 
 ### Quatre niveaux d'observation
 
@@ -105,7 +105,7 @@ Déclenchement : calcul périodique (batch nocturne) sur le profil de style. **P
 - **Mode forcé hors challenge** — un auteur peut désactiver définitivement le mode challenge. Le produit reste pleinement utile en mode confort pur. Le challenge est une option, pas une imposition.
 - **Visibilité du profil** — l'auteur voit son propre profil de style (au moins les méta-suggestions). C'est l'objet du coaching : sans visibilité, pas de prise de conscience.
 
-Note : la visibilité du **profil de style** par l'auteur diffère de la visibilité du **trust** (admin-only — cf. `learning-and-trust.md` à venir). Le profil parle d'écriture, pas de fiabilité — partager le premier ne crée pas le risque de gaming associé au second.
+Note : la visibilité du **profil de style** par l'auteur diffère de la visibilité du **trust** (admin-only — cf. `learning-and-trust.md` §4). Le profil parle d'écriture, pas de fiabilité — partager le premier ne crée pas le risque de gaming associé au second.
 
 ## 6. Hors périmètre / questions ouvertes
 

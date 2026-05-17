@@ -7,7 +7,7 @@ description: Architecture du pivot vers algorithme de tirage sur tables aléatoi
 
 ## Contexte du pivot
 
-L'approche initiale (LLM fine-tuné + LoRA stacking sur 3 axes — univers, situation, voix) est abandonnée.
+L'approche initiale (LLM fine-tuné + LoRA stacking sur trois axes — `univers`, `situation`, `voix`) est abandonnée. La canonisation actuelle élargit à cinq axes atomiques (cf. `philosophy.md` § Conventions) ; les deux axes ajoutés (`rapport_initial`, `emotion_dominante`) étaient implicites dans l'ancienne approche, ils sont désormais explicites.
 
 **Causes** :
 
@@ -29,7 +29,7 @@ L'approche initiale (LLM fine-tuné + LoRA stacking sur 3 axes — univers, situ
 | Niveau                  | Contenu                                  | Exemples                                                 | Usage                                                |
 | ----------------------- | ---------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
 | **Entités atomiques**   | unités lexicales typées                  | gestes, émotions, lieux, objets, noms, traits            | remplissage de slots, briques pour niveaux supérieurs |
-| **Templates à trous**   | squelettes paramétrés                    | « {char} {geste} en {émotion}, {action_suite} »          | structure de phrase ; slots typés tirent dans les entités |
+| **Templates à trous**   | squelettes paramétrés                    | « {char} {geste} en {emotion}, {action_suite} »          | structure de phrase ; slots typés tirent dans les entités |
 | **Beats narratifs**     | unités de niveau scène                   | « hésitation », « rupture de ton », « révélation »        | décident QUOI dire avant de décider COMMENT          |
 | **Fragments narratifs** | sorties complètes prêtes à l'emploi      | répliques / phrases curées depuis corpus                 | échantillonnés directement si beat + contexte alignés |
 
@@ -44,7 +44,7 @@ Chaque table porte des **tags** sur les cinq axes canoniques (`univers`, `situat
 title: Pipeline de génération table-based
 ---
 flowchart TD
-    Context["Contexte: perso, scène, derniers reports, feature"]
+    Context["Contexte: perso, scène, derniers reports, feature, tags axiaux"]
     Selector["Étage 1 — Sélecteur"]
     Weighter["Étage 2 — Pondérateur"]
     Recombiner["Étage 3 — Recombinateur"]
@@ -84,9 +84,10 @@ Cette contrainte stricte sur l'étage 3 est ce qui rend tenable la promesse « z
 
 ### Étage 4 — Filtreur
 
-- **Rôle** : scoring best-of-N. Évaluer cohérence de chaque candidat avec contexte, style, voix.
+- **Rôle** : scoring best-of-N. Évaluer cohérence de chaque candidat avec le contexte (incluant les cinq tags axiaux) et avec le profil de style du récepteur.
 - **Modèle** : cross-encoder (contexte ↔ candidat) entraîné sur l'historique accept/reject utilisateur.
 - **Sortie** : 1 candidat retenu, top-2 et top-3 gardés pour variations / fallback UI.
+- **Exception** : la feature `export prompt vidéo` (#89) court-circuite cet étage (canevas fixe d'assemblage, pas de best-of-N). Cf. mapping ci-dessous.
 
 ## Mapping feature → niveaux exploités
 
@@ -127,7 +128,7 @@ flowchart TD
 | -------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
 | Cohérence scène (#81)            | types d'incohérence (caractère/ton), beats canoniques   | classification multi-label par fragment de scène           |
 | Cohérence session (#82)          | arcs narratifs canoniques, archétypes personnage        | matching séquentiel de beats + scoring d'arc               |
-| Résumé de session (#83)          | templates de résumé tagués genre/situation              | extraction de beats par projection + remplissage du template |
+| Résumé de session (#83)          | templates de résumé tagués `univers / situation`        | extraction de beats par projection + remplissage du template |
 | Suggestions liens fédérés (#84)  | embeddings des personnages publics de l'instance        | similarité d'embeddings + seuil                            |
 
 Le pipeline d'analyse est volontairement spécifié à un niveau d'abstraction supérieur à celui du pipeline de génération. Le matcher (classifieur multi-label ou similarité avec seuil), l'agrégateur (somme pondérée, vote majoritaire, fonctions par feature) et le format des rapports restent à figer dans un document dédié (`analysis-pipeline.md` à venir). Le MVP cible le pipeline de génération en premier.
@@ -155,7 +156,7 @@ La carte est référencée dans `learning-and-trust.md` §6 comme garde-fou anti
 Trois voies d'alimentation à combiner :
 
 1. **Mining corpus → clustering → tables candidates**
-   - S'appuie sur `pipelines/anonymization/` et `pipelines/crawl_rpv/` (déjà présents).
+   - S'appuie sur les pipelines `pipelines/anonymization/` et `pipelines/crawl_rpv/` (présents dans le repo, hérités de l'ancienne stack LoRA — leur sortie servait au format Axolotl, à réadapter pour produire des rows de tables au format JSONL).
    - Extraction NER, segmentation en beats, dédup + clustering sémantique des fragments.
    - Génère des tables candidates à fort volume mais bruitées.
 2. **Curation manuelle**
@@ -181,7 +182,7 @@ Trois voies d'alimentation à combiner :
 - Refonte de la grille tarifaire de `use-cases.md` §1.2 (l'inférence quasi gratuite invalide la grille actuelle). Cf. `philosophy.md` § Conventions sur le renommage de la monnaie en « unité d'usage ».
 - Réécriture de la doc périmée (`README.md`, `architecture.md`, `project_brief.md`, `codebase_map.md`).
 - **Infrastructure du service** — résilience, haute disponibilité, plan de continuité. Le service Muses étant unique (cf. `philosophy.md` §2), c'est un single point of failure pour les features IA de toutes les instances. À traiter dans un `infrastructure.md` dédié (HA actif/passif ? réplication géo ? cache local par instance ?).
-- **Authentification des instances** — chaque requête entrante doit être signée par une instance authentifiée (signature HTTP ActivityPub, déjà prévue par `project_brief.md`). Spec à formaliser dans le doc infrastructure.
+- **Authentification des instances** — chaque requête entrante doit être signée par une instance authentifiée (signature HTTP ActivityPub). Le principe est hérité de l'ancien `project_brief.md` mais ce dernier est obsolète sur l'archi ; la spec opérationnelle reste à formaliser dans le doc infrastructure à venir.
 - **Mode dégradé** — quand Muses est indisponible côté instance Suddenly : comportement attendu spécifié dans `use-cases.md` #4.3 (boutons IA masqués ou messagés, pas de débit). Implémentation côté instance, pas côté Muses.
 
 Chacun de ces points fera l'objet d'un document dédié.
